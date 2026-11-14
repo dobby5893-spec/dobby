@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include "frontier_exploration_ros2/floor_completion.hpp"
 #include <map>
 #include <optional>
 #include <sstream>
@@ -65,6 +66,11 @@ inline std::optional<FloorExhaustion> parseFloorExhaustion(const std::string & t
   if(stamp<0 || area<0 || attempts<0 || attempts>1000000 || std::floor(attempts)!=attempts)return std::nullopt;
   return FloorExhaustion{z,stamp,area,static_cast<unsigned>(attempts),deferred,transition};
  }catch(...){return std::nullopt;}
+}
+inline std::optional<FloorExhaustion> parseAuthorizedFloorCompletion(const std::string & text) {
+ const auto report=frontier_exploration_ros2::parseVerifiedFloorCompletion(text);
+ if(!report)return {};
+ return FloorExhaustion{report->floor_z,report->stamp,report->remaining,0,report->residual,report->transition};
 }
 inline bool matchesActiveFloor(const FloorExhaustion & report,double floor_z,double now) {
  return std::isfinite(floor_z) && std::isfinite(now) && std::abs(report.floor_z-floor_z)<=.15 &&

@@ -186,16 +186,11 @@ class MultifloorCoordinator(Node):
         self.last_pose_time = self.get_clock().now()
 
     def exploration_complete(self, _message):
-        if self.state == State.FLOOR_1:
-            self.state = State.NAVIGATING_TO_STAIRS
-            self.publish_state('Floor 1 complete; stopping frontier controller')
-            self.call_frontier(
-                ControlExploration.Request.ACTION_STOP,
-                self.send_stair_entry_goal)
-        elif self.state == State.FLOOR_2:
-            self.state = State.COMPLETE
-            self.publish_state('Both floors explored')
-            self.call_frontier(ControlExploration.Request.ACTION_STOP)
+        # This legacy coordinator has no joint-audit consumer. Keep stair-test
+        # mode usable, but fail closed for automatic floor handoff.
+        self.get_logger().warning(
+            'Legacy Empty completion ignored. Automatic multifloor completion '
+            'requires go2_multifloor_exploration/full_multifloor_demo.launch.py.')
 
     def tick(self):
         if self.state == State.WAITING:

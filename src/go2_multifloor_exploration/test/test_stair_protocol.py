@@ -54,6 +54,16 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     tf_pub = node.create_publisher(TFMessage, '/tf', 20)
     slice_pub = node.create_publisher(OccupancyGrid, '/map_floor', qos)
     completion = node.create_publisher(Empty, '/exploration_complete', qos)
+    verified = node.create_publisher(String, '/explore/floor_completion', qos)
+
+    def formal(floor_z, residual=False):
+        area = '.1' if residual else '0'
+        return String(data=f"floor_completion;authority=joint_residual_audit;"
+            f"status={'VERIFIED_WITH_RESIDUALS' if residual else 'VERIFIED_COMPLETE'};"
+            f"floor_z={floor_z};stamp={state['stamp']};remaining={area};residual={area};transition=0;"
+            f"region_count={1 if residual else 0};regions={'11:.1:occluded' if residual else ''};"
+            "safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10")
+
     exhausted = node.create_publisher(String, '/explore/floor_exhausted', qos)
     node.create_subscription(Empty, '/multifloor/exploration_complete',
                              lambda m: state.update(completed=state['completed']+1), qos)
@@ -212,10 +222,13 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
                     "reason=closed_regions_excluded;remaining_unknown_area=.42;actionable_unknown_area=0;excluded_unknown_area=.42;attempts=4"))
         else:
             completion.publish(Empty())
+        # Every legacy report and retained Empty must leave exploration active.
+        until = time.monotonic() + .8
+        pump_until(lambda: time.monotonic() >= until)
+        assert state['phases'][-1]['phase'] == 1
+        assert not state['compute'], 'Legacy completion authorized stair handoff'
+        verified.publish(formal(0., handoff_kind != 'complete'))
         pump_until(lambda: any(x['phase'] == 2 for x in state['phases']))
-        if handoff_kind == 'bounded_residual':
-            pump_until(lambda: any('closed_regions_excluded' in x.get('residual_report', '')
-                                  for x in state['phases']))
         until = time.monotonic() + .8
         pump_until(lambda: time.monotonic() >= until)
         assert not state['compute'], 'Stair handoff started before frontier became idle'
@@ -246,6 +259,10 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         # Completion is explicit and only after the configured second floor is explored.
         pump_until(lambda: state['phases'][-1]['phase'] == 1)
         completion.publish(Empty())
+        until = time.monotonic() + .5
+        pump_until(lambda: time.monotonic() >= until)
+        assert state['phases'][-1]['phase'] == 1, 'Empty bypassed second-floor audit'
+        verified.publish(formal(.30))
         pump_until(lambda: state['phases'][-1]['phase'] == 8)
         if handoff_kind != 'complete':
             pump_until(lambda: state['deferred'] > 0)

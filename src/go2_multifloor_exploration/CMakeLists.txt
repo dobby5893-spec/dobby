@@ -68,6 +68,7 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_transition_footprint go2_surface_3d_planner)
   ament_add_gtest(test_floor_handoff test/test_floor_handoff.cpp)
   target_include_directories(test_floor_handoff PRIVATE include)
+  ament_target_dependencies(test_floor_handoff frontier_exploration_ros2)
 
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_ground_parameters test/test_ground_parameters.py TIMEOUT 30

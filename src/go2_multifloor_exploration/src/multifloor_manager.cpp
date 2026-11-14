@@ -127,24 +127,28 @@ public:
    });
   exhausted_sub_=create_subscription<std_msgs::msg::String>(
    "/explore/floor_exhausted",qos,[this](std_msgs::msg::String::SharedPtr msg) {
+    const auto diagnostic=parseFloorExhaustion(msg->data);
+    RCLCPP_DEBUG(get_logger(),"Historical floor report (diagnostic only): parsed=%d",bool(diagnostic));
+   });
+  verified_sub_=create_subscription<std_msgs::msg::String>(
+   "/explore/floor_completion",qos,[this](std_msgs::msg::String::SharedPtr msg) {
     if(state_!=State::EXPLORE_FLOOR)return;
-    const auto report=parseFloorExhaustion(msg->data);
-    if(!report || !matchesActiveFloor(*report,active_floor_,sim())) {
-      RCLCPP_WARN(get_logger(),"Ignoring malformed/stale/other-floor residual report");return;
-    }
-    has_residuals_=true;residual_report_=msg->data;
-    if(report->transition_unknown_area>0 || (msg->data.rfind("v3;",0)==0 || msg->data.rfind("v4;",0)==0)) {
-      pending_handoff_=*report;next_scan_=sim();
-      RCLCPP_INFO(get_logger(),"Flat-floor audit received; verifying complete route to stair entry before stopping exploration");
-    } else completion_pending_=true;
-    RCLCPP_WARN(get_logger(),
-      "Floor handoff accepted: remaining=%.3fm2, deferred_unresolved=%.3fm2; evaluate verified stair approach",
-      report->remaining_unknown_area,report->deferred_unknown_area);
+    const auto report=parseAuthorizedFloorCompletion(msg->data);
+    if(!report || !matchesActiveFloor(*report,active_floor_,sim()))return;
+    has_residuals_|=report->remaining_unknown_area>0;
+    residual_report_=msg->data;
+    // Completion and stair traversability are independent. The last configured
+    // floor needs no stair route; every actual transition still does.
+    if(expected_floors_>0 && static_cast<int>(visited_.size())>=expected_floors_)
+      completion_pending_=true;
+    else {pending_handoff_=*report;next_scan_=sim();}
    });
   deferred_=create_publisher<std_msgs::msg::String>("/multifloor/exploration_deferred",qos);
   completion_sub_=create_subscription<std_msgs::msg::Empty>(
    declare_parameter<std::string>("floor_completion_topic","/exploration_complete"),qos,
-   [this](std_msgs::msg::Empty::SharedPtr){if(state_==State::EXPLORE_FLOOR) completion_pending_=true;});
+   [this](std_msgs::msg::Empty::SharedPtr){
+    RCLCPP_DEBUG(get_logger(),"Legacy Empty completion is diagnostic only; joint audit required");
+   });
   slice_sub_=create_subscription<nav_msgs::msg::OccupancyGrid>("/map_floor",qos,
    [this](nav_msgs::msg::OccupancyGrid::SharedPtr m) {if(m->header.frame_id==map_frame_ && !m->data.empty()) {slice_height_=m->info.origin.position.z;slice_stamp_=rclcpp::Time(m->header.stamp);slice_map_=m;}});
   checkpoint_=create_publisher<std_msgs::msg::String>("/multifloor/checkpoint_state",qos);
@@ -547,7 +551,7 @@ private:
  std::shared_ptr<rclcpp::AsyncParametersClient> gait_;
  rclcpp::Subscription<octomap_msgs::msg::Octomap>::SharedPtr map_sub_;
  rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr completion_sub_;
- rclcpp::Subscription<std_msgs::msg::String>::SharedPtr exhausted_sub_;
+ rclcpp::Subscription<std_msgs::msg::String>::SharedPtr exhausted_sub_,verified_sub_;
  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr deferred_;
  bool has_residuals_{false};std::string residual_report_;
  SimulationProgress simulation_progress_;

@@ -240,23 +240,8 @@ void FrontierExplorerCore::try_send_next_goal()
         ", tested_candidates="+std::to_string(floor_coverage_.failedOptions())+
         ", handoff_blocked=open_unknown_regions");
     }
-    // Re-evaluate the current map even after requesting handoff: an opening
-    // or new unknown component revokes completion. A latched request is not proof.
-    if(floor_coverage_.shouldHandoff(now)) {
-      floor_handoff_requested_=true;
-      if(callbacks.on_floor_exhausted &&
-        (last_floor_handoff_ns_==0 || callbacks.now_ns()-last_floor_handoff_ns_>=2'000'000'000LL)) {
-        last_floor_handoff_ns_=callbacks.now_ns();
-        callbacks.on_floor_exhausted("v1;floor_z="+std::to_string(map->map().info.origin.position.z)+
-          ";stamp="+std::to_string(now)+";reason=closed_regions_excluded"+
-          ";remaining_unknown_area="+std::to_string(floor_coverage_.remaining_unknown_area)+
-          ";actionable_unknown_area="+std::to_string(floor_coverage_.actionable_unknown_area)+
-          ";excluded_unknown_area="+std::to_string(floor_coverage_.excluded_unknown_area)+
-          ";deferred_unknown_area=0"+
-          ";attempts="+std::to_string(floor_coverage_.attempts()));
-      }
-      return;
-    }
+    if(floor_coverage_.completionCandidate(now) && callbacks.request_floor_completion_audit)
+      callbacks.request_floor_completion_audit();
     // Count stable selection opportunities, not controller ticks or active motion.
     floor_coverage_.attempt(now);
   }
@@ -473,8 +458,6 @@ void FrontierExplorerCore::try_send_next_goal()
       widen_unknown_search();
       floor_coverage_.exhaustedSearch(callbacks.now_ns()*1e-9,frontiers.empty(),
         callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending());
-      if(floor_coverage_.shouldHandoff(callbacks.now_ns()*1e-9) &&
-         (!callbacks.residual_handoff_pose_safe || callbacks.residual_handoff_pose_safe()))return;
       if(try_random_recovery(*current_pose,true)) {return;}
       publish_frontier_markers(filtered_frontiers);
       no_frontiers_reported = false;
@@ -1209,6 +1192,10 @@ bool FrontierExplorerCore::dispatch_pending_frontier_goal(
 
 void FrontierExplorerCore::handle_exploration_complete(const geometry_msgs::msg::Pose & current_pose)
 {
+  if(callbacks.request_floor_completion_audit) {
+    callbacks.request_floor_completion_audit();
+    return;
+  }
   callbacks.on_exploration_complete();
 
   if (return_to_start_completed) {
@@ -1615,8 +1602,6 @@ bool FrontierExplorerCore::send_frontier_goal(
   if (dispatch_sequence.empty()) {
     floor_coverage_.exhaustedSearch(callbacks.now_ns()*1e-9,false,
       callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending());
-    if(floor_coverage_.shouldHandoff(callbacks.now_ns()*1e-9) &&
-       (!callbacks.residual_handoff_pose_safe || callbacks.residual_handoff_pose_safe()))return true;
     if(try_random_recovery(current_pose,true)) {return true;}
     if (callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending()) {
       callbacks.log_info("3D observation validation pending; exploration executor remains responsive");

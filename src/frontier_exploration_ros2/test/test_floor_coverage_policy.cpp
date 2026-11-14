@@ -21,16 +21,16 @@ TEST(FloorCoveragePolicy, FourOpenRoomsNeverHandOffBecauseOfTimeout) {
    room(m,xy.first,xy.second,12,true);
  FloorCoveragePolicy p;p.idle_timeout=10;p.cleanup_budget=20;p.minimum_attempts=1;
  observe(p,m,0);p.enterCleanup(10);
- for(int t:{10,20,40,100,10000}) {p.attempt(t);observe(p,m,t);EXPECT_FALSE(p.shouldHandoff(t));}
+ for(int t:{10,20,40,100,10000}) {p.attempt(t);observe(p,m,t);EXPECT_FALSE(p.completionCandidate(t));}
  EXPECT_TRUE(p.hasActionableUnknown());EXPECT_DOUBLE_EQ(p.excluded_unknown_area,0);
  EXPECT_GT(p.actionable_unknown_area,3.);
 }
 TEST(FloorCoveragePolicy, LargeSealedRoomExcludedWithoutChangingRawMap) {
  auto m=coverageGrid();room(m,10,10,22,false);auto original=m.data;
  FloorCoveragePolicy p;observe(p,m,0);observe(p,m,5);
- EXPECT_FALSE(p.shouldHandoff(5));
+ EXPECT_FALSE(p.completionCandidate(5));
  observe(p,m,12);
- EXPECT_TRUE(p.shouldHandoff(12));EXPECT_FALSE(p.hasActionableUnknown());
+ EXPECT_TRUE(p.completionCandidate(12));EXPECT_FALSE(p.hasActionableUnknown());
  EXPECT_NEAR(p.excluded_unknown_area,4.,1e-6);EXPECT_EQ(m.data,original);
  EXPECT_TRUE(p.excludedCell(15,15));EXPECT_FALSE(p.excludedCell(0,0));
 }
@@ -38,56 +38,56 @@ TEST(FloorCoveragePolicy, RepeatedSameMapIsNotIndependentClosureEvidence) {
  auto m=coverageGrid();room(m,10,10,22,false);FloorCoveragePolicy p;
  observe(p,m,0);
  for(double now:{5.,12.,100.,1000.})p.observe(now,OccupancyGrid2d(m),{},0);
- EXPECT_FALSE(p.shouldHandoff(1000));EXPECT_TRUE(p.hasActionableUnknown());
+ EXPECT_FALSE(p.completionCandidate(1000));EXPECT_TRUE(p.hasActionableUnknown());
 }
 TEST(FloorCoveragePolicy, DoorReopeningImmediatelyRevokesExclusion) {
  auto m=coverageGrid();room(m,10,10,22,false);FloorCoveragePolicy p;
  for(int t:{0,5,12})observe(p,m,t);
- ASSERT_TRUE(p.shouldHandoff(12));
+ ASSERT_TRUE(p.completionCandidate(12));
  m.data[21*60+10]=0;observe(p,m,13);
- EXPECT_FALSE(p.shouldHandoff(13));EXPECT_TRUE(p.hasActionableUnknown());
+ EXPECT_FALSE(p.completionCandidate(13));EXPECT_TRUE(p.hasActionableUnknown());
  EXPECT_DOUBLE_EQ(p.excluded_unknown_area,0);
 }
 TEST(FloorCoveragePolicy, DiagonalGapAndMissionBoundaryNeverCountAsClosed) {
  auto m=coverageGrid();room(m,10,10,22,false);m.data[10*60+10]=0;
  FloorCoveragePolicy p;for(int t:{0,5,12})observe(p,m,t);
- EXPECT_FALSE(p.shouldHandoff(12));
+ EXPECT_FALSE(p.completionCandidate(12));
  room(m,10,10,22,false);
  ExplorationBoundaryPolygon boundary{{0.,0.},{2.,0.},{2.,5.},{0.,5.}};
  for(int t:{20,25,32}) {m.header.stamp.sec=t;p.observe(t,OccupancyGrid2d(m),boundary,0);}
- EXPECT_FALSE(p.shouldHandoff(32));EXPECT_TRUE(p.hasActionableUnknown());
+ EXPECT_FALSE(p.completionCandidate(32));EXPECT_TRUE(p.hasActionableUnknown());
 }
 TEST(FloorCoveragePolicy, UnknownAtMapEdgeAndUncertainBoundaryRemainActionable) {
  auto m=coverageGrid();for(int y=10;y<20;++y)m.data[y*60]=-1;
  FloorCoveragePolicy p;for(int t:{0,5,12})observe(p,m,t);
- EXPECT_FALSE(p.shouldHandoff(12));
+ EXPECT_FALSE(p.completionCandidate(12));
  m=coverageGrid();room(m,10,10,22,false);m.data[21*60+10]=50;p.clear();
  for(int t:{0,5,12})observe(p,m,t);
- EXPECT_FALSE(p.shouldHandoff(12));
+ EXPECT_FALSE(p.completionCandidate(12));
 }
 TEST(FloorCoveragePolicy, MissingSensorDataPausesClosureEvidenceTime) {
  auto m=coverageGrid();room(m,10,10,22,false);FloorCoveragePolicy p;
  observe(p,m,0);observe(p,m,5);p.waitForData(5);
- EXPECT_FALSE(p.shouldHandoff(100));
- observe(p,m,105);EXPECT_FALSE(p.shouldHandoff(105));
- observe(p,m,110);EXPECT_TRUE(p.shouldHandoff(110));
+ EXPECT_FALSE(p.completionCandidate(100));
+ observe(p,m,105);EXPECT_FALSE(p.completionCandidate(105));
+ observe(p,m,110);EXPECT_TRUE(p.completionCandidate(110));
 }
 TEST(FloorCoveragePolicy, NoGoalExpandsAndRealGainCanRestoreNormalSearch) {
  auto m=coverageGrid();room(m,10,10,22,true);FloorCoveragePolicy p;observe(p,m,0);
  EXPECT_TRUE(p.expand(1));EXPECT_EQ(p.expansion(),1u);
  EXPECT_FALSE(p.expand(2));EXPECT_TRUE(p.expand(21));EXPECT_EQ(p.expansion(),2u);
  EXPECT_TRUE(p.expand(41));EXPECT_EQ(p.expansion(),3u);
- EXPECT_FALSE(p.shouldHandoff(10000));
+ EXPECT_FALSE(p.completionCandidate(10000));
  for(int y=11;y<16;++y)for(int x=11;x<26;++x)m.data[y*60+x]=0;
  observe(p,m,42);EXPECT_FALSE(p.cleanup());EXPECT_EQ(p.expansion(),0u);
 }
 TEST(FloorCoveragePolicy, FloorClockAndGeometryChangesDiscardOldExclusions) {
  auto m=coverageGrid();room(m,10,10,22,false);FloorCoveragePolicy p;
  for(int t:{0,5,12})observe(p,m,t);
- ASSERT_TRUE(p.shouldHandoff(12));
- m.info.origin.position.z=3;observe(p,m,13);EXPECT_FALSE(p.shouldHandoff(13));
- observe(p,m,18);observe(p,m,25);ASSERT_TRUE(p.shouldHandoff(25));
- observe(p,m,0);EXPECT_FALSE(p.shouldHandoff(0));
+ ASSERT_TRUE(p.completionCandidate(12));
+ m.info.origin.position.z=3;observe(p,m,13);EXPECT_FALSE(p.completionCandidate(13));
+ observe(p,m,18);observe(p,m,25);ASSERT_TRUE(p.completionCandidate(25));
+ observe(p,m,0);EXPECT_FALSE(p.completionCandidate(0));
 }
 TEST(FloorCoveragePolicy, CoreCannotCompleteOrHandoffFourUnfinishedRooms) {
  int64_t now=0;int complete=0,reports=0;
@@ -112,8 +112,8 @@ TEST(FloorCoveragePolicy, CoreCannotCompleteOrHandoffFourUnfinishedRooms) {
  EXPECT_EQ(core.frontier_search_options().viewpoint_expansion_level,3u);
  EXPECT_EQ(core.frontier_search_options().min_frontier_size_cells,1);
 }
-TEST(FloorCoveragePolicy, CoreClosedRoomReportRequiresPersistentEvidence) {
- int64_t now=0;int complete=0;std::vector<std::string> reports;
+TEST(FloorCoveragePolicy, CoreClosedClassificationRequestsAuditWithoutAuthorizingCompletion) {
+ int64_t now=0;int complete=0,audits=0;std::vector<std::string> reports;
  FrontierExplorerCoreParams params;params.floor_cleanup_enabled=true;
  FrontierExplorerCoreCallbacks cb;cb.now_ns=[&](){return now;};
  cb.get_current_pose=[](){geometry_msgs::msg::Pose p;p.position.x=.5;p.position.y=.5;p.orientation.w=1;
@@ -121,14 +121,14 @@ TEST(FloorCoveragePolicy, CoreClosedRoomReportRequiresPersistentEvidence) {
  cb.frontier_search=[](const auto &,const auto &,const auto &,const auto &,double,bool){return FrontierSearchResult{};};
  cb.on_exploration_complete=[&](){++complete;};
  cb.on_floor_exhausted=[&](const auto & text){reports.push_back(text);};
+ cb.request_floor_completion_audit=[&](){++audits;};
  FrontierExplorerCore core(params,cb);auto m=coverageGrid();room(m,10,10,22,false);
  for(int t:{0,5,12}) {
    now=t*1000000000LL;m.header.stamp.sec=t;core.map=OccupancyGrid2d(m);core.costmap=OccupancyGrid2d(m);
    core.try_send_next_goal();if(t<12) {EXPECT_TRUE(reports.empty());}
  }
- ASSERT_EQ(reports.size(),1u);EXPECT_EQ(complete,0);
- EXPECT_NE(reports.back().find("reason=closed_regions_excluded"),std::string::npos);
- EXPECT_NE(reports.back().find("actionable_unknown_area=0.000000"),std::string::npos);
+ EXPECT_TRUE(reports.empty());EXPECT_EQ(complete,0);EXPECT_GT(audits,0);
+ EXPECT_FALSE(core.return_to_start_completed);
  EXPECT_EQ(m.data[15*60+15],-1);
 }
 TEST(FloorCoveragePolicy, CoreDoesNotConsumeUnavailableMapAsNoGain) {
@@ -152,10 +152,10 @@ TEST(FloorCoveragePolicy, ClosedRoomWithObservedFreeInteriorCanBeExcludedButRobo
  auto m=coverageGrid();room(m,10,10,22,false);m.data[20*60+20]=0;
  FloorCoveragePolicy p;
  for(int t:{0,5,12}) {m.header.stamp.sec=t;p.observe(t,OccupancyGrid2d(m),{},0,std::make_pair(.5,.5));}
- EXPECT_TRUE(p.shouldHandoff(12));EXPECT_EQ(m.data[20*60+20],0);
+ EXPECT_TRUE(p.completionCandidate(12));EXPECT_EQ(m.data[20*60+20],0);
  FloorCoveragePolicy own;
  for(int t:{0,5,12}) {m.header.stamp.sec=t;own.observe(t,OccupancyGrid2d(m),{},0,std::make_pair(2.05,2.05));}
- EXPECT_FALSE(own.shouldHandoff(12));EXPECT_TRUE(own.hasActionableUnknown());
+ EXPECT_FALSE(own.completionCandidate(12));EXPECT_TRUE(own.hasActionableUnknown());
 }
 
 static void expanded(FloorCoveragePolicy & p) {
@@ -165,7 +165,7 @@ TEST(FloorResiduals, EmptyExpandedSearchCannotCompleteOpenRoom) {
  auto m=coverageGrid();room(m,10,10,22,true);const auto original=m.data;
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int t=1;t<=181;++t) {observe(p,m,t);p.exhaustedSearch(t,true,false);}
- EXPECT_FALSE(p.residualDeferred());EXPECT_FALSE(p.shouldHandoff(181));
+ EXPECT_FALSE(p.residualDeferred());EXPECT_FALSE(p.completionCandidate(181));
  EXPECT_TRUE(p.hasActionableUnknown());EXPECT_GT(p.actionable_unknown_area,0);
  EXPECT_DOUBLE_EQ(p.excluded_unknown_area,0);EXPECT_EQ(m.data,original);
 }
@@ -175,42 +175,42 @@ TEST(FloorResiduals, TimeoutOrPendingValidationAloneNeverQualifies) {
  for(int t=1;t<=250;++t) {
   observe(p,m,t);p.validationEvidence(false,24,24);p.exhaustedSearch(t,false,t<120);
  }
- EXPECT_FALSE(p.shouldHandoff(250));EXPECT_EQ(p.failedGroups(),0U);
+ EXPECT_FALSE(p.completionCandidate(250));EXPECT_EQ(p.failedGroups(),0U);
 }
 TEST(FloorResiduals, CompletedBroadFansCannotCertifyAllUnknownRegions) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int i=0;i<3;++i)p.validationEvidence(true,12,12);
  for(int t=1;t<=181;++t){observe(p,m,t);p.exhaustedSearch(t,false,false);}
- EXPECT_FALSE(p.shouldHandoff(181));EXPECT_EQ(p.failedGroups(),3U);
+ EXPECT_FALSE(p.completionCandidate(181));EXPECT_EQ(p.failedGroups(),3U);
 }
 TEST(FloorResiduals, IncompleteExpansionAndFreshObservationBudgetAreProtected) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);p.expand(0);
  for(int t=1;t<=250;++t){observe(p,m,t);p.exhaustedSearch(t,true,false);}
- EXPECT_FALSE(p.shouldHandoff(250));EXPECT_EQ(p.residualRounds(),0U);
+ EXPECT_FALSE(p.completionCandidate(250));EXPECT_EQ(p.residualRounds(),0U);
 }
 TEST(FloorResiduals, MissingDataAndRepeatedMapStampCannotSupplySearchEvidence) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int t=1;t<=200;++t){p.observe(t,OccupancyGrid2d(m),{},0);p.exhaustedSearch(t,true,false);}
- EXPECT_LT(p.residualRounds(),6U);EXPECT_FALSE(p.shouldHandoff(200));
- p.waitForData(200);observe(p,m,2000);EXPECT_FALSE(p.shouldHandoff(2000));
+ EXPECT_LT(p.residualRounds(),6U);EXPECT_FALSE(p.completionCandidate(200));
+ p.waitForData(200);observe(p,m,2000);EXPECT_FALSE(p.completionCandidate(2000));
 }
 TEST(FloorResiduals, NewMapInformationImmediatelyRevokesResidualHandoff) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int t=1;t<=181;++t){observe(p,m,t);p.exhaustedSearch(t,true,false);}
- ASSERT_FALSE(p.shouldHandoff(181));
+ ASSERT_FALSE(p.completionCandidate(181));
  for(int i=0;i<10;++i)m.data[11*60+11+i]=0;
- observe(p,m,182);EXPECT_FALSE(p.shouldHandoff(182));EXPECT_EQ(p.residualRounds(),0U);
+ observe(p,m,182);EXPECT_FALSE(p.completionCandidate(182));EXPECT_EQ(p.residualRounds(),0U);
 }
 TEST(FloorResiduals, FloorChangeClearsAllPreviousFailureEvidence) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int t=1;t<=181;++t){observe(p,m,t);p.exhaustedSearch(t,true,false);}
- ASSERT_FALSE(p.shouldHandoff(181));m.info.origin.position.z=3.;
- observe(p,m,182);EXPECT_FALSE(p.shouldHandoff(182));EXPECT_EQ(p.residualRounds(),0U);
+ ASSERT_FALSE(p.completionCandidate(181));m.info.origin.position.z=3.;
+ observe(p,m,182);EXPECT_FALSE(p.completionCandidate(182));EXPECT_EQ(p.residualRounds(),0U);
 }
 TEST(FloorResiduals, CoreKeepsExploringUnresolvedAreaAfterRepeatedEmptySearches) {
  int64_t now=0;int completed=0;std::vector<std::string> reports;
@@ -238,18 +238,18 @@ TEST(FloorResiduals, NavigationAndMeasuredApproachProgressCannotBecomeExhaustion
    p.pauseResidual(t);
    if(t%10==0){observe(p,m,t);p.exhaustedSearch(t,true,false);}
  }
- EXPECT_NEAR(p.residualIdleSeconds(),0.,1e-9);EXPECT_FALSE(p.shouldHandoff(200));
+ EXPECT_NEAR(p.residualIdleSeconds(),0.,1e-9);EXPECT_FALSE(p.completionCandidate(200));
  for(int t=201;t<=400;++t){observe(p,m,t);p.exhaustedSearch(t,true,false);}
- ASSERT_FALSE(p.shouldHandoff(400));p.observationEvidence({1,1},true);
- EXPECT_FALSE(p.shouldHandoff(400));EXPECT_EQ(p.residualRounds(),0U);
+ ASSERT_FALSE(p.completionCandidate(400));p.observationEvidence({1,1},true);
+ EXPECT_FALSE(p.completionCandidate(400));EXPECT_EQ(p.residualRounds(),0U);
 }
 
 TEST(FloorResiduals, NewlyOpenedPassageRevokesEvidenceWithoutNewUnknownCells) {
  auto m=coverageGrid();room(m,10,10,22,true);
  FloorCoveragePolicy p;observe(p,m,0);expanded(p);
  for(int t=1;t<=181;++t){observe(p,m,t);p.exhaustedSearch(t,true,false);}
- ASSERT_FALSE(p.shouldHandoff(181));m.data[11*60+10]=0;
- observe(p,m,182);EXPECT_FALSE(p.shouldHandoff(182));EXPECT_EQ(p.residualRounds(),0U);
+ ASSERT_FALSE(p.completionCandidate(181));m.data[11*60+10]=0;
+ observe(p,m,182);EXPECT_FALSE(p.completionCandidate(182));EXPECT_EQ(p.residualRounds(),0U);
 }
 
 TEST(FloorResiduals, UnsafeMeasuredRobotCannotTurnPlanningFailuresIntoFloorCompletion) {
@@ -278,7 +278,7 @@ TEST(FloorResiduals, SingletonAndSmallSetFailuresAreDiagnosticOnly) {
  p.validationEvidence(true,1,1);p.validationEvidence(true,2,2);p.validationEvidence(true,5,5);
  for(int t=1;t<=181;++t){observe(p,m,t);p.exhaustedSearch(t,false,false);}
  EXPECT_EQ(p.failedGroups(),3U);EXPECT_EQ(p.failedOptions(),8U);
- EXPECT_FALSE(p.shouldHandoff(181));EXPECT_TRUE(p.hasActionableUnknown());
+ EXPECT_FALSE(p.completionCandidate(181));EXPECT_TRUE(p.hasActionableUnknown());
 }
 TEST(FloorResiduals, PartialEmptyOrTimedOutSetsNeverCountEvenWithManyTestedPoints) {
  auto m=coverageGrid();room(m,10,10,22,true);
@@ -288,14 +288,14 @@ TEST(FloorResiduals, PartialEmptyOrTimedOutSetsNeverCountEvenWithManyTestedPoint
    p.validationEvidence(true,0,0);p.validationEvidence(false,12,12);
    p.validationEvidence(true,13,12);p.exhaustedSearch(t,false,false);
  }
- EXPECT_EQ(p.failedGroups(),0U);EXPECT_FALSE(p.shouldHandoff(200));
+ EXPECT_EQ(p.failedGroups(),0U);EXPECT_FALSE(p.completionCandidate(200));
 }
 TEST(FloorResiduals, SingletonRepetitionsStillNeedTimeAndFullFloorSearchEvidence) {
  auto m=coverageGrid();room(m,10,10,22,true);FloorCoveragePolicy p;
  observe(p,m,0);expanded(p);
  for(int i=0;i<10;++i)p.validationEvidence(true,1,1);
  for(int t=1;t<=181;++t)observe(p,m,t);
- EXPECT_FALSE(p.shouldHandoff(181));EXPECT_EQ(p.residualRounds(),0U);
+ EXPECT_FALSE(p.completionCandidate(181));EXPECT_EQ(p.residualRounds(),0U);
 }
 TEST(FloorCoveragePolicy, ClosedReferenceExcludedOnlyAfterStableTopologyAndRevokedOnDoorOpening) {
  auto m=coverageGrid();room(m,10,10,22,false);FloorCoveragePolicy p;
@@ -380,13 +380,13 @@ TEST(FloorResiduals, ClosedBoxAndUnvisitedRoomsCannotBeGloballyDeferred) {
    observe(p,m,t);p.validationEvidence(true,13,13);
    p.observationEvidence({double(t%4),double(t%5)},false);
    p.exhaustedSearch(t,true,false);
-   EXPECT_FALSE(p.shouldHandoff(t));
+   EXPECT_FALSE(p.completionCandidate(t));
  }
  EXPECT_GT(p.excluded_unknown_area,0.);EXPECT_GT(p.actionable_unknown_area,1.);
  EXPECT_EQ(m.data,original);
  for(int y=0;y<50;++y)for(int x=25;x<60;++x)
    if(m.data[y*60+x]<0)m.data[y*60+x]=0;
- observe(p,m,3601);EXPECT_TRUE(p.shouldHandoff(3601));
+ observe(p,m,3601);EXPECT_TRUE(p.completionCandidate(3601));
 }
 TEST(FloorResiduals, CurrentLogCountsCannotCertifyUnvisitedRoom) {
  auto m=coverageGrid();room(m,10,10,22,true);FloorCoveragePolicy p;
@@ -395,6 +395,21 @@ TEST(FloorResiduals, CurrentLogCountsCannotCertifyUnvisitedRoom) {
  p.validationEvidence(true,9,9);
  for(int t=1;t<=200;++t){observe(p,m,t);p.exhaustedSearch(t,false,false);}
  EXPECT_EQ(p.failedGroups(),18U);EXPECT_EQ(p.failedOptions(),230U);
- EXPECT_FALSE(p.residualDeferred());EXPECT_FALSE(p.shouldHandoff(200));
+ EXPECT_FALSE(p.residualDeferred());EXPECT_FALSE(p.completionCandidate(200));
  EXPECT_TRUE(p.hasActionableUnknown());
+}
+
+TEST(FloorCoveragePolicy, ZeroUnknownRequestsAuditAndDoesNotLatchLegacyCompletion) {
+ int64_t now=1000000000LL;int audits=0,legacy=0;
+ FrontierExplorerCoreParams params;params.floor_cleanup_enabled=true;
+ FrontierExplorerCoreCallbacks cb;cb.now_ns=[&](){return now;};
+ cb.get_current_pose=[](){geometry_msgs::msg::Pose p;p.position.x=.5;p.position.y=.5;p.orientation.w=1;return std::optional<geometry_msgs::msg::Pose>(p);};
+ cb.frontier_search=[](const auto &,const auto &,const auto &,const auto &,double,bool){return FrontierSearchResult{};};
+ cb.request_floor_completion_audit=[&](){++audits;};
+ cb.on_exploration_complete=[&](){++legacy;};
+ cb.on_floor_exhausted=[&](const auto &){++legacy;};
+ FrontierExplorerCore core(params,cb);auto m=coverageGrid();
+ core.map=OccupancyGrid2d(m);core.costmap=OccupancyGrid2d(m);
+ core.try_send_next_goal();
+ EXPECT_GT(audits,0);EXPECT_EQ(legacy,0);EXPECT_FALSE(core.return_to_start_completed);
 }

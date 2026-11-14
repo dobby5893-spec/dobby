@@ -2,6 +2,7 @@
 #include "frontier_exploration_ros2/frontier_types.hpp"
 #include "frontier_exploration_ros2/exploration_boundary.hpp"
 #include <functional>
+#include "frontier_exploration_ros2/floor_completion.hpp"
 #include <queue>
 #include <sstream>
 #include <iomanip>
@@ -21,7 +22,26 @@ struct ResidualAudit {
  double verification_deferred{0};
  size_t sites{0};std::vector<ResidualRegion> regions;
  std::optional<std::pair<double,double>> reference,view;
- bool handoff() const {return complete && pending==0 && deferred+transition>0 && !regions.empty();}
+ CompletionStatus status() const {
+  if(!std::isfinite(remaining) || remaining<0 || closed!=0 ||
+     std::abs(remaining-deferred-pending-transition)>1e-4)return CompletionStatus::ERROR;
+  if(!complete || pending>0)return CompletionStatus::INCOMPLETE;
+  double total=0;bool blocked=false;
+  for(const auto & region:regions) {
+   if(!std::isfinite(region.area) || region.area<=0)return CompletionStatus::ERROR;
+   total+=region.area;
+   if(region.state=="verification_deferred" || region.state=="observed_no_gain" ||
+      region.state=="undetermined" || region.state=="actionable")return CompletionStatus::INCOMPLETE;
+   if(region.state=="no_route" || region.state=="no_known_access")blocked=true;
+   else if(region.state!="occluded" && region.state!="transition")return CompletionStatus::ERROR;
+  }
+  if(std::abs(total-remaining)>1e-4)return CompletionStatus::ERROR;
+  if(blocked)return CompletionStatus::BLOCKED;
+  return remaining==0?CompletionStatus::VERIFIED_COMPLETE:CompletionStatus::VERIFIED_WITH_RESIDUALS;
+ }
+ bool handoff() const {
+  auto s=status();return s==CompletionStatus::VERIFIED_COMPLETE || s==CompletionStatus::VERIFIED_WITH_RESIDUALS;
+ }
  std::string records() const {
   std::ostringstream s;s<<std::setprecision(10);
   for(size_t i=0;i<regions.size();++i) {
@@ -83,7 +103,7 @@ inline ResidualAudit auditResidualRegions(
   int x=start%w,y=start/w;
   if(map.getCost(x,y)>=0 || !is_inside_exploration_boundary(map.mapToWorld(x,y),boundary,margin))continue;
   out.remaining+=area;
-  if(excluded(x,y)){out.closed+=area;continue;}
+  (void)excluded; // A 2D exclusion is a candidate classification, never 3D proof.
   if(seen[start])continue;
   const bool stair=transition_cell && transition_cell(x,y);
   const int proof=stair?0:(runtime_cell?runtime_cell(x,y):0);
@@ -92,7 +112,7 @@ inline ResidualAudit auditResidualRegions(
    int cx=component[head]%w,cy=component[head]/w;
    for(int dy=-1;dy<=1;++dy)for(int dx=-1;dx<=1;++dx) {
     int nx=cx+dx,ny=cy+dy;
-    if(valid(nx,ny) && !seen[ny*w+nx] && map.getCost(nx,ny)<0 && !excluded(nx,ny) &&
+    if(valid(nx,ny) && !seen[ny*w+nx] && map.getCost(nx,ny)<0 &&
        bool(transition_cell && transition_cell(nx,ny))==stair &&
        (stair?0:(runtime_cell?runtime_cell(nx,ny):0))==proof &&
        is_inside_exploration_boundary(map.mapToWorld(nx,ny),boundary,margin)) {
@@ -109,6 +129,7 @@ inline ResidualAudit auditResidualRegions(
     frontier.push_back(i);break;
    }
   }
+  if(frontier.empty())frontier=component;
   work.push_back({region,std::move(frontier),stair,proof});
  }
  // Inspect large unexplored regions before spending the budget on tiny slivers.
@@ -120,13 +141,9 @@ inline ResidualAudit auditResidualRegions(
   if(item.stair) {
     region.state="transition";out.transition+=region.area;out.regions.push_back(region);continue;
   }
-  if(item.proof==1 || item.proof==2) {
-    region.state=item.proof==1?"observed_no_gain":"verification_deferred";
-    out.deferred+=region.area;
-    if(item.proof==2)out.verification_deferred+=region.area;
-    out.regions.push_back(region);continue;
-  }
+  // Runtime evidence never skips visibility/support/route validation.
   bool opportunity=false,uncertain=false,route_rejected=false;
+  size_t tested=0;
   for(int i:frontier) {
    auto target=map.mapToWorld(i%w,i/w);
    for(int cell:queue) {
@@ -134,7 +151,7 @@ inline ResidualAudit auditResidualRegions(
     double distance=std::hypot(view.first-target.first,view.second-target.second);
     if(distance<.1 || distance>4.)continue;
     if(timed()){out.complete=false;uncertain=true;break;}
-    ++out.sites;int result=can_observe(view,target);
+    ++out.sites;++tested;int result=can_observe(view,target);
     if(result==-2){route_rejected=true;continue;}
     if(result<0){uncertain=true;continue;}
     if(result>0){opportunity=true;if(!out.reference){out.reference=target;out.view=view;}break;}
@@ -144,7 +161,7 @@ inline ResidualAudit auditResidualRegions(
   if(opportunity)uncertain=false;
   if(uncertain)out.complete=false;
   region.state=uncertain?"undetermined":opportunity?"actionable":
-    frontier.empty()?"no_known_access":route_rejected?"no_route":"occluded";
+    tested==0?"no_known_access":route_rejected?"no_route":"occluded";
   if(opportunity || uncertain)out.pending+=region.area;else out.deferred+=region.area;
   out.regions.push_back(region);
 

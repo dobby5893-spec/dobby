@@ -163,9 +163,9 @@ public:
  unsigned emptyRounds() const {return raw_empty_rounds_;}
  unsigned observationPositions() const {return no_gain_positions_.size();}
  double residualIdleSeconds() const {return residual_idle_;}
- bool shouldHandoff(double) const {
+ bool completionCandidate(double) const {
    return initialized_ && paused_at_<0 &&
-     actionable_cells_==0 && excluded_unknown_area>0;
+     actionable_cells_==0;
  }
  bool hasActionableUnknown() const {return actionable_cells_>0;}
  bool excludedCell(int x,int y) const {

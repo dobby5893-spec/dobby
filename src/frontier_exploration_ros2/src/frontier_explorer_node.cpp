@@ -654,6 +654,9 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
 
   floor_exhausted_pub_=create_publisher<std_msgs::msg::String>(
     "/explore/floor_exhausted",rclcpp::QoS(1).reliable().transient_local());
+  verified_completion_pub_=create_publisher<std_msgs::msg::String>(
+    "/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local());
+  callbacks.request_floor_completion_audit=[this]() {floor_cleanup_mode_=true;};
   callbacks.on_floor_exhausted=[this](const std::string & report) {
     std_msgs::msg::String msg;msg.data=report;floor_exhausted_pub_->publish(msg);
     RCLCPP_WARN(get_logger(),"Floor cleanup deferred residuals; requesting stair evaluation: %s",report.c_str());
@@ -1814,7 +1817,10 @@ void FrontierExplorerNode::serviceResidualAudit()
   if(residual_audit_future_.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;
   ResidualAudit result;
   try{result=residual_audit_future_.get();}
-  catch(const std::exception & e){RCLCPP_WARN(get_logger(),"Residual audit uncertain: %s",e.what());return;}
+  catch(const std::exception & e){
+   residual_audit_stability_.reset();
+   RCLCPP_ERROR(get_logger(),"Floor completion assessment: ERROR; residual audit failed: %s",e.what());return;
+  }
   if(result.fingerprint!=residualMapFingerprint(grid) || result.transition_hash!=transition_hash || result.runtime_hash!=runtime_hash || result.epoch!=random_epoch_ ||
      std::hypot(actual->position.x-result.start.first,actual->position.y-result.start.second)>.3) {
     residual_audit_stability_.reset();residual_audit_next_=now+2;return;
@@ -1830,6 +1836,7 @@ void FrontierExplorerNode::serviceResidualAudit()
   if(!result.complete)residual_audit_budget_=std::min(60.,residual_audit_budget_*2);
   else residual_audit_budget_=5.;
   int64_t stamp=int64_t(hint->header.stamp.sec)*1000000000LL+hint->header.stamp.nanosec;
+  RCLCPP_INFO(get_logger(),"Floor completion assessment: %s",completionStatusName(result.status()));
   bool stable=residual_audit_stability_.observe(result,now,stamp);
   if(stable && measuredClearanceRestored(true)) {
     std::ostringstream report;report<<std::setprecision(10);
@@ -1843,6 +1850,16 @@ void FrontierExplorerNode::serviceResidualAudit()
       <<";safe_start=1;complete_views=1;complete_routes="<<(result.verification_deferred>0?0:1)
       <<";runtime_evidence=1;runtime_min_positions=3;runtime_min_healthy_s=60;attempts=0;regions="<<result.records();
     std_msgs::msg::String msg;msg.data=report.str();floor_exhausted_pub_->publish(msg);
+    std::ostringstream formal;formal<<std::setprecision(10);
+    formal<<"floor_completion;authority=joint_residual_audit;status="<<completionStatusName(result.status())
+      <<";floor_z="<<hint->info.origin.position.z<<";stamp="<<now
+      <<";remaining="<<result.remaining<<";residual="<<result.deferred<<";transition="<<result.transition
+      <<";region_count="<<result.regions.size()<<";regions="<<result.records()
+      <<";safe_start=1;complete_views=1;complete_routes=1;stable_samples="<<residual_audit_stability_.samples()
+      <<";stable_seconds="<<residual_audit_stability_.seconds(now);
+    if(parseVerifiedFloorCompletion(formal.str())) {
+      std_msgs::msg::String verified;verified.data=formal.str();verified_completion_pub_->publish(verified);
+    }
     RCLCPP_WARN(get_logger(),"Current-floor residual regions individually audited; requesting stair evaluation: %s",msg.data.c_str());
   }
   residual_audit_next_=now+3.;

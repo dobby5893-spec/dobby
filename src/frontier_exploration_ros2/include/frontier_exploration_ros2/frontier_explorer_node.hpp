@@ -250,6 +250,7 @@ private:
   rclcpp::Service<srv::ControlExploration>::SharedPtr control_service_;
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr completion_event_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr floor_exhausted_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr verified_completion_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr frontier_marker_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr selected_frontier_pub_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr optimized_map_pub_;

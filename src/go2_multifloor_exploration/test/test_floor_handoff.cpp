@@ -116,3 +116,38 @@ TEST(FloorHandoff, V4TaskExhaustionKeepsVerificationUncertaintyExplicit) {
  lying.replace(at,std::string("verification_deferred").size(),"no_route");
  EXPECT_FALSE(parseFloorExhaustion(lying));
 }
+
+static std::string authorized(const std::string & status="VERIFIED_COMPLETE",
+ const std::string & remaining="0",const std::string & residual="0",
+ const std::string & records="",const std::string & count="0") {
+ return "floor_completion;authority=joint_residual_audit;status="+status+
+ ";floor_z=0;stamp=100;remaining="+remaining+";residual="+residual+
+ ";transition=0;region_count="+count+";regions="+records+
+ ";safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10";
+}
+TEST(CompletionAuthority, LegacyMessagesNeverAuthorize) {
+ for(auto prefix:{"v1;","v2;","v3;","v4;",""})EXPECT_FALSE(parseAuthorizedFloorCompletion(prefix));
+ auto legacy="v1;floor_z=0;stamp=100;reason=closed_regions_excluded;remaining_unknown_area=.42;actionable_unknown_area=0;excluded_unknown_area=.42;attempts=4";
+ ASSERT_TRUE(parseFloorExhaustion(legacy));
+ EXPECT_FALSE(parseAuthorizedFloorCompletion(legacy));
+}
+TEST(CompletionAuthority, ZeroAndAuditedResidualsUseSameEntrance) {
+ EXPECT_TRUE(parseAuthorizedFloorCompletion(authorized()));
+ EXPECT_TRUE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1","11:.1:occluded","1")));
+ for(auto state:{"INCOMPLETE","BLOCKED","ERROR"})
+  EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized(state)));
+}
+TEST(CompletionAuthority, RuntimeDeferralAndNoRouteAreNotVerifiedResiduals) {
+ for(auto reason:{"verification_deferred","observed_no_gain","no_route","no_known_access","undetermined","actionable"})
+  EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1",std::string("11:.1:")+reason,"1")));
+}
+TEST(CompletionAuthority, MissingSafetyStabilityOrAreaEvidenceRejects) {
+ auto good=authorized();
+ for(auto key:{"safe_start=1","complete_views=1","complete_routes=1","stable_samples=3","stable_seconds=10"}) {
+  auto weak=good;auto at=weak.find(key);weak.erase(at,std::string(key).size());
+  EXPECT_FALSE(parseAuthorizedFloorCompletion(weak));
+ }
+ EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized("VERIFIED_COMPLETE","1","0")));
+ EXPECT_FALSE(parseAuthorizedFloorCompletion(good+";safe_start=1"));
+ EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1","","1")));
+}

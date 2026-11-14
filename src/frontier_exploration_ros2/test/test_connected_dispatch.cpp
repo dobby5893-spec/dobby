@@ -304,21 +304,22 @@ TEST(ResidualRegions, FreshIndependentStableMapsRequiredAndOpeningRevokes) {
  EXPECT_FALSE(stable.observe(opened,23,4));
  EXPECT_FALSE(stable.observe(result,24,5));
 }
-TEST(ResidualRegions, ClosedAreaAndAuditedResidualAreaHaveSeparateAccounting) {
+TEST(ResidualRegions, TwoDimensionalClosedAreaMustBeIndependentlyAudited) {
  auto m=room();m.data[10*60+30]=-1;m.data[30*60+30]=-1;OccupancyGrid2d grid(m);
  auto result=auditResidualRegions(grid,{1.05,2.05},{},0.,
   [](int x,int y){return x==30 && y==10;},[](auto,auto){return 0;},
   std::chrono::steady_clock::now()+std::chrono::seconds(3));
- EXPECT_NEAR(result.closed,.01,1e-6);EXPECT_NEAR(result.deferred,.01,1e-6);
- EXPECT_EQ(result.regions.size(),1U);EXPECT_TRUE(result.handoff());
+ EXPECT_EQ(result.closed,0);EXPECT_NEAR(result.deferred,.02,1e-6);
+ EXPECT_EQ(result.regions.size(),2U);EXPECT_GT(result.sites,0U);
+ EXPECT_TRUE(result.handoff());
 }
-TEST(ResidualRegions, RegionsWithoutKnownFloorConnectionAreRecordedIndividually) {
+TEST(ResidualRegions, TwoDimensionalDisconnectionDoesNotProveThreeDimensionalOcclusion) {
  auto m=room();
  for(int y=0;y<40;++y)m.data[y*60+25]=100;
  m.data[20*60+40]=-1;
  auto result=auditFixture(m,[](auto,auto){return 1;});
- ASSERT_TRUE(result.handoff());ASSERT_EQ(result.regions.size(),1U);
- EXPECT_EQ(result.regions[0].state,"no_known_access");
+ EXPECT_FALSE(result.handoff());ASSERT_EQ(result.regions.size(),1U);
+ EXPECT_GT(result.sites,0U);EXPECT_EQ(result.regions[0].state,"actionable");
 }
 TEST(ResidualRegions, ThreeDimensionalWallOcclusionIsNotPlannerFailure) {
  octomap::OcTree tree(.1);VisibilitySensor sensor;sensor.z=.35;
@@ -408,16 +409,53 @@ TEST(ResidualRegions, RuntimeEvidenceCannotHideAnAdjoiningUnvisitedCell) {
  auto result=auditResidualRegions(grid,{1.05,2.05},{},0,[](int,int){return false;},
   [](auto,auto){return 1;},std::chrono::steady_clock::now()+std::chrono::seconds(2),
   {},[](int x,int y){return x==30 && y==10?1:0;});
- EXPECT_GT(result.pending,0);EXPECT_NEAR(result.deferred,.01,1e-6);
+ EXPECT_NEAR(result.pending,.02,1e-6);EXPECT_EQ(result.deferred,0);
  EXPECT_FALSE(result.handoff());EXPECT_EQ(m.data[10*60+30],-1);
 }
-TEST(ResidualRegions, RuntimeDeferralPreservesUncertaintyMeaningAndCanRequestStairEvaluation) {
+TEST(ResidualRegions, RuntimeDeferralCannotReplaceIndependentVerification) {
  auto m=room();m.data[10*60+30]=-1;m.data[30*60+30]=-1;
  OccupancyGrid2d grid(m);int calls=0;
  auto result=auditResidualRegions(grid,{1.05,2.05},{},0,[](int,int){return false;},
   [&](auto,auto){++calls;return -1;},std::chrono::steady_clock::now()+std::chrono::seconds(2),
   {},[](int,int y){return y<20?1:2;});
- EXPECT_EQ(calls,0);EXPECT_TRUE(result.handoff());EXPECT_NEAR(result.verification_deferred,.01,1e-6);
- EXPECT_NE(result.records().find("observed_no_gain"),std::string::npos);
- EXPECT_NE(result.records().find("verification_deferred"),std::string::npos);
+ EXPECT_GT(calls,0);EXPECT_FALSE(result.handoff());
+ EXPECT_EQ(result.status(),CompletionStatus::INCOMPLETE);
+ EXPECT_GT(result.pending,0);
+}
+
+TEST(ResidualRegions, TwoDimensionalExclusionCannotHideThreeDimensionalOpportunity) {
+ auto m=room();m.data[10*60+30]=-1;OccupancyGrid2d grid(m);int calls=0;
+ auto result=auditResidualRegions(grid,{1.05,2.05},{},0,[](int,int){return true;},
+  [&](auto,auto){++calls;return 1;},std::chrono::steady_clock::now()+std::chrono::seconds(2));
+ EXPECT_GT(calls,0);EXPECT_EQ(result.closed,0);EXPECT_GT(result.pending,0);
+ EXPECT_FALSE(result.handoff());EXPECT_EQ(m.data[10*60+30],-1);
+}
+TEST(ResidualRegions, ZeroResidualRequiresStableFormalCompletion) {
+ auto result=auditFixture(room(),[](auto,auto){return 1;});
+ EXPECT_EQ(result.status(),CompletionStatus::VERIFIED_COMPLETE);
+ ResidualAuditStability stable;
+ EXPECT_FALSE(stable.observe(result,0,1));
+ EXPECT_FALSE(stable.observe(result,5,2));
+ EXPECT_TRUE(stable.observe(result,10,3));
+}
+TEST(ResidualRegions, RuntimeHistoryStillAllowsIndependentOcclusionProof) {
+ auto m=room();m.data[10*60+30]=-1;OccupancyGrid2d grid(m);
+ for(int kind:{1,2}) {
+  int calls=0;
+  auto result=auditResidualRegions(grid,{1.05,2.05},{},0,[](int,int){return true;},
+    [&](auto,auto){++calls;return 0;},std::chrono::steady_clock::now()+std::chrono::seconds(2),
+    {},[&](int,int){return kind;});
+  EXPECT_GT(calls,0);EXPECT_TRUE(result.handoff());
+  EXPECT_EQ(result.status(),CompletionStatus::VERIFIED_WITH_RESIDUALS);
+  EXPECT_EQ(result.regions.front().state,"occluded");
+ }
+}
+TEST(ResidualRegions, BlockedAndInvalidEvidenceAreSeparateFromCompletion) {
+ auto m=room();m.data[10*60+30]=-1;
+ auto blocked=auditFixture(m,[](auto,auto){return -2;});
+ EXPECT_EQ(blocked.status(),CompletionStatus::BLOCKED);EXPECT_FALSE(blocked.handoff());
+ auto uncertain=auditFixture(m,[](auto,auto){return -1;});
+ EXPECT_EQ(uncertain.status(),CompletionStatus::INCOMPLETE);EXPECT_FALSE(uncertain.handoff());
+ ResidualAudit invalid;invalid.remaining=1;
+ EXPECT_EQ(invalid.status(),CompletionStatus::ERROR);EXPECT_FALSE(invalid.handoff());
 }
