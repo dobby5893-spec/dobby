@@ -38,3 +38,27 @@ Runtime checkpoints themselves are not included in this repository.
 Automated checks and frozen-map replays exist under package test directories.
 End-to-end physical stair ascent in the two-floor simulation has not yet been demonstrated.
 Exploration completion, residual-region classification and stair handoff remain under development.
+
+## Linux executable permissions after cloning
+
+The Windows Git import stored files with mode 100644. The original VM executable paths (317 files) are preserved in `LINUX_EXECUTABLE_PATHS.json`. After cloning on Ubuntu, run this once from the repository root, before building or launching:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+root = Path.cwd().resolve()
+paths = json.loads((root / "LINUX_EXECUTABLE_PATHS.json").read_text())
+for name in paths:
+    path = (root / name).resolve()
+    path.relative_to(root)
+    if not path.is_file():
+        raise FileNotFoundError(name)
+for name in paths:
+    path = root / name
+    path.chmod(path.stat().st_mode | 0o111)
+print(f"Restored executable permissions for {len(paths)} files")
+PY
+```
+
+Git normalized CRLF text files to LF during import. Original byte hashes in `SOURCE_SNAPSHOT.json` describe the VM export; text hashes can therefore differ only because of line endings. Original export bytes and file modes are also retained in the local `.transfer/go2-source.tar.gz` archive, which is excluded from Git.
