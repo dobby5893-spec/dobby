@@ -1,0 +1,25 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="1" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithValidatedPath">
+        <RateController hz="1.0">
+          <Fallback>
+            <Sequence>
+              <GoalMatches goal="{goal}" path_goal="{path_goal}"/>
+              <ValidateCurrentPath candidate="{path}" goal="{goal}" path="{path}" path_goal="{path_goal}"/>
+            </Sequence>
+            <Sequence>
+              <ComputePathToPose goal="{goal}" path="{raw_path}" planner_id="Floor3D"/>
+              <ValidateCurrentPath candidate="{raw_path}" goal="{goal}" path="{path}" path_goal="{path_goal}"/>
+            </Sequence>
+          </Fallback>
+        </RateController>
+        <ReactiveSequence>
+          <GoalMatches goal="{goal}" path_goal="{path_goal}"/>
+          <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="floor_goal_checker"/>
+        </ReactiveSequence>
+      </PipelineSequence>
+      <EscapeMove name="SafeClearanceEscape" dist_x="0.0" dist_y="0.0" speed="0.06" time_allowance="30.0"/>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

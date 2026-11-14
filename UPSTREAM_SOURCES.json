@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/livox_ros_driver2",
+    "upstream": "https://github.com/Livox-SDK/livox_ros_driver2.git",
+    "commit": "4a1def929e5b59c7a8122d19fce6efba581ce9f7",
+    "modified_files": []
+  },
+  {
+    "path": "src/livox_laser_simulation_ros2",
+    "upstream": "https://github.com/LCAS/livox_laser_simulation_ros2.git",
+    "commit": "dbac363e867676efbe7394df32fc3a90f4dfa35e",
+    "modified_files": [
+      "M CMakeLists.txt",
+      " M include/ros2_livox/livox_ode_multiray_shape.h",
+      " M src/livox_ode_multiray_shape.cpp",
+      " M src/livox_points_plugin.cpp",
+      " M urdf/mid360.xacro",
+      "?? test/"
+    ]
+  },
+  {
+    "path": "src/unitree-go2-ros2",
+    "upstream": "https://github.com/anujjain-dev/unitree-go2-ros2.git",
+    "commit": "fdac259518930c8f03e79189c4d0fdd00fc47483",
+    "modified_files": [
+      "M champ/champ_base/CMakeLists.txt",
+      " M champ/champ_base/include/quadruped_controller.h",
+      " M champ/champ_base/package.xml",
+      " M champ/champ_base/src/quadruped_controller.cpp",
+      " M champ/champ_bringup/launch/bringup.launch.py",
+      " M robots/configs/go2_config/launch/gazebo.launch.py",
+      " M robots/descriptions/go2_description/xacro/robot.xacro"
+    ]
+  }
+]

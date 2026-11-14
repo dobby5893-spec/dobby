@@ -1,0 +1,10 @@
+<class_libraries>
+  <library path="go2_escape_move_behavior">
+    <class
+      name="go2_nav2_recovery/EscapeMove"
+      type="go2_nav2_recovery::EscapeMove"
+      base_class_type="nav2_core::Behavior">
+      <description>Collision checked planar escape motion for a holonomic Go2 base.</description>
+    </class>
+  </library>
+</class_libraries>

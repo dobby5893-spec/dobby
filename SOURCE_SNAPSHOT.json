@@ -1,0 +1,4265 @@
+{
+  "source_workspace": "/home/dobby/scan",
+  "files": [
+    {
+      "path": "stop_go2_stack_cleanly.sh",
+      "bytes": 1853,
+      "sha256": "df501003ceb863093544fc2284d259df6d351168c4824e4da3912de0ea23c042"
+    },
+    {
+      "path": "AUTONOMOUS_EXPLORATION_DEBUG.md",
+      "bytes": 4156,
+      "sha256": "6d5ad72b05ea363c1ba13f9f0f74b34de93e67822bb5733b3bb87e576919ce7f"
+    },
+    {
+      "path": "start_multifloor_demo.sh",
+      "bytes": 223,
+      "sha256": "f0b1811ed87f403e2d8420ec09be300c4488b8a2f327755f363f333c06a243a2"
+    },
+    {
+      "path": "restart_nav2_only.sh",
+      "bytes": 1054,
+      "sha256": "ebab9062e8dee426106270ea1b1e0db4056bea1819e4ab0c9c29dcda37e9b2d7"
+    },
+    {
+      "path": "inspect_lidar_extrinsic.sh",
+      "bytes": 633,
+      "sha256": "61f65201b6ca88c9b66ba2ca29b4f9bb28ec81f55b0ee8b951cf2ff88a7ef9e6"
+    },
+    {
+      "path": "diagnose_nav_motion.py",
+      "bytes": 2710,
+      "sha256": "5480708de6d8a9bdc57bbdd963c450b133096a37bb15cabb951b168782832c3e"
+    },
+    {
+      "path": "validate_nav_after_extrinsic.py",
+      "bytes": 3621,
+      "sha256": "38a847551bd0d11bc3959f8aac1937c48de24504751c798187ed80d4ad8cb337"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/.github/stale.yml",
+      "bytes": 682,
+      "sha256": "43f4c7c1cd847756a97d5415b630aa143768865b8252273cb1b3ab10326b1ab8"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/.gitignore",
+      "bytes": 108,
+      "sha256": "795630267d82a868299154c5d0e6bc4e0fe875e799534da04be6a320f55114e2"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/.gitmodules",
+      "bytes": 123,
+      "sha256": "dce23769c95c9f6038a738f13da0d73f6bbf098926f628cd0faa31e9fcc2a0c8"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/CMakeLists.txt",
+      "bytes": 3895,
+      "sha256": "87460e268eed0b9000711193738e8b2cd1e84584b6ad5776aa2fc20a82174b02"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/LICENSE",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/PCD/1",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/README.md",
+      "bytes": 10863,
+      "sha256": "81d183c08616cbf83d7bf935e73009de7383299c3087e8f0bebb7ff00a82d08d"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/avia.yaml",
+      "bytes": 2066,
+      "sha256": "47de1f48a605b04a8fcec4a98a41a13a502dcd5ad39d06ad1c75c9d737e74e00"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/horizon.yaml",
+      "bytes": 2079,
+      "sha256": "816688b9c73a6d93e7f1331ac5d15d4f5720c55bf2bac9c4076b9e2c91e1d730"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/mid360.yaml",
+      "bytes": 2673,
+      "sha256": "de7b89dc39de8709cfbee79945c8665f2f851d36f7240b73b1a9c34ec8f4f274"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/mid360.yaml.before_sim_extrinsic_fix_20260916",
+      "bytes": 2351,
+      "sha256": "340a6b9108c9be9fb67d70d96c46301ae88ef0753c0a6287caefbf16d3b04a06"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/ouster64.yaml",
+      "bytes": 2185,
+      "sha256": "fbf800038ce8ed2a7be23d1a55f6263f86fa6288b881ba871a59ec7f3ace9cb1"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/config/velodyne.yaml",
+      "bytes": 2297,
+      "sha256": "c3a5c83dd3073a62416a2e0f5a0b436288e1fa41fad46e30d6dd8cacbc635e6f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/Fast_LIO_2.pdf",
+      "bytes": 13353245,
+      "sha256": "25ee5a7a43c3775a842f858ea23b91867fb18d21a7f17b730cd9ae19e77c74e4"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/avia_scan.png",
+      "bytes": 331122,
+      "sha256": "7da4c75fe581068620c2801eda19a0f773345fc165d0725aa5123ccddf5edd1b"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/avia_scan2.png",
+      "bytes": 250296,
+      "sha256": "c73a3e72a6d87153ce81c3fe96eae7a8b989760ba66b2a42dcefcc58f52e81c1"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/overview_fastlio2.svg",
+      "bytes": 410534,
+      "sha256": "721676b4ac5d1f2b655eb2454118cdffcc2c4ea66b41bb09744afa8cbaf8f6dd"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/real_exp_2.png",
+      "bytes": 2111204,
+      "sha256": "2fa803b65c6da739f12c2fe3ecd2bebdf49efc0d129acbec6c245eb880e81d65"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/real_experiment2.gif",
+      "bytes": 52347648,
+      "sha256": "5d4dbc6c7b1eaeacdc6a551947aa2585bbd6fe66f459ad787b01059942d7c1c5"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/HKU_HW.png",
+      "bytes": 2261448,
+      "sha256": "04f76c82732823afcd1406835a498091ec3b988b1ad537fc93297fb8b7215317"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/HKU_LG_Indoor.png",
+      "bytes": 1685887,
+      "sha256": "655abba62ad110e0454157ed2d5d25de16a8ec4e5fbe82c3a52fda73bc860cbe"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/HKU_MB_001.png",
+      "bytes": 2020125,
+      "sha256": "b182ca3e5ff8466cb1d857ff0284dd889a7b17f5b06e5678a1f074afb31c07b7"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/HKU_MB_002.png",
+      "bytes": 5165290,
+      "sha256": "19704c1a47b2e6c226a0642b1925d86a1d1759f5155bb7321ad22d1ff2ce119d"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/HKU_MB_map.png",
+      "bytes": 3294676,
+      "sha256": "a372aa131eb9cf943793059f79d89dd9bebe5d08e9653e67dc6b77de3eb3f9f2"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/Screenshot from 2020-10-15 20-33-35.png",
+      "bytes": 984956,
+      "sha256": "c76369702d2e007a7492e187da384a2ad80674a48279f115f781790c3919832e"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/Screenshot from 2020-10-15 20-35-46.png",
+      "bytes": 594006,
+      "sha256": "537e98eb32adb2fbf1f81624544e67f6c4269775f6bb6fdd6864963571f71cc5"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/Screenshot from 2020-10-15 20-37-48.png",
+      "bytes": 1231357,
+      "sha256": "6168574c569c596cf449786f5b2a0e5f32d52fbe4d43c2580a1fbc0c05c8e731"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/indoor_loam.png",
+      "bytes": 1860445,
+      "sha256": "42d65f385f5ee0cb17a1dc700bbeb54a56418ab5e51946bc256511b762f1a7a2"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/indoor_loam_imu.png",
+      "bytes": 1466468,
+      "sha256": "a64d5599409cda6f8dba44b38b653980fa673b3a34db9fcba51e9305e1b9a01a"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/indoor_our.png",
+      "bytes": 792915,
+      "sha256": "55e6e95e14d50443970f813acd6d748f0f0efa98d79fddd3caac876832015251"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/long_corrid.png",
+      "bytes": 714976,
+      "sha256": "f22540d1f7c9d6caec68e1d8cc4b851eba1500b96335133522ebc16b8146f69f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/uav2_path.png",
+      "bytes": 1408423,
+      "sha256": "9c30aea5ef5aa43fe806a4d8ce68ee954c7bbf53d477e52921fbba1969729b3a"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/uav2_test_map.png",
+      "bytes": 561917,
+      "sha256": "b17670076be3d78a91a722c7d21ac4945c7537124928e384d0aaaa395c17e967"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/uav_lg.png",
+      "bytes": 1304763,
+      "sha256": "cb127faade5b3dd5cd0fa237c7b10184a07493d3933859853740c1c6114f4b61"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/uav_lg_0.png",
+      "bytes": 443993,
+      "sha256": "98c5ea3373a150a18eb0a52f690eb4ffca4cd57838f51d92eaea5283148faaee"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/results/uav_lg_2.png",
+      "bytes": 2118827,
+      "sha256": "8254a42bdcd39ec0781cc949283b0f32533a1a698241a6c2d7baa1ca9651d457"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/uav01.jpg",
+      "bytes": 341245,
+      "sha256": "b9b27cdc4e0913d55f3fc0923a1c1602cdc9fd4a110db888a953dd6eef994509"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/uav_ground.pdf",
+      "bytes": 709736,
+      "sha256": "6f4091bd706b985a24b906b58fe7f042142165a62e09f4c959ab3bfe2a363167"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/uav_system.png",
+      "bytes": 430648,
+      "sha256": "b54822f0c483cf52ececeb5dcadffd8477f9dad22800b70c45184512e1c52471"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/doc/ulhkwh_fastlio.gif",
+      "bytes": 35802922,
+      "sha256": "aaf40ee02f44b0586be74227388d92d2cc4d2041747c6a8786cb961c2a7616d6"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/Exp_mat.h",
+      "bytes": 2743,
+      "sha256": "abce87e1fb0e60febf42f38b75f4c018bac24c1bf652e26b7a510a9296d3031d"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/esekfom/esekfom.hpp",
+      "bytes": 68556,
+      "sha256": "b990411209fe06ae64112c8bc807b0c2a13922fc1460ec2745c6701cc9344e85"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/esekfom/util.hpp",
+      "bytes": 2363,
+      "sha256": "3c4265d25ea3f8c7f586d1e34bc352e981e09e30555e42011cd23a0a147d6918"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/build_manifold.hpp",
+      "bytes": 9436,
+      "sha256": "0e88522551d02e78dc995e6c9d7883d9ecca7190379ec047ab839fff7186ea0f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/src/SubManifold.hpp",
+      "bytes": 4886,
+      "sha256": "96709f0f453a0c8776b1969064275ebf14dc5234b7024e68eb1cfc51a513864f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/src/mtkmath.hpp",
+      "bytes": 10176,
+      "sha256": "f9627989cf578f35ec5594a6956b4e9283d4dd109b26e7d2621682c508546295"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/src/vectview.hpp",
+      "bytes": 6540,
+      "sha256": "7855408124ea65df4423bae5f97d5104af5552318796bc6324bdbf98a45101f3"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/startIdx.hpp",
+      "bytes": 12515,
+      "sha256": "79cdc368bb4e083f5fda7549094c0aba8b599aee1f88e9f2a8b7fa785bf1f757"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/types/S2.hpp",
+      "bytes": 9971,
+      "sha256": "f861be0bbb1a80d968189c90f9ef6b8e56b5f4bb19a9043a2e41c9397c215d56"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/types/SOn.hpp",
+      "bytes": 10624,
+      "sha256": "90a8384a05d656698e6826b892561dc6cd619b62a7e32f9e6e3a9253e5e0c8aa"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/types/vect.hpp",
+      "bytes": 14226,
+      "sha256": "771ecededd51dc694bdadb57f8a49fad7bc6091c6f6112142096954649ac405f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/IKFoM_toolkit/mtk/types/wrapped_cv_mat.hpp",
+      "bytes": 3236,
+      "sha256": "3040f43fcb4195a2572a8819be012ebd2c4b59a38cfae86fcac3e01d7039a589"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/bounded_voxel_map.hpp",
+      "bytes": 2255,
+      "sha256": "e4450c276912c952924fc4b34192a6f2b036c559c9f15a09e0249429e0bda023"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/common_lib.h",
+      "bytes": 8059,
+      "sha256": "bd9d6cf500f6f77e880c0cbf451ce6fc8b0e6d638773a4580a1ee779744e9e54"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/ikd-Tree/README.md",
+      "bytes": 73,
+      "sha256": "a7f6feab008dc54a053963fb518e360389ee807af63ebddcc15e90b1ede78073"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/ikd-Tree/ikd_Tree.cpp",
+      "bytes": 68733,
+      "sha256": "ec3cbbbb6386eb6c68f9aa081c48b5d62209ada44fe167a002d4e3b112a1ea9f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/ikd-Tree/ikd_Tree.h",
+      "bytes": 10279,
+      "sha256": "bb87cab944c6c59e0be61cb0b3a2cd0e334d93dc1bf768875058857278135a4b"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/matplotlibcpp.h",
+      "bytes": 81837,
+      "sha256": "360d70cb9a7dd6cb981622871204c394b56f856ef42abd0e07a011a5e146f4d6"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/so3_math.h",
+      "bytes": 2936,
+      "sha256": "e02f73dc804c3f539a80fe49d4221a85dbfeaee4cf0b643d7af062b49148e9f7"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/include/use-ikfom.hpp",
+      "bytes": 4337,
+      "sha256": "1ee2c078ee757ff2dffedf48da764daec152baa79876a70785d010cc2e6165ab"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/launch/gdb_debug_example.launch",
+      "bytes": 962,
+      "sha256": "f635965b011c5f4872be2a1cc0fe711d0a999bc7d489bab4c401cbb41318103e"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/launch/mapping.launch.py",
+      "bytes": 2334,
+      "sha256": "60f12a49d9706074bd4a691e8d68d67ddf4cedcd720978a166940118e59518f4"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/msg/Pose6D.msg",
+      "bytes": 597,
+      "sha256": "91b5397207076295c2b20273552b80267e258a749ae1a932dc00f48cfc31334f"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/package.xml",
+      "bytes": 1144,
+      "sha256": "a5c9a445f5dd7e69e0ad3c181627ff881e10bfc0ec897830fc69848e4e5cb554"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/rviz/fastlio.rviz",
+      "bytes": 10603,
+      "sha256": "d6f5ab5d9ffaacfb268b4c11264d7a25466be5e118fa2974c5ede1b554bc9e5a"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/rviz_cfg/.gitignore",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/rviz_cfg/loam_livox.rviz",
+      "bytes": 11178,
+      "sha256": "cea6f0134e2b63feb5d619510823a827fd598f8b5542f42db58a4df952d89947"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/src/IMU_Processing.hpp",
+      "bytes": 12672,
+      "sha256": "2b786c50c255a118fe95c9b017ef13af9e27a79b0624a718d4e192c3e5ca138d"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/src/laserMapping.cpp",
+      "bytes": 53460,
+      "sha256": "b8fb8f982a96004d6b83cc22aa86967a82cccaed0ec9bbc22f228388d2974fea"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/src/preprocess.cpp",
+      "bytes": 27757,
+      "sha256": "b37fb12ef1640a924daeb79832ec82a939429ae5e0ceffc92278181f4987aa7e"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/src/preprocess.h",
+      "bytes": 5233,
+      "sha256": "52730724a24c87db7856a6a527652e5c951002d3494078e2792a0fa7464729a9"
+    },
+    {
+      "path": "src/FAST_LIO_ROS2/test/test_bounded_voxel_map.cpp",
+      "bytes": 1742,
+      "sha256": "fc1341581a929966d00551e092fa608adf7ef50c19680da67a89bcb0eaea0c27"
+    },
+    {
+      "path": "src/SCAN-Planner/.gitignore",
+      "bytes": 756,
+      "sha256": "800efe7f15538daae0fae291a48925c9da37b0f504b1a3fdbda609d27b980296"
+    },
+    {
+      "path": "src/SCAN-Planner/LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "src/SCAN-Planner/NOTICE",
+      "bytes": 741,
+      "sha256": "2c94da707e9520cf05ecccab75b2715a9c8a3148741a1785660dfd2bfc933cd3"
+    },
+    {
+      "path": "src/SCAN-Planner/README.md",
+      "bytes": 7361,
+      "sha256": "3efb8486f87a26b30977242159b0eb68fcfe810d756fcd52551c4e39bfb5ac53"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/gif/dynamic_compress.gif",
+      "bytes": 8675944,
+      "sha256": "43e12fa04628cdeccfcb6aae9481c0e019bab36b1fc163ed1da36f987f9d313a"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/gif/maze_compress.gif",
+      "bytes": 4258855,
+      "sha256": "449a733c2e4fb5a31188b67c075dfe14722be0f193d117aea9f20edf6db3d8fd"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/gif/sshape_compress.gif",
+      "bytes": 3652899,
+      "sha256": "0c4ae3697b23dc83de486eb9c0afec2b6a4d2a4da74401312aad36ef7a0c2c5c"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/gif/terrain_compress.gif",
+      "bytes": 5361211,
+      "sha256": "3063b9b63413c18d7d809ef46ef22a26e2fb1fdaef0fe4706582404fe8873f83"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/images/abstract_real.jpg",
+      "bytes": 4007541,
+      "sha256": "cf99eced2e77c7b0840b278a5a2055cbd04512eeb98d102883b9d6c2c48dc6a9"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/images/demo1.png",
+      "bytes": 1200301,
+      "sha256": "6342d0026a2ff3d75a70774387a401eaee5b0ec63dc9ac076e36504b4a6300c4"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/images/demo2.png",
+      "bytes": 1619230,
+      "sha256": "4fdb113e55132746540de7ad63faab5a99cba684e2fdf8ea2e12e52a4dfc0869"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/images/demo3.png",
+      "bytes": 577773,
+      "sha256": "7a68f4d8373f978bf78e359efce1428af8dc9656e4108d80440bdc7e0c205ce1"
+    },
+    {
+      "path": "src/SCAN-Planner/assets/images/framework.jpg",
+      "bytes": 563160,
+      "sha256": "d94ba2b18f148dbca29fcaa6e58e07df3b702162e308f8852c7077d50b7fdaa1"
+    },
+    {
+      "path": "src/SCAN-Planner/map.pcd",
+      "bytes": 48000221,
+      "sha256": "8721efeb74415336d47c97d861d6e30ad213669b120d5b37c62461100c1f2eae"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/CMakeLists.txt",
+      "bytes": 1283,
+      "sha256": "625227e0ae7516236c423085abc16cfa9b9496b96f2f3e49e2d50cc243d92a33"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/include/bspline_opt/bspline_optimizer.h",
+      "bytes": 6369,
+      "sha256": "ddd2c2e812b2dd59bb32f383c093246ebe12a9a667ae93d448ef5d1e4b9ef926"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/include/bspline_opt/gradient_descent_optimizer.h",
+      "bytes": 1289,
+      "sha256": "1b02e713ac1112ea0a365f84e23af262822a1d76fe9cef3e8740b073d906abca"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/include/bspline_opt/lbfgs.hpp",
+      "bytes": 54747,
+      "sha256": "39174dfe750b142f448fe8ac637976edc8a1bcf6a6ab8a56930e6543cfdf6b07"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/include/bspline_opt/uniform_bspline.h",
+      "bytes": 2952,
+      "sha256": "5ab1b400f4b0b36c62d3661091e753bd4a238ddf90dbdd8f3b25b5d21c387a28"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/package.xml",
+      "bytes": 568,
+      "sha256": "2157a112274394488a791b422007690eadc4343f861067f47cd0308a22bc8009"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/src/bspline_optimizer.cpp",
+      "bytes": 43788,
+      "sha256": "9744424bd58841213230e95b252706360b1d4db10eaf30e7f6bf34a857a87568"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/src/gradient_descent_optimizer.cpp",
+      "bytes": 3166,
+      "sha256": "4dca3811be57cf3f819a0d3601d6a6024c304f5b9852e4079bf3334706f133c7"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/src/uniform_bspline.cpp",
+      "bytes": 10184,
+      "sha256": "e91c5a429155738389602dc4c50301ea65f8f134809406545779c1bf0c1d7a8b"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/bspline_opt/test/test_uniform_bspline.cpp",
+      "bytes": 980,
+      "sha256": "acf9fa94285c426ca04c2b5c21b77e926d0a635915f75373a1d99371690e730e"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/path_searching/CMakeLists.txt",
+      "bytes": 908,
+      "sha256": "0abd39e42a0879750487260bd6da795496d8971fbc7cf1ad83c207a979e70f27"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/path_searching/include/path_searching/dyn_a_star.h",
+      "bytes": 3323,
+      "sha256": "255490852440fa3d89fb5a81d01f610a0acc1bdcce5785fe98edf0d036ac35e0"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/path_searching/package.xml",
+      "bytes": 484,
+      "sha256": "9dfc54b1045a51703b9ac7a191b4d8f1c52a6193ea8a6ddcad8d8a8e7310f985"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/path_searching/src/dyn_a_star.cpp",
+      "bytes": 10870,
+      "sha256": "bd69ec25ba9dadcefb5995dc05997adedbfb017f62be51904fdc36888a536858"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/CMakeLists.txt",
+      "bytes": 1531,
+      "sha256": "32358b7f430445757fd294b79d23a89794e9186bbffc0a7620485859b31fb33a"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/include/plan_env/grid_map.h",
+      "bytes": 16019,
+      "sha256": "f6f40c633af78cd3fa182c429ea0d19bbbabb15803f3cf5575bbc50e998fd297"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/include/plan_env/raycast.h",
+      "bytes": 1399,
+      "sha256": "0bf2bfc853eed90f8ca3b47ae14050db40a08fbe5ea1db8c3ab1fb4b363b39b0"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/package.xml",
+      "bytes": 738,
+      "sha256": "7931c7aa77413b8ae4be4ae67a1ce8a06b9210f89b738c8e96c2cab71c734ea5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/src/grid_map.cpp",
+      "bytes": 38530,
+      "sha256": "144abf7c40f6e6a29a38eff61643f3232f145cdcaca7876cde2ba2c7354e58c1"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_env/src/raycast.cpp",
+      "bytes": 10491,
+      "sha256": "d7cd0a81c3264fe8aa0920b796cf5dd86241b35aa74c15890af5a5c10f270a40"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/CMakeLists.txt",
+      "bytes": 3469,
+      "sha256": "a12b41d9c9bdd53a805a08141e3c4805b51244775ba532d452c6f85be86075d5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/config/controllers.yaml",
+      "bytes": 1013,
+      "sha256": "7139eefb804179589583ccd6dcc900aad50d47a45c5134ef7997e1aeaac4b0e8"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/config/keypoints.example.yaml",
+      "bytes": 109,
+      "sha256": "e681f321f2f336081f2d443d6a576f6300ccf63f86b3692fb82f55a7df02b6ca"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/config/planner.yaml",
+      "bytes": 2105,
+      "sha256": "1c4b0f799b5bf3b1454c4e7206310865e856e03fffeaf0441687c2d53712ff8d"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/config/reference_path.map.yaml",
+      "bytes": 452,
+      "sha256": "fb6d7ccde75ccf6af7e2dcc804d7dea9afcf5e60340607043a9cb09ad03d66ba"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/config/simulator.yaml",
+      "bytes": 1575,
+      "sha256": "fa49f55acae0c678ec77fc72ccf5a0e2023970f0361c2fc20b534292e1d94a61"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/include/plan_manage/plan_container.hpp",
+      "bytes": 7252,
+      "sha256": "c5c37fdd776a09b846ec04034329c2781b07f3ad4feeab095084115b179bf2d4"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/include/plan_manage/planner_manager.h",
+      "bytes": 2590,
+      "sha256": "b1f04257653c84757b0a2ce8cc05c6fb5f42ba09ee523a7cc16c400e4a1a7a31"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/include/plan_manage/reference_path_utils.h",
+      "bytes": 1871,
+      "sha256": "3bc4c0a989305db124824bdcf1df9f15f0ffebc061cb44f00e62fb89a565f46e"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/include/plan_manage/scan_replan_fsm.h",
+      "bytes": 5177,
+      "sha256": "0cde988dc286fd3a9b27a0eb0fc3f1341d7fa6d22dc665bef7140d5e05b0e741"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/include/plan_manage/trajectory_progress.hpp",
+      "bytes": 1971,
+      "sha256": "34e83637b7f9706e0a86e0fb5e83d013e8f20ab574ea736921ee6e53afad93be"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/launch/default.rviz",
+      "bytes": 16307,
+      "sha256": "e9426ba3ef990c01c201020d4aedf767bae8febf3d2fee34b81c66121f627c1c"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/launch/run.launch.py",
+      "bytes": 9736,
+      "sha256": "25d2cd70d6ad23108152748d350af22a2496048ff9f7945c447fff5fa8600ce5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/launch/rviz.launch.py",
+      "bytes": 871,
+      "sha256": "3461655a5833d8cce8df045fcc5ca1dc12b52548b4398c3fb2cd59f89dec61d8"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/launch/simulator.launch.py",
+      "bytes": 5460,
+      "sha256": "2d770c35b29f798dbb49b4f99ba54dcf2dd55c4892b43703648de98821ec555f"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/package.xml",
+      "bytes": 1604,
+      "sha256": "2ad60127fb69a9df7cf0f9bd4ac5e314ab5f66a7368bb87c813dc809e4ba23f3"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/scripts/keypoint_recorder.py",
+      "bytes": 5131,
+      "sha256": "e2ba7f3cd0d5eb77bfb5062bd8d7d926304f4b3565c30cd4f1592dfc46bd6114"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/scripts/reference_path_publisher.py",
+      "bytes": 4100,
+      "sha256": "3df13e20a27371e513dcf6ef1ff744ee212261851fddf6a141d2c4747ff5aeda"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/closed_loop_controller.cpp",
+      "bytes": 7420,
+      "sha256": "4db68c759e32bf524f4935c6dc12d322b3eb5594c51d8b85cd2b145555b19648"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/go2_gait_publisher.cpp",
+      "bytes": 5648,
+      "sha256": "9f90cb9bf0a5d9aa156a0e6cfe6af3ccc8ff550ea694703a157dbd3b39408b12"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/go2_kinematic_sim.cpp",
+      "bytes": 4865,
+      "sha256": "c01c8eee657124f2c5ba5547a781b43c3ea10915e1a0dd4d3a47b9f8ed6cffc8"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/open_loop_controller.cpp",
+      "bytes": 5655,
+      "sha256": "686695e53036eec110a750b076172c3c99b8437390b8a0a43a2751c1fef215ba"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/planner_manager.cpp",
+      "bytes": 21928,
+      "sha256": "b7851dcbcf10bd55b80d4b718d64c8c24821417c12907e7405811d6326517080"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/scan_planner_node.cpp",
+      "bytes": 646,
+      "sha256": "2040950cf8e72e6037543185b89a92fa9f416b05976131730d7ae05236bc2f08"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/src/scan_replan_fsm.cpp",
+      "bytes": 35318,
+      "sha256": "454a0bcc9368e20c11f625a3f475862a09434daf2758e502c32ac4b906dd69c5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_planner_startup.py",
+      "bytes": 859,
+      "sha256": "b9853c05debeabb808313e99696ed70683b29c676e52edddcd2721018da3f260"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_reference_path_publisher_launch.py",
+      "bytes": 3534,
+      "sha256": "c4f82856f47a651e57cc89aefd46671de653f0fff210901055e5260818c5a60c"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_reference_path_publisher_unit.py",
+      "bytes": 1388,
+      "sha256": "2abc5ed35d778a69bf2ad7e2fa2857764dfd4a4379cde6a3cf7f9cfb9279cadc"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_reference_path_utils.cpp",
+      "bytes": 2060,
+      "sha256": "c002ca91af1cf98c7daf6faee275c1c447c27040ff73d84fb905a66a78fdf41c"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_trajectory_progress.cpp",
+      "bytes": 1773,
+      "sha256": "345aad572bee7e8c5f018c1275a7bfa354df944d39d545d231f79495c888db69"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/plan_manage/test/test_waypoint_parameters.py",
+      "bytes": 923,
+      "sha256": "9c4d01bd06ecbc5982b7cb63b915eb0253a67304c1e7b354ae2f40ebe9da96f5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/scan_planner_msgs/CMakeLists.txt",
+      "bytes": 470,
+      "sha256": "fde831fa5746fcf8121eec9f960617f5bc8433bdea06cb9683643a1835c10863"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/scan_planner_msgs/msg/Bspline.msg",
+      "bytes": 142,
+      "sha256": "60040920d4c09184baa540fad8babbec6b3e4e81c7d80522d4bedd048e162fbc"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/scan_planner_msgs/msg/DataDisp.msg",
+      "bytes": 74,
+      "sha256": "e5af486e44777df259d35ee0a4d6f99a1a9bcb6d99de0c64687d1e5c02abc7f2"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/scan_planner_msgs/package.xml",
+      "bytes": 691,
+      "sha256": "ac8cffb52a76590efbdd8f43b7d3cbabfe73932968135ca2aec53c4eb42c2fb1"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/CMakeLists.txt",
+      "bytes": 1051,
+      "sha256": "5e2f21bb681b22ebc1e9b03c78df1b39a53d585ca436219abbab510434b77bb6"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/include/traj_utils/planning_visualization.h",
+      "bytes": 2765,
+      "sha256": "c7d0bb617163f7931fce28346963a5cc5ab0f383aa00ebb360c2f8319bc5a4c1"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/include/traj_utils/polynomial_traj.h",
+      "bytes": 8581,
+      "sha256": "7ce335eea4abc5afb9f02fb3d1f5e926f57dc90e2a0b9005ad11ab13836f1060"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/package.xml",
+      "bytes": 562,
+      "sha256": "41eccf955db4758e3d21faee9f3ba273aaa3b3950a26815a085e82511a1b3143"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/src/planning_visualization.cpp",
+      "bytes": 11290,
+      "sha256": "938924191bfe46dbfadd83df45d118f0fc7fc54c080ecf9bf310fc7b1ba71541"
+    },
+    {
+      "path": "src/SCAN-Planner/src/planner/traj_utils/src/polynomial_traj.cpp",
+      "bytes": 7728,
+      "sha256": "608005c392dbfa46315cfa3f6e5f3b9db5bc3a10cb3f9ac539c3321505acdb18"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/COLCON_IGNORE",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/CMakeLists.txt",
+      "bytes": 326,
+      "sha256": "fa9f6bacf7b4a4fa5555fccbc8a29e47d69254a98780d30d2fc3eec75bad115f"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/COLCON_IGNORE",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/README.md",
+      "bytes": 777,
+      "sha256": "e48c79207a514ea06d88533c974fd915237eeafcc1a4a98ce45f4d50e4ed5c4a"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/config/bridge.yaml",
+      "bytes": 1157,
+      "sha256": "a8ac02566991784fc354f1a1ff06b0e3ac4931422f7d35ff0f03774a84fa37af"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/config/ros2_controllers.yaml",
+      "bytes": 894,
+      "sha256": "efa137087778baa515e39c36441b8c2247d61856d6d7168a1c2de29a5db23177"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/base.dae",
+      "bytes": 10727615,
+      "sha256": "f777940215d5072dfb047726282455dff00c58655675148c21c79b3e606bfd7a"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/calf.dae",
+      "bytes": 1125646,
+      "sha256": "a875e0e2bb2433d8433faadafc9bfae4f3b0c6a5d64ba8eb75821239c091f3dc"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/calf_mirror.dae",
+      "bytes": 1125586,
+      "sha256": "c65ac56ddfca59b6edfcb68654d2863855707098aa188d338f9b80b1ac11cd54"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/foot.dae",
+      "bytes": 507076,
+      "sha256": "f37a2d16dd2e6975297c5ec26b4d1f2ce2052c4d64715e25e7ea8f8476268e86"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/hip.dae",
+      "bytes": 4666550,
+      "sha256": "1f1a020683056677d73682c6783907bb13c8a9c14b2736c7cce2a630523e0597"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/thigh.dae",
+      "bytes": 3884265,
+      "sha256": "167a6c6545f792f9e7ea53abe7e66dae4d72b53e0ef532ae9903a1f7907b384f"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/dae/thigh_mirror.dae",
+      "bytes": 3896704,
+      "sha256": "ab1d3b0ef1184735e79bd53c011c4f668a731a23b532d37e07ef74e65201bce2"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/launch/check_joint.rviz",
+      "bytes": 923,
+      "sha256": "6787cd985b8825a0db7fad16bda9ba042b77319f0b62f2d741eca05ad76d37f4"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/launch/go2_rviz.launch.py",
+      "bytes": 1221,
+      "sha256": "19935c0a15537f1cd0344d6e6e24befdc9890b48c0c087058d01adfcd1cb3f95"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/launch/go2_sim.launch.py",
+      "bytes": 4212,
+      "sha256": "1a2504e86ebe2cbbcf0b5a5ab155cbf4630c35131500c5fad25878f49f42a631"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/base.dae",
+      "bytes": 10727615,
+      "sha256": "f777940215d5072dfb047726282455dff00c58655675148c21c79b3e606bfd7a"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/calf.dae",
+      "bytes": 1125646,
+      "sha256": "a875e0e2bb2433d8433faadafc9bfae4f3b0c6a5d64ba8eb75821239c091f3dc"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/calf_mirror.dae",
+      "bytes": 1125586,
+      "sha256": "c65ac56ddfca59b6edfcb68654d2863855707098aa188d338f9b80b1ac11cd54"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/foot.dae",
+      "bytes": 507076,
+      "sha256": "f37a2d16dd2e6975297c5ec26b4d1f2ce2052c4d64715e25e7ea8f8476268e86"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/hip.dae",
+      "bytes": 4666550,
+      "sha256": "1f1a020683056677d73682c6783907bb13c8a9c14b2736c7cce2a630523e0597"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/thigh.dae",
+      "bytes": 3884265,
+      "sha256": "167a6c6545f792f9e7ea53abe7e66dae4d72b53e0ef532ae9903a1f7907b384f"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/meshes/thigh_mirror.dae",
+      "bytes": 3896704,
+      "sha256": "ab1d3b0ef1184735e79bd53c011c4f668a731a23b532d37e07ef74e65201bce2"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/package.xml",
+      "bytes": 1221,
+      "sha256": "6e2ab68c48b0457a71776d3f85639f0a8fd74204505a17ffd0d972c0909bd0b5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/urdf/Amended_collision_model.png",
+      "bytes": 218383,
+      "sha256": "4c2ce468f29313bd65a6109265f99b55b156f8dba8bf3f5c1b9afb0ad666cba6"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/urdf/Normal_collision_model.png",
+      "bytes": 205117,
+      "sha256": "4aaa869842b28436e8cf73a7d9cf67eb4f0651808cae4407f8975f0f87434ec5"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/worlds/empty.sdf",
+      "bytes": 1554,
+      "sha256": "8c35bc5f227f282ac1bb2b22f593f674ad1de19e1e1d76a2f8083d8a6297c1b9"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/const.xacro",
+      "bytes": 7898,
+      "sha256": "fec485669d746b85a4955f21da72abe091f0316d909d047d1a0d9f6f4d4d620d"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/gazebo.xacro",
+      "bytes": 1223,
+      "sha256": "bf0d624b59f9eb2c2750f743589dde28457b88d02ee5efe4b472141041c3c6b2"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/leg.xacro",
+      "bytes": 12464,
+      "sha256": "eab0e1a5d0e8f29054e714a83f24f6a2018343396210a0bb1a7fad171fa078f2"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/materials.xacro",
+      "bytes": 905,
+      "sha256": "5335e8a1c02e81f6d6bd5f3a0748e00b633ed783b80f4089b2da92a7cd363474"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/robot.xacro",
+      "bytes": 4960,
+      "sha256": "da2991a58c9300095d265639e0fe99126abc399b9ef9a7a134f3ed8396c13d99"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/go2_description/xacro/ros2_control.xacro",
+      "bytes": 1507,
+      "sha256": "d84a5faea9e1e05be0d69af0e704acfeb2d68fcef5fba2c8d084a6d1c014cb3e"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/odom_visualization/CMakeLists.txt",
+      "bytes": 1057,
+      "sha256": "dcde53c687402df782e102b0c10839b163ac83c6e222419a25babd9ee909ded6"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/odom_visualization/meshes/hummingbird.mesh",
+      "bytes": 6365657,
+      "sha256": "c2b9f892fa0ec833dd9fcdf795d81fbe4b62cfed7fda05fffdf53c0ebe356641"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/odom_visualization/package.xml",
+      "bytes": 696,
+      "sha256": "7eb4662eea75ac15ae4366bae7878f996f3cc5cb1b07e0ae533ddc75f8f8f6f8"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/odom_visualization/src/odom_visualization.cpp",
+      "bytes": 6382,
+      "sha256": "8f952856bbcbead708d88310126ab40bfb6a174ebfc4811a5b7aecd29dca53e1"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/pose_utils/CMakeLists.txt",
+      "bytes": 738,
+      "sha256": "18af643509f7c4b96e91301f905cce03afea77f2ab0a99b6aeb37f585af49650"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/pose_utils/include/pose_utils.h",
+      "bytes": 1191,
+      "sha256": "bf4cdde8b05626067806716cd6d86145e46afd0f01e02cede228206345905d49"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/pose_utils/package.xml",
+      "bytes": 417,
+      "sha256": "8c6d8eeb9b309133520b3083695ed2b6863a342bef456f97fdf53014306076fa"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/pose_utils/src/pose_utils.cpp",
+      "bytes": 13855,
+      "sha256": "2f6271fc98b4a267a97ac0433dd5d599e52e38a5e32237e05b078c755db75968"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/waypoint_generator/CMakeLists.txt",
+      "bytes": 531,
+      "sha256": "f694cb3bd6997f5c82bd46c397dddfb2e2d46933f304c72c3346b2e484e7cdcd"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/waypoint_generator/package.xml",
+      "bytes": 478,
+      "sha256": "04d085bc99859cc1779fc78e52d86e21782666d3a62bf653dd4962b3500faa84"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/Utils/waypoint_generator/src/waypoint_generator.cpp",
+      "bytes": 2257,
+      "sha256": "bac7298dcae0585b806a222a2e0da56132cf5f5e75e28abaead56c11191bf216"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/CMakeLists.txt",
+      "bytes": 2491,
+      "sha256": "dfe51b8f7faaa16a4614b24f5dcf19df8dc5cdd5a5bcadc01a95016e4650e09b"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/360camera.vs",
+      "bytes": 4228,
+      "sha256": "bdecabf38606a4fc3f2ff6771c8072934536d55871bca69a66db766024e019db"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/FOV_Checker/FOV_Checker.cpp",
+      "bytes": 21609,
+      "sha256": "afd63ddb06cdb87a3e528d506c8d4fd2ed7181720901f8e30cc88f2b5a987394"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/FOV_Checker/FOV_Checker.h",
+      "bytes": 1152,
+      "sha256": "8985656a387dc2acd67bf7f069d704f079ef53f4161733b7a5cf2bf1775296a9"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/camera.fs",
+      "bytes": 369,
+      "sha256": "9d2c5b04a99d690a84f72d97f7a07cd48781cb0918f14159298c9e681f9ff580"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/camera.vs",
+      "bytes": 389,
+      "sha256": "4fef32d0bfaa78f600376a72da69f8899589cc67c81f921f9d2662dca30dac27"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/filesystem.h",
+      "bytes": 1269,
+      "sha256": "8c7aece384f773eb54f929afb047049e794893caafaad2b45983a2bdff1cf075"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/ikd-Tree/ikd_Tree.cpp",
+      "bytes": 69352,
+      "sha256": "b48096fce9582368500e067e837ebdfd9033d3f27a610f6c7dc6065f48f6905c"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/ikd-Tree/ikd_Tree.h",
+      "bytes": 7009,
+      "sha256": "3285dca2c65a892fbbddd7ed9c3a26ce3e3cb7be7db1682b9bdcff0b2a35e285"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/opengl_sim.hpp",
+      "bytes": 103164,
+      "sha256": "c127bc592f4cdc78532414a0ec5072a4db6320a679408000b4a92f45974fe2a8"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/shader_m.h",
+      "bytes": 6706,
+      "sha256": "ba446a068114a5a008ad61ab81870916eb46a0108d214f9645d1d46f5350ba4c"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/include/tools_kd_hash.hpp",
+      "bytes": 8164,
+      "sha256": "c1b19e00dd90d1008e69d50fd8a9764915a96cdfc4e2c848ba798385ac036a09"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/package.xml",
+      "bytes": 734,
+      "sha256": "a5655e6ef283b68e791d40673adcc5467d6660fc3c65a52b7821401fe5d2bd05"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/params/camera.yaml",
+      "bytes": 192,
+      "sha256": "bb2a3c162f36407a076d5de733a726e81cbd1be4f0bb2bbd7c5fe8025cbb6c1a"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/src/opengl_render_node.cpp",
+      "bytes": 48601,
+      "sha256": "d321e33a9d84ab7737aed26a370513ece8b208d4757a9b3f18c89db5f5c72193"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/local_sensing/src/pointcloud_render_node.cpp",
+      "bytes": 83027,
+      "sha256": "de816e856299fe1ffa89908981a4dbcea7406cb9457d6bed79ac26bbdba88658"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/map_generator/CMakeLists.txt",
+      "bytes": 712,
+      "sha256": "4a8da2a59c4aca2def88ad76684af7940cff0a483d8e4d84566ca37fd047344e"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/map_generator/package.xml",
+      "bytes": 520,
+      "sha256": "b8c4de32e41ba3932ad4946603cb65ac0ca5cef0d8cd8bcb581423e1266c558d"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/map_generator/src/map_publisher.cpp",
+      "bytes": 2806,
+      "sha256": "058d7e57e43aa650c5d31aa5d3d141418d234b455b4f1dd9372bb19403bfad08"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/CMakeLists.txt",
+      "bytes": 1041,
+      "sha256": "6a3b9bf8aaab3eb5cf3c870c09c626d825cd4f13440e56eea276db284be54877"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/config/rviz.rviz",
+      "bytes": 970,
+      "sha256": "1d6b89e2164e975c9505469d702c38c13cd2ee95377363894996eb3ed662c016"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/include/maps.hpp",
+      "bytes": 1379,
+      "sha256": "1b180377b1d332c6f1aeff5bc109f3e1be74fd306cdd4dd9b11cf20630779a03"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/include/perlinnoise.hpp",
+      "bytes": 983,
+      "sha256": "18a22c18addb667f9c36c7dde5d0a119129a0c6f561d05eaa6367c4318fbb412"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/package.xml",
+      "bytes": 631,
+      "sha256": "c6ed6ca0e47853dac5905ca9fda077783f41488f1d48292476882b21f5336ed9"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/src/.clang-format",
+      "bytes": 302,
+      "sha256": "7299fac016539f7b80056787f0b61998295248be8a0897bc0f80593c48140d24"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/src/maps.cpp",
+      "bytes": 23857,
+      "sha256": "c3ee149d0b9520e19dbfd6cca2f7267c201fb47175497908313f9fa37eba3916"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/src/mockamap.cpp",
+      "bytes": 2835,
+      "sha256": "68117ecea46b434804d23fe17d1791156fe94015c6a840f22a323121ce91e572"
+    },
+    {
+      "path": "src/SCAN-Planner/src/simulator/mockamap/src/perlinnoise.cpp",
+      "bytes": 4383,
+      "sha256": "097e8f53f3e923214cc6e077ac89c1df5662582e0e71a5989eabf9f4ad28729d"
+    },
+    {
+      "path": "src/SCAN-Planner/tools/README.md",
+      "bytes": 388,
+      "sha256": "25d4b8ea0f53d54e2c9cdbf9afef0801c608aada976bae7e48593be62b61556a"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/checkpoint_store.py",
+      "bytes": 4630,
+      "sha256": "11b6103bc6208b3dce2c1bebb33ba4a595e6c896bd45481f32d2b2d86e7eab43"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/continuous_ground.py",
+      "bytes": 1875,
+      "sha256": "4087cfb2bbf721464ada0cc984aeeb5b737d1e709cfb1f6df43769d2ee5b74cc"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/exploration_checkpoint.py",
+      "bytes": 13797,
+      "sha256": "05da236b8c4945100fd02dc5ce1268e2a6625658f88f6266c292e3ca066a4e96"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/fastlio_tf_bridge _3d.py",
+      "bytes": 5527,
+      "sha256": "28b4e52fee40c6351128bf519f28d4b1d08c6cabf55562b8c8eaff1505020a12"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/fastlio_tf_bridge.py",
+      "bytes": 14166,
+      "sha256": "a6dd57c660ca0ec9bc905f6c93aefe17984cc94fc11af22fac456d1e139f87ab"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/ground_prior_resolver.py",
+      "bytes": 5186,
+      "sha256": "a6e6abe26461fa20cbf5d868037d06c99b49bba7d61994e0008e2b7b833e634c"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/lidar_frame_relay.py",
+      "bytes": 6693,
+      "sha256": "daf5f38cc0704bce61d5833dad9dad1ab5521e4a44d2e540a14b0463c991967a"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/fastlio_nav_bridge/resume_alignment.py",
+      "bytes": 1122,
+      "sha256": "d25ae22811c6c25c5051f196b7a542901de32d5456cce1834dadb7c316318031"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/launch/mapping_3d.launch.py",
+      "bytes": 3109,
+      "sha256": "e1df619954b8254d384b21d4d6206b93972546ef84ab9a98b2a3f436afda4b3c"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/package.xml",
+      "bytes": 1220,
+      "sha256": "c3a6c3859905efd61ee7b010484058c0100873c9ae3524c9519891fc15d5b4c9"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/resource/fastlio_nav_bridge",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/setup.cfg",
+      "bytes": 105,
+      "sha256": "3a81d8051eccf1d3da816caccbc9b7f39fa4eff74f576a6813036f1b52dc3047"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/setup.py",
+      "bytes": 1160,
+      "sha256": "b42ae7ddd8c86d8dad62631f652f8b90063c4b9e029b27ba1be09e41e18f2ed1"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_checkpoint_store.py",
+      "bytes": 2141,
+      "sha256": "4b1fe7c67fcaf733c8ba55295c6196f1583f5112b5da7687916b29f5ccfba261"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_continuous_ground.py",
+      "bytes": 4988,
+      "sha256": "19bf177f9231845a7a87079404d596707aae6d4d2e7170edcf36364dda659e31"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_copyright.py",
+      "bytes": 962,
+      "sha256": "ea71bbbc6247b5c14d176ed09f39ee274d563cc9b2ec355828ea451ceff31757"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_flake8.py",
+      "bytes": 884,
+      "sha256": "37a813a0507f0ce51a2d0b57312d2cc078a0307a3ca85580ea801b0d2f9755d2"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_ground_prior_protocol.py",
+      "bytes": 4519,
+      "sha256": "266f0a9be1dfd74bbc21770213183de9848479be013784c67791913d3911ef9a"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_height_frame.py",
+      "bytes": 994,
+      "sha256": "31d5439837d93fc25a19a27306f67b855475e9ab03356a982c550a3a1a95d6f0"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_pep257.py",
+      "bytes": 803,
+      "sha256": "e8b88d49ee296987b1b40069f81019b5fa09b1aa1bfee9a1faae45bb5cf53eda"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_resume_alignment.py",
+      "bytes": 644,
+      "sha256": "a91a03f8fd30a8711465f612aff1f26024a82b217990f1ffa87e03780fc9bbbc"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_resume_checkpoint_gate.py",
+      "bytes": 3338,
+      "sha256": "d629813b09081eb3a0631b3cb7b080031a436f099ac69301ec344d54fdd02786"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_temporal_bridge.py",
+      "bytes": 2027,
+      "sha256": "d290ef1ea4e04497ec64dd3cb2c382ad573ff8891d2325ba3d2e321f993bfee6"
+    },
+    {
+      "path": "src/fastlio_nav_bridge/test/test_twist_frame.py",
+      "bytes": 1467,
+      "sha256": "f20b5ccca9179ecb5ab8f2bb6659ffe4a2690909f00132e2bef6f1c4fccdbac4"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.github/FUNDING.yml",
+      "bytes": 22,
+      "sha256": "9d485b1f6d1668db39394f376da0626c16c76ee09a41d23de12d179faa8b448f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.github/ISSUE_TEMPLATE/bug_report.md",
+      "bytes": 2404,
+      "sha256": "59ed7997c151818c3533e687e3c718ab1c79f533f8ee359ea447687761b9ade3"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.github/ISSUE_TEMPLATE/feature_request.md",
+      "bytes": 595,
+      "sha256": "1f48c52f209a971b8e7eae4120144d28fcf8ee38a7778a7b4d8cf1ab356617d2"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.github/workflows/jazzy-build.yml",
+      "bytes": 1615,
+      "sha256": "58da2fc76a80e6b47ca78533072a5a76754e5e09ccaeeedc7677657153615502"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.github/workflows/jazzy-test.yml",
+      "bytes": 3051,
+      "sha256": "e4e82325748f99248b1384b9bbf14bf86d4afc76356fcfc5fa53b713abdea7cb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/.gitignore",
+      "bytes": 258,
+      "sha256": "45e0e2e477e2619af2fac568644672c34d4107b2b00acb79db2bf4da408109be"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/CMakeLists.txt",
+      "bytes": 12158,
+      "sha256": "f171e82125930acbd50847bfe9fd8802724ae12d0e6b675a8e4a2485811eefdb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/LICENSE",
+      "bytes": 10947,
+      "sha256": "4458503dd48e88c4e0b945fb252a08b93c40ec757309b8ffa7c594dfa1e35104"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/README.md",
+      "bytes": 118749,
+      "sha256": "5028a5563a31cd295c2e87562111ac902cf34bc4019c1087f9795e3e16e85f1c"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/config/params.yaml",
+      "bytes": 16509,
+      "sha256": "b54ff1203eea62ac100abbb9efd931518213c748c520c45e719ce8c75f86f8e5"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/docs/nearest-legacy-readme-parts.md",
+      "bytes": 492,
+      "sha256": "2782a07b916eca3842ab0d64f3d7bff013f11824664336fe6c0961a8e551e216"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/connected_dispatch.hpp",
+      "bytes": 7185,
+      "sha256": "23cefbd5783d50ad7b43f1e77b01ed7e8a16f6fcd3c55478be8e5683bb5592bd"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/debug/debug_analyzer.hpp",
+      "bytes": 5066,
+      "sha256": "f553b7a0917e495fcbe511daad520d8d911a750f5d7126fec80345cffc631c5b"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/debug/debug_markers.hpp",
+      "bytes": 3049,
+      "sha256": "1c2d84fdcc43862f5594913b9a1f78e62d85da2d62fcabe32c23d7f27d426507"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/decision_map.hpp",
+      "bytes": 6580,
+      "sha256": "a05ec4da2155776a180fd3ed5a716542fb1bcfaeb87c2b1c054dde7bbd1f3a9f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/exploration_boundary.hpp",
+      "bytes": 5988,
+      "sha256": "9aecf9bd60e996068580ac256d45288a2f17818195506365a3f16147c35dcd72"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/floor_coverage_policy.hpp",
+      "bytes": 10834,
+      "sha256": "c1bfe885ce80762491546dc58a2d988ca0b69e45b714c62e8247e8c54a63a1f3"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_evaluator.hpp",
+      "bytes": 1385,
+      "sha256": "b4d2809411704598f6dca71e1fe0b88e38e76359e50a1303dd35a21cac6efe45"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_explorer_core.hpp",
+      "bytes": 24856,
+      "sha256": "448e51407eef6c2341556b09e846cf9b5ed37dc86e8e0139db6cd2f675df2b24"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_explorer_node.hpp",
+      "bytes": 12870,
+      "sha256": "d39ded6aa9c4070a9c87cc26b6c7df32c813726cbf8713c0f32a76115be9a509"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_policy.hpp",
+      "bytes": 2029,
+      "sha256": "fc2ad994311ed6686fa64ac745c784747b519f02d6662f1575b34661e2bf11cb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_scorer.hpp",
+      "bytes": 616,
+      "sha256": "66016779b4c7930d814afafdeb5c994171e4b53336a84ac56feb5270ad971fd5"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_search.hpp",
+      "bytes": 9256,
+      "sha256": "cb6529bd77277a8b5d959809c316d32b10969382dc7142598938ab8e24230f5c"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_suppression.hpp",
+      "bytes": 6880,
+      "sha256": "15ea9102a75ffcb5ea45114fb6b43625b8c50dcb64414463c7aa452807b856da"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/frontier_types.hpp",
+      "bytes": 11473,
+      "sha256": "24160c3744f56b04f9e2740d23e94c4c59142f34fe6a0e82fc60637295393872"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/geometry_analyzer.hpp",
+      "bytes": 1202,
+      "sha256": "97eb7712d7d68c21a2f99fc582924c9a87536aa165506601e94eb142d2a74994"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/localization_freshness.hpp",
+      "bytes": 825,
+      "sha256": "e7d316cb3dc58ccc112c0ce7429fa63fc6b698b839b6aaf3734e649b9613f172"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/mapped_observation.hpp",
+      "bytes": 14911,
+      "sha256": "b367f58e52fd8bcfd23dd6e638e7bb31407a17eeadb4246be22ffcd8a2fe2882"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/mrtsp_ordering.hpp",
+      "bytes": 3372,
+      "sha256": "317254e9ffe8d07642361681f7967e709e7e2cd656d3b765e13e393f28ef8a34"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/mrtsp_solver.hpp",
+      "bytes": 2302,
+      "sha256": "388a44def692833c3d1f013cb10a7001cc4a86664b41600efd2a6c27d02a0ff6"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/nav2_compat.hpp",
+      "bytes": 1534,
+      "sha256": "8c58f432ca37a8872976c273e113c0512ec1672b30b72634951bbe07709b162b"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/nearby_observation.hpp",
+      "bytes": 3397,
+      "sha256": "83abf5ac0ace57c990481edaa569b6576d6c7e94da8139bf1d134647e9ae2639"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/no_next_goal_watchdog.hpp",
+      "bytes": 1525,
+      "sha256": "4edf7337274fd0bbf415244e25fdaf428e53321d022913b502805159d53eef3c"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/observation_grid.hpp",
+      "bytes": 214,
+      "sha256": "807b3b9062c93895b6218361b88652723d45b4d6f7e75e4974a25a1ed669ab97"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/observation_progress.hpp",
+      "bytes": 10967,
+      "sha256": "57c9ce55aba41e2a73e235ab13b111d60da88aefa6796fd8dc6e2c33c200a8da"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/qos_utils.hpp",
+      "bytes": 9706,
+      "sha256": "99c321771af3baea510f4fdebcb64cc808886e0c0b3200336986d423455b7245"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/random_recovery.hpp",
+      "bytes": 11282,
+      "sha256": "dc5ef3121c5185b9c897bad93caa31608f3720ecdaad5b7afe7cda2ad2a23b56"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/recovery_start.hpp",
+      "bytes": 1370,
+      "sha256": "3db4cbbfeccbe295861067f504bf883f3edb1b192a09d0e982f081003fd2cc12"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/region_observation_task.hpp",
+      "bytes": 16491,
+      "sha256": "6dae457c22794ec993986923452bc2cd5dfe47bf23d94a66df73b9ca0468d909"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/residual_region_audit.hpp",
+      "bytes": 13098,
+      "sha256": "63a0d2a86eadcab6c4f6caa7e1ca7f5e03309d619d398dc349616c2c333a52a7"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/symmetric_relocation.hpp",
+      "bytes": 8225,
+      "sha256": "3de56ae041861a3cd084ea369146231a71f8e36c1e8ba24bc0828b13b469700f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/topology_graph.hpp",
+      "bytes": 1492,
+      "sha256": "04d5f444f3d082e3afa5b68a48558824a31315aa7b1ae41b26d95834e4ee65f6"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/validation_retry_queue.hpp",
+      "bytes": 3058,
+      "sha256": "3f594e30f4130f8d88bd5836b2f54b9d4307060acdd88a9fbade21490603d023"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/viewpoint_sampling.hpp",
+      "bytes": 4782,
+      "sha256": "127dfe9d6d10f81ab251ae428fd71a96d14488468a278c85a9703f2abc804ae7"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/viewpoint_visibility_3d.hpp",
+      "bytes": 3561,
+      "sha256": "e9f94bdacff3806e4698a245807fdd89f4937fd5dbe165d59f5f49fc26b9f992"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/include/frontier_exploration_ros2/visited_open_return.hpp",
+      "bytes": 4185,
+      "sha256": "1784922beb6dd888851eeaa978e81d7ec381c3e51f9260c1ad048cbbb33fbdeb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/launch/frontier_debug.launch.py",
+      "bytes": 4651,
+      "sha256": "826802eb136e57de7294ba6ffe6bdd645874384be654732be70987a42757cec9"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/launch/frontier_explorer.launch.py",
+      "bytes": 5189,
+      "sha256": "f2e3f0e8bbc8069425d3f1ff0581304971d6607dffa6e4f98c205034a54fbf0d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/package.xml",
+      "bytes": 1483,
+      "sha256": "54c2984d0eb27f97b47d7a4c689cd78a95e4a2221c3ce9a1c8b61ca7c543599a"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/CMakeLists.txt",
+      "bytes": 3098,
+      "sha256": "df6e732f1af2455797af83ea5c2b0481ec54bef10f95c92bf80cc6fe24c8f7c0"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/README.md",
+      "bytes": 2075,
+      "sha256": "1fce89b2b9aef81d8f7ce91898317dc6a9ca1e0b5a1023903584b5cbc0434800"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/include/frontier_exploration_ros2_rviz/exploration_control_panel.hpp",
+      "bytes": 2200,
+      "sha256": "301c172d6fe1fbf1b13e423e2f1e7e78012d9925cd3230738ea51b48d2687b78"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/include/frontier_exploration_ros2_rviz/exploration_panel_backend.hpp",
+      "bytes": 3957,
+      "sha256": "42d497d1802e61209a2f6c657ad295d58257d4d0ad64b707b5ae718a95664e96"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/include/frontier_exploration_ros2_rviz/exploration_panel_logic.hpp",
+      "bytes": 2558,
+      "sha256": "268531a52c2a40334475b244054d072d490050fdb1146344aa822758cf12d9b5"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/launch/rviz_with_frontier_panel.launch.py",
+      "bytes": 1020,
+      "sha256": "568785d865147952f44363287d874f6564affc40d13ac08193c58ca6aa224fc7"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/package.xml",
+      "bytes": 983,
+      "sha256": "526ca6598faf59c14e6bf76012cf8767987c5d713a0e35ec868ef501f06076cf"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/rviz/frontier_exploration_panel.rviz",
+      "bytes": 2229,
+      "sha256": "30b382f00011fb66c08f04e14db79d9d242e6c888204c0efd0d955b9f3f296cb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/rviz_plugin_description.xml",
+      "bytes": 390,
+      "sha256": "01f5011cc998a1eea15758431244ad03fca42a094f4425593d9a3ccfc35a16ef"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/src/exploration_control_panel.cpp",
+      "bytes": 9186,
+      "sha256": "874ec5a575f707367a608d67b9c4885bc781aa089c382acbd0ffdb398ea50e38"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/src/exploration_panel_backend.cpp",
+      "bytes": 12951,
+      "sha256": "8ea515522388577616a646f62645c2588b80fa149ca61a5d3aa20c4d7405365b"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/src/exploration_panel_logic.cpp",
+      "bytes": 7197,
+      "sha256": "c47bb900da18d6c211115da6208ca46eef3de851a199d80e47514241894170f7"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/test/test_panel_backend.cpp",
+      "bytes": 6104,
+      "sha256": "6ac5f2ef4b9eb7329dedf469d1783a0fe066c4d961f074b51f7c633c379ee258"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/plugin/frontier_exploration_ros2_rviz/test/test_panel_logic.cpp",
+      "bytes": 3870,
+      "sha256": "da79a8bdff3c16428f76061f61cd7bf67547a0ffdf999d506e435de9f5cc7441"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/debug/debug_analyzer.cpp",
+      "bytes": 12151,
+      "sha256": "b2f1301345d27e9363da045b3eaa89619be2e69914c48e26bdaa1494726a6e73"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/debug/debug_markers.cpp",
+      "bytes": 23335,
+      "sha256": "bc1be36fdb0a6df3d32eb6a738df849ffed186da524be1300c9aa685562192fb"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/debug/debug_observer_node.cpp",
+      "bytes": 20413,
+      "sha256": "16f7aa3c8d0ece4a68d8edcdfcaa7efc31916d5ef03c0a0b92d6a1445595174d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/decision_map.cpp",
+      "bytes": 58204,
+      "sha256": "a650aee0a917ee17c3e21f7a1275d409faefaa3085c59b33797cb80997161f44"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_evaluator.cpp",
+      "bytes": 10417,
+      "sha256": "bbaf01de22c8d28def2ebd770071f74ea67eec54f5053f9565b70a22eec55ed0"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_exploration_ctl.cpp",
+      "bytes": 3632,
+      "sha256": "a569970220eef0e22b4dc79f84c131fea9b8b41b70951584e4410c252fb2d3d5"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_exploration_ctl_detail.hpp",
+      "bytes": 4149,
+      "sha256": "543a7b80b6eba38b1250c7dbe58cd9a0fb588ece71ba8ff477d64d2abefbb8c8"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_detail.hpp",
+      "bytes": 3576,
+      "sha256": "96648035ae95c5bb8be93df1a9ec71a7e9e0533188e24e50cdf90f2662f2feed"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_dispatch.cpp",
+      "bytes": 86073,
+      "sha256": "560743814174a3ad5cebb7505abc7f1c14caafd29947618d5a36d02df1c49de2"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_frontiers.cpp",
+      "bytes": 26908,
+      "sha256": "e1ecc72b3c3f8ac4d89b5e1eeb44281632600cb703035754c876a121e4b16a53"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_init.cpp",
+      "bytes": 12234,
+      "sha256": "34e9e3676958dc1bdd3d4c0b71c40c6fd15213acba43b52ade7ba7ee31370d68"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_maps.cpp",
+      "bytes": 9145,
+      "sha256": "e7bbe5b3b92f1312d2f398fc8bae3ee72f8154e4eed250b9c0014ed0272449a5"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_core_suppression.cpp",
+      "bytes": 8782,
+      "sha256": "62425378ce17eae0f28d4fd2bddf11e0b95a3e587a6c325e4170197f9a3e366a"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_explorer_node.cpp",
+      "bytes": 127010,
+      "sha256": "aa23467fe712f38d6bdc62146a6db2cefa04a27d63870b00b32efca90239ea0b"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_policy.cpp",
+      "bytes": 4557,
+      "sha256": "8c3bf6cbb5c3cb3dbb15c160aa0ee6bf8ad4139b5d06981294384c47d5fd005c"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_scorer.cpp",
+      "bytes": 1511,
+      "sha256": "59c2de1a604eab47b3583eb49f2c67c1490ab77d2a05a718c913fcbfda9d8e30"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_search.cpp",
+      "bytes": 41754,
+      "sha256": "fed5a969c5ba0ccf5c8a1256464378368bc9b8c550dc3e8b884d992624af39ac"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/frontier_suppression.cpp",
+      "bytes": 16736,
+      "sha256": "6318a25ad6a3c057bba4bfa741f152e261e70bb72f35df57b8fcb4f19aaf7b58"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/geometry_analyzer.cpp",
+      "bytes": 6468,
+      "sha256": "d04b6e91fc68a3da1777ef0ad6dcd49c36726ecc3b2d75ccdc660163b11ff28f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/main.cpp",
+      "bytes": 1113,
+      "sha256": "034ba89703da7151cde905f9268f861ad74c237fa1ce2717cc4fc3d98893b9e9"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/mrtsp_ordering.cpp",
+      "bytes": 8820,
+      "sha256": "c38e88c91338e7dccfe869bf5e57a77984a7abb21140ba60aedf7eb68e03243d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/mrtsp_solver.cpp",
+      "bytes": 10093,
+      "sha256": "628bd8108cfdde76e1cd186230c9d396ecb0d44d755233ba61cb74694da54a08"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/src/topology_graph.cpp",
+      "bytes": 4553,
+      "sha256": "379be3df7d223b1e17734f69bbd36080be84f1c4342e3715d2008e29216e243d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/srv/ControlExploration.srv",
+      "bytes": 313,
+      "sha256": "b8a8920c25a5dcdc0447161b6fedba238adf401d09455e98f8cae5ca3357bcbe"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_connected_dispatch.cpp",
+      "bytes": 20826,
+      "sha256": "510dc1043cfde91c4fc48bf20462d9c621d91d922a94962b79a3d29fdc121d34"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_control_service_and_idle.cpp",
+      "bytes": 14577,
+      "sha256": "4fd2c388a0ecda7b4d1baa5f5b63dd2d8b23fe99f35dc2c47807afbc5440b8c8"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_decision_map_and_mrtsp.cpp",
+      "bytes": 43667,
+      "sha256": "e290f8f0f2a98f99e51bcc0f85e9855446594a5367789a4b9590f784f9a3b1b2"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_floor_coverage_policy.cpp",
+      "bytes": 21686,
+      "sha256": "a94a206ae11a58627a7c6b8f61ec0c3b9941c6e18b0cc4bf0d08677c5280a625"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_frontier_evaluator.cpp",
+      "bytes": 3150,
+      "sha256": "62259380d6b60294a8c27c2a1c311ddb1976d9292d79996ad6072b72f15befc8"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_frontier_snapshot_and_search.cpp",
+      "bytes": 27985,
+      "sha256": "934313dcfd121607c30153460bcbe20c8d19024d07c4c8c637e6f0f06310875f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_frontier_suppression.cpp",
+      "bytes": 18438,
+      "sha256": "8cd83dbf7b7801d1bc555f17538b316056ecdebc133eaec5b2240d89c84b032d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_geometry_and_scoring.cpp",
+      "bytes": 3154,
+      "sha256": "d272c7288b99aca252981c9910f860895d4f72f4f37fa07cb48f9490758c5392"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_localization_freshness.cpp",
+      "bytes": 1613,
+      "sha256": "1b33eb8db379c96b3d57d7c7a275eb36c69a8f8c1411729af19257b42214131d"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_mrtsp_solver.cpp",
+      "bytes": 9573,
+      "sha256": "607a1f410604d15695327d96da2714e6c7182536ab360f584478e4738fdfc863"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_nearby_observation.cpp",
+      "bytes": 15448,
+      "sha256": "78352d1fdf2a0c0e5acc6271838078b16647a3c6d97326f84f9cc3754b4a717c"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_observation_progress.cpp",
+      "bytes": 8316,
+      "sha256": "137b717af5685e47ad13ea0377ad7f689500e8de85800d8c5d68457785039eae"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_preemption_flow.cpp",
+      "bytes": 77755,
+      "sha256": "284d9af80b677dff756964da2d3c4bce94ae07c230d6000101899a6708ad4a9f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_qos_utils.cpp",
+      "bytes": 4318,
+      "sha256": "200dc02f5dfcb08da5d305da4abde815289eaab89adee4f5dc3bc32561aabcfa"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_random_recovery.cpp",
+      "bytes": 19011,
+      "sha256": "44dd5fd4cca62d4db6686a0b6f60ce4809479dc7e54d326d464c35ab3ab1bf2f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_region_observation_task.cpp",
+      "bytes": 22055,
+      "sha256": "1f30336da39134d0197ef380b213d29c93945350923ee112c2cdbf8882fa2f64"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_symmetric_relocation.cpp",
+      "bytes": 8242,
+      "sha256": "60f773560a219920eb6126cf323383b11fe2c308647db956ad36fa58bd8d408f"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_topology_graph.cpp",
+      "bytes": 2336,
+      "sha256": "0ef04d250b4b91e568016f1a321de17121f4ff71bf3adbf9c531eec594272b38"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_validation_retry_queue.cpp",
+      "bytes": 3897,
+      "sha256": "7ca34beafd933778fca6344c851d6b9df1c2376b437e03089a8f8971b372eb26"
+    },
+    {
+      "path": "src/frontier_exploration_ros2/test/test_viewpoint_fan.cpp",
+      "bytes": 9531,
+      "sha256": "d967797278792f5384195811ea9f1b4e6aeb4e869e284773218de22bad54471d"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/CMakeLists.txt",
+      "bytes": 4254,
+      "sha256": "e25fef63748cedac7eea86e6f54c23d1e1c1c1d030f441addcd5c2293aa52e98"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/config/multifloor.yaml",
+      "bytes": 2583,
+      "sha256": "3ae1deb2fa0de29532d694afd96fa4548026337ad6857c04ee860d6c6280d38b"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/include/go2_multifloor_exploration/floor_handoff.hpp",
+      "bytes": 4702,
+      "sha256": "13a0cfc1525cd198e928f05ec45cb24c3afe9cdf2de9f519ac2dab650031b353"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/include/go2_multifloor_exploration/floor_slice.hpp",
+      "bytes": 1782,
+      "sha256": "f3dd360f81ba5c5a9b8831ac0939b6c1dacad734b486f221cd1875b9441b5ab8"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/include/go2_multifloor_exploration/simulation_progress.hpp",
+      "bytes": 797,
+      "sha256": "2024274b17e3b9ea4d55464cf9f1777cb718d3af598f1bb980ec125906f40b32"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/include/go2_multifloor_exploration/stair_transition.hpp",
+      "bytes": 1359,
+      "sha256": "06d145f78c6ae393e0e96f81cf96e656f9d893a3d4e395c6dc3d8eb509059cf4"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/include/go2_multifloor_exploration/transition_footprint.hpp",
+      "bytes": 3297,
+      "sha256": "923a8cf4cd4ead044dad83c1adc8bca98d2d72f62265a55dc430d6766fbab473"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/launch/full_multifloor_demo.launch.py",
+      "bytes": 11594,
+      "sha256": "d91b512352b64f5a9ef6a62fffd68a9795a06abc5da343dc3e2963042d499f14"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/launch/multifloor_exploration.launch.py",
+      "bytes": 1978,
+      "sha256": "f47b1ed38eb8e9b40125bec5d37c19a991df46ec8f43eaef201acc39eacc5f91"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/package.xml",
+      "bytes": 1416,
+      "sha256": "6376072e7efab1f46d9cc4c8eeec7f3486092417c12aad389e9b2d085819a6e7"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/src/floor_slice.cpp",
+      "bytes": 7253,
+      "sha256": "4620c7f1dba23911fb03f722cfaf3844a46a37fa0978fe5bb7afba51c4ab5101"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/src/floor_slice_node.cpp",
+      "bytes": 5524,
+      "sha256": "db4ade9194a880a547c4fcc5f3f6fcd54e2a33e7762924ab014b8887fca2ec9a"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/src/multifloor_manager.cpp",
+      "bytes": 37102,
+      "sha256": "74f006d4732ccf1228de85e98e641d98042d4e84c823fbea3501b1c1be090ee3"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/src/stair_transition.cpp",
+      "bytes": 8468,
+      "sha256": "f0608721fdfbcc3fce8b5c8685c031aa3c2a41c2e09764f3242dd6b3a0da5e81"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/make_stair_fixture.cpp",
+      "bytes": 581,
+      "sha256": "5dce01fb7a032c53f00f6ed22941a7e1577f39f75b3bf6909096a401022deb53"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_floor_handoff.cpp",
+      "bytes": 8437,
+      "sha256": "61fde037b799765b2ea2475bd3591b272bb7c7d5f4da2f6069e5c6cbe947c75d"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_floor_slice.cpp",
+      "bytes": 5574,
+      "sha256": "6ac54dac2fed6301d20035e2f2a1aef1bbbbc4a17fbfb44edb08f2fdce167e18"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_ground_parameters.py",
+      "bytes": 2122,
+      "sha256": "adedc55aa3e0fa93244b8b9e2eb36bb89fb5ddd6a95a01990be511b8740fbe69"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_stair_protocol.py",
+      "bytes": 15161,
+      "sha256": "35784aa856c8390941a56f37c593983b944a9e8fc8b8a2d49a10654049db970b"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_stair_transition.cpp",
+      "bytes": 3756,
+      "sha256": "1b18f295a9351c471442ee8281d598c8dc0505256bf47de11bb27cfd395b348d"
+    },
+    {
+      "path": "src/go2_multifloor_exploration/test/test_transition_footprint.cpp",
+      "bytes": 2289,
+      "sha256": "e5a9ed3b55dac8ba99197eba2ed23f8653243fd7caed029d433f8817d53b4707"
+    },
+    {
+      "path": "src/go2_nav2_recovery/CMakeLists.txt",
+      "bytes": 3901,
+      "sha256": "9c024a82cdd2fa6f4e3ba737a7daf8a9e31fe3fc871fb0669d01033b0f821201"
+    },
+    {
+      "path": "src/go2_nav2_recovery/behavior_plugin.xml",
+      "bytes": 346,
+      "sha256": "a1bab24d8906e4b0f7192b509c0ceb242591351985e50ee501660b0a56495c98"
+    },
+    {
+      "path": "src/go2_nav2_recovery/include/go2_nav2_recovery/escape_move.hpp",
+      "bytes": 3255,
+      "sha256": "bf8df03513328643ce709155ff0f72a4f37d6f8b796034cabed358112e064845"
+    },
+    {
+      "path": "src/go2_nav2_recovery/include/go2_nav2_recovery/escape_move_action.hpp",
+      "bytes": 1046,
+      "sha256": "bedfd0d98d23b6e671443015361e99c1e84caaaed02110b664af647f94d1849e"
+    },
+    {
+      "path": "src/go2_nav2_recovery/include/go2_nav2_recovery/footprint_safety.hpp",
+      "bytes": 9219,
+      "sha256": "a3c802d52da12074f9b207771db4d7b63478702b902eb18053bb68b184ad41be"
+    },
+    {
+      "path": "src/go2_nav2_recovery/package.xml",
+      "bytes": 1079,
+      "sha256": "3fdb9737a988234d2428b6eff76406de780e97a36600c34ded690194a13f1f03"
+    },
+    {
+      "path": "src/go2_nav2_recovery/src/escape_move.cpp",
+      "bytes": 20242,
+      "sha256": "3d3be1aac421ddf7388e6327e3d7ba97061b1703b5fb8063a69dac862f460b84"
+    },
+    {
+      "path": "src/go2_nav2_recovery/src/escape_move_action.cpp",
+      "bytes": 1399,
+      "sha256": "81b0fb04106227b6c864c63060780c202e907a2200c09f5c397f95cfa6b073ea"
+    },
+    {
+      "path": "src/go2_nav2_recovery/src/path_safety.cpp",
+      "bytes": 3818,
+      "sha256": "b6e8aebe971d07aea59027ed1e43c5bb8389c2d5ca48400cbb8e2ebcac36e701"
+    },
+    {
+      "path": "src/go2_nav2_recovery/test/check_tree.cpp",
+      "bytes": 2571,
+      "sha256": "67cfdc4ed14b3dc3d0324706fa5bf28b88d14a9621feb3e9c7e8c33fb24b33ef"
+    },
+    {
+      "path": "src/go2_nav2_recovery/test/test_footprint.cpp",
+      "bytes": 3198,
+      "sha256": "6013136d1f57ba39f7ee85cc7e4a39c148ab234eb07c3b704f7481c9bc3d98a8"
+    },
+    {
+      "path": "src/go2_nav2_recovery/test/test_path_validation.cpp",
+      "bytes": 3603,
+      "sha256": "0ba4645f38163a37e0494d42802f216d3dc39ca203d18a08ddc05ffb0a53ab14"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/CMakeLists.txt",
+      "bytes": 2475,
+      "sha256": "c5e97205b0b4005b189c5f64d8191002c07d3bc48659f70f3cbf1396ce7c74d0"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/clearance_astar_planner.hpp",
+      "bytes": 1847,
+      "sha256": "7785d825e7e7f966824c45e1dc776995c49fde0157341da32ba4f19c28c4bb72"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/goal_checker_3d.hpp",
+      "bytes": 1168,
+      "sha256": "a8bcf60c3e7f581fec05756471262db48369dc8eab764f9bcff753c96d82922e"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/parameter_utils.hpp",
+      "bytes": 530,
+      "sha256": "2919c0d2f606db591a01322961985951c68173571ce1c76e04f31698ec351d9b"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/surface_3d_planner.hpp",
+      "bytes": 2225,
+      "sha256": "8c6c3fff48855a21ac4cd9e0e0d2725bc75713405539b243b5a6e891ca1a3cdb"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/surface_graph.hpp",
+      "bytes": 7458,
+      "sha256": "276329850734fa263ff60b9b25a9fd08514353d5c6cbdf2b42fc156d42206b73"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/include/go2_surface_3d_planner/surface_regions.hpp",
+      "bytes": 1089,
+      "sha256": "301a60e3eb8afa4551e3b6a3298584def7f1b11a767b1f7b54f17d1ade2d521f"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/package.xml",
+      "bytes": 894,
+      "sha256": "eedefefe1e871baa17ead1f133cd38940f09ba70489e0001bebfb09490a16f5e"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/plugins.xml",
+      "bytes": 852,
+      "sha256": "ee6bedd9899ac63b3d46e0f67b963bd577a814d209b0cabba3c21e5387f28044"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/src/clearance_astar_planner.cpp",
+      "bytes": 12704,
+      "sha256": "21115a831069710385a4e0f5bf6151654dcf9beefe9dbdb4e5095a52968eaadf"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/src/goal_checker_3d.cpp",
+      "bytes": 3006,
+      "sha256": "92f70869b0bd48266e892f0e8521158408fb29222316b3da14859c4f4de45868"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/src/surface_3d_planner.cpp",
+      "bytes": 15107,
+      "sha256": "b255d11e2d67141f96a5f9f0f79063bc03548a6d203286d692fbc78ef1219021"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/src/surface_graph.cpp",
+      "bytes": 50598,
+      "sha256": "74edd330e04ddc362001c0148edcf0f3e3724826438382592589c7088274bf89"
+    },
+    {
+      "path": "src/go2_surface_3d_planner/test/test_surface_graph.cpp",
+      "bytes": 38988,
+      "sha256": "17ea075ca99cdd434632bb567ae2c3bff5161dd3723eb21cd047f66187e7cf08"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/CMakeLists.txt",
+      "bytes": 3290,
+      "sha256": "f458287ef1e1285453dfccfc4cc0a9dee4a710514245e63537a15ac1cd418180"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/LICENSE",
+      "bytes": 1073,
+      "sha256": "2b73e13c08cd7e23aad9b7c8bccedee62249e95464539bcb9b255bf22eef1ab8"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/README.md",
+      "bytes": 1826,
+      "sha256": "8ab4b866e37e76a9fc3357ce82200c0395b9cc931cf5aa890687a21cbe04e04b"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/docs/fastlio_pointcloud.png",
+      "bytes": 2367916,
+      "sha256": "b3884b2f27a91d50a1d9a0bf018bd9a2959a4ef5e25fc552b4f504211f2b5ec7"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/docs/poincloud2.png",
+      "bytes": 991571,
+      "sha256": "31c4f6fbae0c107569fd49b5991f341d10944233029fcd8b9b534a8f2c9b6785"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/include/ros2_livox/csv_reader.hpp",
+      "bytes": 1625,
+      "sha256": "7dbe05282839126be97654ca2acb4a27b715ff4df933c77770c13e0de9366427"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/include/ros2_livox/livox_ode_multiray_shape.h",
+      "bytes": 1688,
+      "sha256": "16d00822136a62364885a227080f0d5b6c760d106223b3a83eeee75e56a748e3"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/include/ros2_livox/livox_points_plugin.h",
+      "bytes": 3230,
+      "sha256": "934b38f540277c99f018ecb771e22989c2d4995c577759e6cf524b44b03fe6eb"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/meshes/mid-360-scaled.dae",
+      "bytes": 4358811,
+      "sha256": "c1097892112fbdfbb02cf3f366a61440150118d7feb38f90868be59514373ac9"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/package.xml",
+      "bytes": 1037,
+      "sha256": "dd2bb6b26e5de3b54df660c55e6c815fc4f44409a87ab4643bf2f3ab4754dd00"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/HAP.csv",
+      "bytes": 23874509,
+      "sha256": "166f86062e9e3c22b10f64a7c9b7cefa68f9a3877e8ad59a2572916d247f6626"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/avia.csv",
+      "bytes": 34863404,
+      "sha256": "9363f7ec8da1541b49214ae18eea840151eda4eed176ebd573bd443eb7970d78"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/horizon.csv",
+      "bytes": 34862844,
+      "sha256": "0888f20083b1892702df7c9cbd064ebc53e22dca318190258d864bb1da94af55"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/mid360.csv",
+      "bytes": 16809997,
+      "sha256": "aa1fc08b6a4400608dbd6ee832b7ea3a9c3c37197e734f60f58fe5abf762269a"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/mid40.csv",
+      "bytes": 13266993,
+      "sha256": "8d9079778f549d5be8081d216df71c73ffb1e10a75284810e5a9d049848ef732"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/mid70.csv",
+      "bytes": 13266694,
+      "sha256": "c7d2a7a5f02b6387a83225f058dd3e02750fd779c18a648e4e449b225367f6d1"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/scan_mode/tele.csv",
+      "bytes": 34861107,
+      "sha256": "23453d2c493d801cb006153390a4aca4c88c85d6553ea8d86ecc51821023c40e"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/src/csv_main.cpp",
+      "bytes": 228,
+      "sha256": "63e5b6444f9adc1896ef4dddfd62a58a1b6a8c24721d13ef7d57d89a2a987995"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/src/livox_ode_multiray_shape.cpp",
+      "bytes": 7347,
+      "sha256": "035a7fe34133507301ec85646f1bd78b2543a167c4de2ba6514efa4d22a1b140"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/src/livox_points_plugin.cpp",
+      "bytes": 15032,
+      "sha256": "61385ece9d1c3f4a1540d7309c02c270b7a9b7a7616b0eb7f0e9d109ac9e721c"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/test/test_range.cpp",
+      "bytes": 2254,
+      "sha256": "5575737279ef3a797d3b5091e2e4042b3ead318d185948e8d76199e5af14c3f8"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/HAP.xacro",
+      "bytes": 2689,
+      "sha256": "1d9bba68a45e2e35389bc750156f965dbb6a65dbfae02b77711edc67e00c9626"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/avia.xacro",
+      "bytes": 2840,
+      "sha256": "5f5019e31a0afa3561904ea8f3c791a80687342e372e661d661690527592ca7d"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/horizon.xacro",
+      "bytes": 2849,
+      "sha256": "6b200205846e66921c14334c0d75c8a98e5bfdf92eeab0e4914ac297c5116797"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/mid360.xacro",
+      "bytes": 2729,
+      "sha256": "cb456e86b7456769a9327c741e3dc4941c0d4a13ac3b9722617f68e0885b8a39"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/mid40.xacro",
+      "bytes": 2738,
+      "sha256": "7a4e4513dd8ff0f11fd6a97b8887c051c027f09402a97a14a5d851ffba2344ce"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/mid70.xacro",
+      "bytes": 2711,
+      "sha256": "fe233f72db6921045adecd88201b004c35671a65cb0d6903f18c35da220f31f2"
+    },
+    {
+      "path": "src/livox_laser_simulation_ros2/urdf/tele.xacro",
+      "bytes": 2842,
+      "sha256": "1cf6519d863cfad3953f98d40ab958bc1e45b884e415d09ff75af8c7a0bfe86b"
+    },
+    {
+      "path": "src/livox_ros_driver2/.gitignore",
+      "bytes": 37,
+      "sha256": "2da9e4085d66ed68d16a4d7d4c97ced71bf404f0cb1a4c7c028f44079b86351b"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/allocators.h",
+      "bytes": 10437,
+      "sha256": "49b554ebfc2369438fd9365b28f0453485d936437847de31a7bb770001abca55"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/cursorstreamwrapper.h",
+      "bytes": 2230,
+      "sha256": "de1a52b674c998a7581f9cb69c9310757f825595c3fef985d5d153f7ac1b6aaf"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/document.h",
+      "bytes": 117966,
+      "sha256": "6afae6a8825b03b4c6baa42a513e5a5242ac96b4c95968c07ee8bda8163eb3ff"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/encodedstream.h",
+      "bytes": 10634,
+      "sha256": "4bb5e4853943d5ead467e46b5313d95aa23645018cda93e7907a934a06cfbb26"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/encodings.h",
+      "bytes": 29827,
+      "sha256": "0201c664e471c615b5cd27d2e981cf8b21ac9c210bdf108062fb2fd9d493a501"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/error/en.h",
+      "bytes": 3739,
+      "sha256": "484dcd32c0b35b7a81561740fad970402c0ffcec44311381a2fb265cfe5e273c"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/error/error.h",
+      "bytes": 6472,
+      "sha256": "aa9b40b61754b227248b4b092331dbd5721ef6565d962e4c225c6c1e7974817e"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/filereadstream.h",
+      "bytes": 2961,
+      "sha256": "8c7d282eb32897969430f5a94178cab238433e25fa139ee74eda87eb1d42690a"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/filewritestream.h",
+      "bytes": 3073,
+      "sha256": "1db49a4cd9038f2670667e5900f346d231a0eece06ac1817f33feb63f33545b9"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/fwd.h",
+      "bytes": 4120,
+      "sha256": "2a0e024b8b6b87d1d3f50d1d0dd4656124c161fea88406265d097d613498854e"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/biginteger.h",
+      "bytes": 8296,
+      "sha256": "0be8375c2d39bc1f8f57b755a26569db9ed35c86d066b294911690513786afb3"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/clzll.h",
+      "bytes": 2035,
+      "sha256": "93d71c879a805a8c17cfd8913cf1add4d2f25407bbf668abe1dcca6e40ebc746"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/diyfp.h",
+      "bytes": 11387,
+      "sha256": "f2c45af9e73a451e5472e5dd10a7672085e9a3504d1f3ab864a5b9cc7445c1eb"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/dtoa.h",
+      "bytes": 7724,
+      "sha256": "965deca8d1382c30db9e0a1d51200a4934bfe032eda3dcde10d4bdb39817c05a"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/ieee754.h",
+      "bytes": 2990,
+      "sha256": "a1b4a88d5e0f633e99c7d68a34fdebc6289e6be0f0cfba452a7793166d7ea970"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/itoa.h",
+      "bytes": 9272,
+      "sha256": "45c96bab2327aee5ff999167fac8f768a3a9e1003142fa68e3aee50b54d93e12"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/meta.h",
+      "bytes": 6731,
+      "sha256": "a20dad578c7d714ff04029f04719df19be5835c30bf9c7028d226e67d065bf0b"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/pow10.h",
+      "bytes": 3957,
+      "sha256": "7a7693969c936ddb6d036467a0f6b53def076922bb838d250eb40f12b2e2ce0e"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/regex.h",
+      "bytes": 23238,
+      "sha256": "624cf078b8179a198374eebe94331aa2d8b70b08997f4e270ccfaccc90fd09b2"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/stack.h",
+      "bytes": 6805,
+      "sha256": "46c4f98ff2acce64d1280458dd1224aaee9a9035eebd3462cdf31ee25a13702e"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/strfunc.h",
+      "bytes": 2184,
+      "sha256": "e083b68f7bf3570653fce1e3ea0a573a75745a096dd80194e1a2fde4d7695bb8"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/strtod.h",
+      "bytes": 8656,
+      "sha256": "2134c15ad40b9584ecb8e1a7f6163277a6d783574b3fb08574f88ab769b91751"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/internal/swap.h",
+      "bytes": 1421,
+      "sha256": "48ecb57c3b2ca955ad3cccdfff03835be495a56c9c5da07ab9c02f488b7d7fe1"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/istreamwrapper.h",
+      "bytes": 4112,
+      "sha256": "b3c03a5826b8d8c9dfcef64eb09d8ec4a955e0c6edd38d9c3a127dbca53ec2dc"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/license.txt",
+      "bytes": 5152,
+      "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/memorybuffer.h",
+      "bytes": 2573,
+      "sha256": "cf661606aa41bee3466cee20174bc7454210e8aabac929b1d8e9e189fef601ab"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/memorystream.h",
+      "bytes": 2673,
+      "sha256": "8dd07eb66381de95a69c9cadce537d76c0349f913cfe183ab6243c54863c4dcf"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/msinttypes/inttypes.h",
+      "bytes": 7824,
+      "sha256": "92f53d3ba0cdebaeb20a52893f89d0c29aae5111a3a8bb555eabdd8c96e3244f"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/msinttypes/stdint.h",
+      "bytes": 9151,
+      "sha256": "515ff5e244372892293c20bbfe6a5b3dcca7265442941df31dcebdfbe2a828fe"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/ostreamwrapper.h",
+      "bytes": 2342,
+      "sha256": "366d953184777b0de0a102ef38cf56f9fc766422246f16be9af2dad8ad787054"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/pointer.h",
+      "bytes": 60230,
+      "sha256": "d74ab63c76a99a5a92418d2420cc733c22767b6d9e9a6f989689940de4f7c478"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/prettywriter.h",
+      "bytes": 10253,
+      "sha256": "e8495e521c5d726c7e2ff59b1f7eb6f08a1e0298055d1fbbc4f29f08d736360d"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/rapidjson.h",
+      "bytes": 24293,
+      "sha256": "22ffbcb054cecc5180bdb72478ab32598c9aa40421322f17923809acdcf99629"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/reader.h",
+      "bytes": 89290,
+      "sha256": "291f6d315a3617c9bd83d8b2836f9dc1e45a2a9770dcb0745f9eaaa603b715a6"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/schema.h",
+      "bytes": 101259,
+      "sha256": "473b44fcb9f88d2fa7439e1c9f86899deae44205323a7ba7709e6b4b513f01fa"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/stream.h",
+      "bytes": 6694,
+      "sha256": "58e37336dafded31177eb2381f0d553de8a5fd33c8580873de32b0e467d85677"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/stringbuffer.h",
+      "bytes": 3984,
+      "sha256": "8434f52ca786bf876b3d3d693ce8e2d399325ddf891e0437becd41ed590806e9"
+    },
+    {
+      "path": "src/livox_ros_driver2/3rdparty/rapidjson/writer.h",
+      "bytes": 26178,
+      "sha256": "b42eca28a42d7b3806aaf691ee921accabcf911be6728c35fa04e14162a72bdf"
+    },
+    {
+      "path": "src/livox_ros_driver2/CHANGELOG.md",
+      "bytes": 1833,
+      "sha256": "3d6459d5d6c06a26f5bf8e9d4f0a58a6d4be418bd730f49b5fa9d0ff96e87042"
+    },
+    {
+      "path": "src/livox_ros_driver2/CMakeLists.txt",
+      "bytes": 10999,
+      "sha256": "208ab593f723e015ce527968a7b98244354f800eb729cc69a95af1df4d4d01ae"
+    },
+    {
+      "path": "src/livox_ros_driver2/LICENSE.txt",
+      "bytes": 19928,
+      "sha256": "5d965fd1439196751d5ccad8064a51dafdb2d88548174bb5516d393c7a4c0717"
+    },
+    {
+      "path": "src/livox_ros_driver2/README.md",
+      "bytes": 21774,
+      "sha256": "8ae5d78318bd37dff9fb9b71fc145f7793af92e36f71b46eeb7dd738c283c313"
+    },
+    {
+      "path": "src/livox_ros_driver2/build.sh",
+      "bytes": 1763,
+      "sha256": "05ffb76f017e796ff5230b53ad4e8e2bcd52e43ce2215e03c4ee78a44cb46b7a"
+    },
+    {
+      "path": "src/livox_ros_driver2/cmake/version.cmake",
+      "bytes": 990,
+      "sha256": "698b065d680a20695f2163ca5bbe601792b24069357919bee3136768d75f8f7f"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/AVIA2_config.json",
+      "bytes": 767,
+      "sha256": "53bfe4aba27dc64bdcac05cbbefbbcfe7defd1e700e73a62234e07f3fdc08af3"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/HAP_config.json",
+      "bytes": 863,
+      "sha256": "956414d48bf17af2427e2b8f3dbbeff92345f93fe81e97422f22117ea0ef3f35"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/MID360_config.json",
+      "bytes": 884,
+      "sha256": "6eba01156ce604a5a5aab8b102179d21ba0729aa4652cd9b0d2ad2a6afd7ca4d"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/MID360s_config.json",
+      "bytes": 794,
+      "sha256": "874b4c619dfe7ed7172631df462c0ac433eb9b5e667ef9595567f9261e77bcae"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/display_point_cloud_ROS1.rviz",
+      "bytes": 5650,
+      "sha256": "89d934b783d9f0386dbaef7cbbf0ea3f4ee0c87c57b313178d822cec93320caf"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/display_point_cloud_ROS2.rviz",
+      "bytes": 4834,
+      "sha256": "ae7cea85c28bcb532f3504994aa287ad14100048cd53b30821b73df0a1f94e61"
+    },
+    {
+      "path": "src/livox_ros_driver2/config/mixed_HAP_MID360_config.json",
+      "bytes": 1665,
+      "sha256": "99895013db7bfc1d58fef1abb2d25461624ab468bce5f5c4381172f3b7d235cf"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/msg_AVIA2.launch",
+      "bytes": 1743,
+      "sha256": "7128281f51e050f171cc9b02eef8891b4d3aa149610a3bd9a19496a681bb8a68"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/msg_HAP.launch",
+      "bytes": 1743,
+      "sha256": "2bb9adeab763da7a414fe756fa0569e41ab4795722817ad950a39450f97813ef"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/msg_MID360.launch",
+      "bytes": 1744,
+      "sha256": "b4a86ae5e58d354e454140fe6e3b0032193826f764ed8da9f6d1519ba99f60dd"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/msg_MID360s.launch",
+      "bytes": 1745,
+      "sha256": "623d0aac93ff6bb54688fb132f441248b33d7331376df30ebb77e736023da850"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/msg_mixed.launch",
+      "bytes": 1754,
+      "sha256": "77c8f7eed8d2702211f52db053f792f2b5906123e8ab647a913313bb015c6ab8"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/rviz_AVIA2.launch",
+      "bytes": 1932,
+      "sha256": "b04a2114fceaf0e5cc2c10de15c9bb688f3faf6e8545ac742ecf0d6442f3d422"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/rviz_HAP.launch",
+      "bytes": 1930,
+      "sha256": "be4b09a282eb005128933ec802d0658d273ebe5b91dc65d0413a78c603ee3f78"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/rviz_MID360.launch",
+      "bytes": 1933,
+      "sha256": "03a622737d58ac346261ad5bf87df109d3c339184c1baeee11ba8371396f6578"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/rviz_MID360s.launch",
+      "bytes": 1934,
+      "sha256": "0786538975f8cb314680f747d3ddacd4d093093e944d94b1d9f10a67bccb2b95"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS1/rviz_mixed.launch",
+      "bytes": 1943,
+      "sha256": "bb9830540646897bb52e4abd76947232a751b27f0f9ec7c4fedc953bb4fbcb79"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/msg_AVIA2_launch.py",
+      "bytes": 1901,
+      "sha256": "cceb8d4a61009c7a7437a53bf66e76ce11356ddf51ea50f2205c476b9956a756"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/msg_HAP_launch.py",
+      "bytes": 1968,
+      "sha256": "bb58699d0b6d344f579f5b2991db54561621ddb395e6ade8c94425c563cd9ef6"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/msg_MID360_launch.py",
+      "bytes": 1902,
+      "sha256": "11b0618d2a9a0def7f6e1a6831646d261674014344496fa1497fea67d6c0e826"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/msg_MID360s_launch.py",
+      "bytes": 1903,
+      "sha256": "29d48e9e2dd2b21352e4ecff9c0a7db2a18994fe688dc68f361b3b70b33ee05a"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/rviz_AVIA2_launch.py",
+      "bytes": 2188,
+      "sha256": "494e82e04dea8494538f62c98f57549cc80e1da59378c7e63044b4a4056f4db6"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/rviz_HAP_launch.py",
+      "bytes": 2186,
+      "sha256": "da07dc3d0402cccffe3e068108066fede37ed71ef47c191541158665d67b478f"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/rviz_MID360_launch.py",
+      "bytes": 2189,
+      "sha256": "8331565b4c8fe1a80ec77d518b4bb2fcbe40ea8bf60a20de691d9c61417b678e"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/rviz_MID360s_launch.py",
+      "bytes": 2190,
+      "sha256": "5660e8982e12c003bac4880b6804b27a611e2c6fda999ebc454e173282e9614b"
+    },
+    {
+      "path": "src/livox_ros_driver2/launch_ROS2/rviz_mixed.py",
+      "bytes": 2199,
+      "sha256": "decc75ab24173f20455c849c0cbe6cb3931d33d4901f39b52c105d381405b8d0"
+    },
+    {
+      "path": "src/livox_ros_driver2/msg/CustomMsg.msg",
+      "bytes": 341,
+      "sha256": "f42d6709db951b1fa307e929e742c0593cbf0d1b0ff977d2ed63ad8d7cee0a96"
+    },
+    {
+      "path": "src/livox_ros_driver2/msg/CustomPoint.msg",
+      "bytes": 353,
+      "sha256": "b64b31a8edc8c8b3765d82b5d3ccd2d2e1f217b9525ef7007ab918674c619c59"
+    },
+    {
+      "path": "src/livox_ros_driver2/package.xml",
+      "bytes": 1123,
+      "sha256": "084b1db3a68ef3cf979da0c8ce6a8bf9566dc586ebfdd51d0dbe012f43c3d2dd"
+    },
+    {
+      "path": "src/livox_ros_driver2/package_ROS1.xml",
+      "bytes": 3395,
+      "sha256": "2e3eb6932e9fe365d31aa69926aa6cae76464f4176008cf33de26f0fbee29c27"
+    },
+    {
+      "path": "src/livox_ros_driver2/package_ROS2.xml",
+      "bytes": 1123,
+      "sha256": "084b1db3a68ef3cf979da0c8ce6a8bf9566dc586ebfdd51d0dbe012f43c3d2dd"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/call_back/lidar_common_callback.cpp",
+      "bytes": 2276,
+      "sha256": "8f37b7dda4236edbcb4a87cfa6a016e4105ca1e0b8e0e99f2446953636412196"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/call_back/lidar_common_callback.h",
+      "bytes": 1575,
+      "sha256": "e0fd66f13ad20b0426b9b5384abee61c8b2b85ace2e9904c470da9fd7c0cc366"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/call_back/livox_lidar_callback.cpp",
+      "bytes": 15505,
+      "sha256": "50fec08a89c3be6ddd423632f508b4b7179d43303a3206f6a26fbef5d2e9e665"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/call_back/livox_lidar_callback.h",
+      "bytes": 3238,
+      "sha256": "8b491e57ee77c0b020458338f5bf9a5b8776c0d875c96654531e622e92159c45"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/cache_index.cpp",
+      "bytes": 3858,
+      "sha256": "dca25f47674f530249e94c0ac8ac368d122910ca66336bd1bee65a06d2f01667"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/cache_index.h",
+      "bytes": 2055,
+      "sha256": "65c635bd6903564bc1e0547113a6aff52e592c16295ed23264b5726317327c01"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/comm.cpp",
+      "bytes": 2209,
+      "sha256": "73e6b7469337528ffb60b0f670bedc3c01dfcd7d8a048e72e8f04bd5d839f126"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/comm.h",
+      "bytes": 8580,
+      "sha256": "72c639ba1d6eaf7c355050672c865c7615cea3619abee628683d98920fb31fa4"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/ldq.cpp",
+      "bytes": 4682,
+      "sha256": "b5a11f2b4b658e4fc2c53dc261a7401e09516a6276e9b1a9c7568a4ee6d86a3f"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/ldq.h",
+      "bytes": 2330,
+      "sha256": "01ccf8d13f84475cb126dea1f15546a59ce9398968360e6484da5832729aa077"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/lidar_imu_data_queue.cpp",
+      "bytes": 2248,
+      "sha256": "7f9ecbdad433653233b2701dbd06dd4f7f523d0e972cc5cb4bf0aca2ed7494b5"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/lidar_imu_data_queue.h",
+      "bytes": 2632,
+      "sha256": "cc8ae6d425cf6fb173b59072e5310f7b984e776a9d8277c8e9e0ef9d9dc58998"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/pub_handler.cpp",
+      "bytes": 18553,
+      "sha256": "4a81276ab8e425619fd58184b4b3ae386d5b07c31598295334b8a18907eaf9da"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/pub_handler.h",
+      "bytes": 4483,
+      "sha256": "6078da7ae6d23b8651af84ce8db7b753471fabfa2387cf9b6dcec32f6370a204"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/semaphore.cpp",
+      "bytes": 1470,
+      "sha256": "7ea77d2b2b9f5aca1aa1c4f239d427398699b504a25b5bcd1667545650a0c587"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/comm/semaphore.h",
+      "bytes": 1623,
+      "sha256": "a07dedf139d6a1f85d572b23f4a69b1f0574577366b2ecd759f06da4995eadcb"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/driver_node.cpp",
+      "bytes": 1485,
+      "sha256": "2367146dbf888b8eb6ac661792c3858ae7c2f8bb3136888fbbaee7593f1c1a1c"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/driver_node.h",
+      "bytes": 2482,
+      "sha256": "503851a1fe806c633377f891479b8b434e89a0ac4070db80d9e3b8fc36070a6a"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/include/livox_ros_driver2.h",
+      "bytes": 1734,
+      "sha256": "ee561a4a46c044994b94ccb47f479774b2d47745d96d1827bf75aa92d43b85ee"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/include/ros1_headers.h",
+      "bytes": 2216,
+      "sha256": "25d868b0c4e1972ad61619b26e47c5538d282b520143f6c03300b0adeab8fb0b"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/include/ros2_headers.h",
+      "bytes": 2478,
+      "sha256": "16aa2833be3b35acb0bbb9c71e78e261f65d7251740565571ae24d2c43b579d1"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/include/ros_headers.h",
+      "bytes": 1341,
+      "sha256": "67c52fefe87f71fb83d99774ba8569fff0de7c698a6917c31de2f4ccff3c78eb"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lddc.cpp",
+      "bytes": 22762,
+      "sha256": "37dcc252a743fafe14c7ee5341d8827f1a5298ec910502b201bd0feb3476c71e"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lddc.h",
+      "bytes": 5868,
+      "sha256": "31a78f172caf82f3b2938c9e2c296cd582da228d0043c17849f7a9b20788d4ea"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lds.cpp",
+      "bytes": 5950,
+      "sha256": "a53c0f737a61282c523a00bbdc5a76bfbb7ed5616fc5bbb4265bc64ca0853efe"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lds.h",
+      "bytes": 2689,
+      "sha256": "090334fb09e5b9a946042af06abe46d0f5a098b9978527b42ac1d0b7ce022b63"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lds_lidar.cpp",
+      "bytes": 6520,
+      "sha256": "637cac3ab27239717bb434ac35210551a98d17b08153e7205eb733da84a1153d"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/lds_lidar.h",
+      "bytes": 2705,
+      "sha256": "2a36a2f0c890ce7a4692a8e546a8dca5b1c8815766788f1ad95dc89a3d943822"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/livox_ros_driver2.cpp",
+      "bytes": 7899,
+      "sha256": "5be8fe1854e345660e78cf4f1c600eb87bb34ead54ef50b16033fba0cecdd621"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/parse_cfg_file/parse_cfg_file.cpp",
+      "bytes": 2381,
+      "sha256": "f893a7397f05e81826d6097233ae6a90d3428f921ceb04d9f957427f4bcf7e5e"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/parse_cfg_file/parse_cfg_file.h",
+      "bytes": 1721,
+      "sha256": "c0512f0ddb732861ec152e93d7d6477dd620865b4a92c385379d013286506998"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/parse_cfg_file/parse_livox_lidar_cfg.cpp",
+      "bytes": 5293,
+      "sha256": "ce7cc5df5f7e09768a2d256f0d1cae30ae9c6214d821be95036311cef08912ed"
+    },
+    {
+      "path": "src/livox_ros_driver2/src/parse_cfg_file/parse_livox_lidar_cfg.h",
+      "bytes": 2018,
+      "sha256": "1d5b9f606deedb7c78e1a6d0c3c10d62a886fcc2aac1ac42e1a4a1ae6a9b6d49"
+    },
+    {
+      "path": "src/multifloor_exploration/launch/multifloor_autonomy.launch.py",
+      "bytes": 2546,
+      "sha256": "6a6a19074f30fe6857753df398d4a44bf3d474e8ed10e30d64f24292db435ac5"
+    },
+    {
+      "path": "src/multifloor_exploration/multifloor_exploration/__init__.py",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "src/multifloor_exploration/multifloor_exploration/coordinator.py",
+      "bytes": 17990,
+      "sha256": "de7802edd65a25ddbf52f22a15878d7c1f5b76f172ea9454b98f80a283142eda"
+    },
+    {
+      "path": "src/multifloor_exploration/package.xml",
+      "bytes": 880,
+      "sha256": "aceadb86baa105090895f50f3c7bfa1358e605b689261f90493a23d9b9389a02"
+    },
+    {
+      "path": "src/multifloor_exploration/resource/multifloor_exploration",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "src/multifloor_exploration/setup.cfg",
+      "bytes": 113,
+      "sha256": "956b5c16d9bf5cf4fe9e6dd2b9d2a078fa2da3f3825377b112d82af1c018fabe"
+    },
+    {
+      "path": "src/multifloor_exploration/setup.py",
+      "bytes": 851,
+      "sha256": "65bd840dc4c797aa25b984676e142e97b4a3076d7ff78118cb3aaf426fcbc1c3"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/CMakeLists.txt",
+      "bytes": 2027,
+      "sha256": "fcd9b468825686b149b15dea828eb6e14d13aaa4e7b57038578b41f46b2b9492"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/include/scan_planner_nav2_controller/motion_speed_limit.hpp",
+      "bytes": 314,
+      "sha256": "dded29d11ce3e387ab8a44261097429f3937685ac26646a4b27d2bae9f8502d2"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/include/scan_planner_nav2_controller/pose_path_tracker.hpp",
+      "bytes": 8827,
+      "sha256": "763f51e9bfd5372aa2206f04ab86173f8dfe8a727998c438d0fc0cd16137f1b9"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/include/scan_planner_nav2_controller/scan_planner_controller.hpp",
+      "bytes": 4736,
+      "sha256": "8a1be08a5a37e736f25017ba7a4412edaacc7ddb994240ac33a98543518a3329"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/launch/scan_planner_go2.launch.py",
+      "bytes": 2472,
+      "sha256": "f798fe68cf42e616731fa41c54d053d8f34328ecf4adf1da01d80f5a159b339f"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/package.xml",
+      "bytes": 1104,
+      "sha256": "244c19cd221a9341ccde91d43fc6579d67d1efbed80eaf9c7ef065925e0b1063"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/scan_planner_controller.xml",
+      "bytes": 383,
+      "sha256": "143bd398baed644a04fdbb1525555e5a955284feb646b82d503db72642e6d2f1"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/src/scan_planner_controller.cpp",
+      "bytes": 39321,
+      "sha256": "abf910a00e06353d9fec7d6f5bc56f3d930edb988e7cb565b44f8f8d399df2c1"
+    },
+    {
+      "path": "src/scan_planner_nav2_controller/test/test_pose_path_tracker.cpp",
+      "bytes": 8609,
+      "sha256": "b0545b604f4f0e559dc131375492ce407ea7c1ec42b1c4348cc12d79aec9e483"
+    },
+    {
+      "path": "src/unitree-go2-ros2/.docs/gazebo_launch.png",
+      "bytes": 251874,
+      "sha256": "ded872f660ad37c2ff18c5c65d9f3650011d94b2e7b63f89db713b1bbbbacaf1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/.docs/gazebo_rviz_launch.png",
+      "bytes": 298018,
+      "sha256": "2df45b6de268be3df7a96e66d75c1f9abf862ea7fbc1af51bb255bc35dfe5244"
+    },
+    {
+      "path": "src/unitree-go2-ros2/.docs/gazebo_velodyne_launch.png",
+      "bytes": 248292,
+      "sha256": "fc0e5135cb45445dbcfae65b2623b7a76d3137a454fc1265d2e364e22e65caf9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/.docs/gazebo_velodyne_rviz_launch.png",
+      "bytes": 262030,
+      "sha256": "604d61832e240419795290cdf760c02c06197670ccbb943850b5156620d0a4f9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/.docs/go2_teleop.mp4",
+      "bytes": 1160919,
+      "sha256": "0f55715d4a3cab391a9fee341e88cbcc72d53ab565d9c8d83f5369b6ab12db08"
+    },
+    {
+      "path": "src/unitree-go2-ros2/README.md",
+      "bytes": 7676,
+      "sha256": "92d6c09618cd930b46f1202737abd91a20ccbcb5e12b6f8ca976b8db144e1a90"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/.travis.yml",
+      "bytes": 1281,
+      "sha256": "7888e79a0c6de39bad8321ca8cb5e45612d1cc5c19a15529e4107a2c93b7e184"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/LICENSE",
+      "bytes": 1525,
+      "sha256": "6ce8176cbad447a90f9cb09a66d97a3ceac3b0924c87c6919e32def10c36e32f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/README.md",
+      "bytes": 11229,
+      "sha256": "52b93a6253d7af01e347d132675c33562232411146dc7cdacd7ae3b17c777a07"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/CMakeLists.txt",
+      "bytes": 1443,
+      "sha256": "d56d9028104f91e97f59a7c11eda32de6ec9dbe23f8e3237809b67634c7f986f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/LICENSE",
+      "bytes": 1525,
+      "sha256": "6ce8176cbad447a90f9cb09a66d97a3ceac3b0924c87c6919e32def10c36e32f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/README.md",
+      "bytes": 868,
+      "sha256": "5fa8db0e13bbce7146d098716e6061b5bad51526893a3a2f9a9b7d1362dcebcb"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/bla/basic_linear_algebra.h",
+      "bytes": 23283,
+      "sha256": "62d3237961b5549216e72512032b5a3873b7057be3dc44e9d648593dbc8dd3b4"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/bla/memory_delegate.h",
+      "bytes": 9529,
+      "sha256": "a179b30c8062b482fc2463bc70eed5ff0e4a3f4fe313309e6bd2c368b7f5c5c1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/body_controller/body_controller.h",
+      "bytes": 3932,
+      "sha256": "ef702a4663a8cc6fd53d0621a2eab3c9abcbc4497a6c8ee1367716f60d05930e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/geometry/geometry.h",
+      "bytes": 10699,
+      "sha256": "b49f321cf206eaf014ccc985ce5a0f059583d89966e19f1c188442122e0d0a03"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/kinematics/kinematics.h",
+      "bytes": 7509,
+      "sha256": "95c86e31972b986d6c598022e5029423cea53ad5020b1f40934c7c4d331122bf"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/leg_controller/leg_controller.h",
+      "bytes": 7222,
+      "sha256": "c1cd9c1cac7a46e819a77ef91399865d652b3edb216650abdb5ea1463119eef2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/leg_controller/phase_generator.h",
+      "bytes": 5410,
+      "sha256": "c204d0ec060ceb72ed8bbd11c092a8f73d10869146fdd382222ef1fb8fab3f32"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/leg_controller/trajectory_planner.h",
+      "bytes": 6504,
+      "sha256": "64b93b1cf8502ee7e833ddcbcbba3be097d25e1eb86af442cf68c8bc48cff656"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/macros/macros.h",
+      "bytes": 2130,
+      "sha256": "22eee9f6d6204d3c5f066aa5839eeb527070ad8b6d03c79124466c359fb2abf5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/odometry/odometry.h",
+      "bytes": 6026,
+      "sha256": "6e4c50f85001aa971a5b558ef28dda8fad0fd836ab937e2af22114938bc173ee"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/quadruped_base/quadruped_base.h",
+      "bytes": 4949,
+      "sha256": "835a996977172dbb7116386878614f31161450dad7783590b50f00b24b68e2a0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/quadruped_base/quadruped_components.h",
+      "bytes": 5568,
+      "sha256": "96ff5d255a15ce8f60baed50d22a0efad9e3df0b402be172bbe64e8c0d889933"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/quadruped_base/quadruped_joint.h",
+      "bytes": 4739,
+      "sha256": "cdf81e594bc693ec49f8bae22c63a2bb418bcfe4dad5a9699a02ca5944a85537"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/quadruped_base/quadruped_leg.h",
+      "bytes": 6417,
+      "sha256": "9ed3d68faae72940b6929b81f09f9bbeeb7466d6279d8f1785e92e116d309685"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/utils/urdf_loader.h",
+      "bytes": 8004,
+      "sha256": "6a1dbdcfa1286cb7075b8f0bc493007a9d070496a6f1e2c6daf4b153c2453528"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/include/champ/utils/xmlrpc_helpers.h",
+      "bytes": 3626,
+      "sha256": "1399d3fc91fbae742e6f6aea5f987f89f5202c45b23c56c298587620d7cc26d8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ/package.xml",
+      "bytes": 354,
+      "sha256": "8fed912065fbef53bc3f25c69fa7601d90f92d8781397d81f3d1e9ad6212e254"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/.gitignore",
+      "bytes": 16,
+      "sha256": "f1b924abed73d9dbb42f1e5abbb20a67c4c39326c46fab9037890f746ec37f0f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/CMakeLists.txt",
+      "bytes": 3046,
+      "sha256": "d0bd85d11e6818481dcdfcb54550e67e921974f88a1f503e143705f575afed49"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/config/ekf/base_to_footprint.yaml",
+      "bytes": 825,
+      "sha256": "08f32113f1e2c462dc6ab9bc62e11f092796149fec0e37818c77288e53b8b154"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/config/ekf/footprint_to_odom.yaml",
+      "bytes": 831,
+      "sha256": "ee4d95ba50cc983dbea13c87f6eddbfc99043a3d41d46163e673d35b45f47e27"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/config/velocity_smoother/velocity_smoother.yaml",
+      "bytes": 426,
+      "sha256": "6158ef8cbb408bce0873ee6baee4af71b55aff062a44d1e747614e030b764aae"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/include/actuator.h",
+      "bytes": 3386,
+      "sha256": "b2108f3e72d9172457b36fe61043e7b7a55cef9ef43e4c327fd9731891ecb924"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/include/message_relay.h",
+      "bytes": 3457,
+      "sha256": "e3fc2d67f3638d2a34d46aed6391b07c454ba5a91510436f4ef2c06f48bfd55d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/include/quadruped_controller.h",
+      "bytes": 3926,
+      "sha256": "a4d1bb0ced60386174e61f4ab1fcf0c35339a966014ca41ee27dbb86b5f5dca3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/include/state_estimation.h",
+      "bytes": 4556,
+      "sha256": "24c0a4f5d7f705deefcadac90a8f3f101b217836c56cc7247f0cafb40db89bd8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/package.xml",
+      "bytes": 772,
+      "sha256": "51b7aba8d623b92af384481897d69ecf1abbf76a9869dfb178b551ee03864d40"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/message_relay.cpp",
+      "bytes": 6817,
+      "sha256": "75f8660bb5b20021fb1861c3e6927da237c25289e183dfc064aa950a2a1c6014"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/message_relay_node.cpp",
+      "bytes": 1709,
+      "sha256": "f5f8025cf07607e05a5b384b55cc31ed7de0b2640fbb5af23d1d485aa8685381"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/quadruped_controller.cpp",
+      "bytes": 10258,
+      "sha256": "715be76e034a933bf8c897a0edd0a9b22c355deb722af771cad0e08c953715ae"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/quadruped_controller_node.cpp",
+      "bytes": 1723,
+      "sha256": "640cdef55511beef72fcd338b43e09fa8354a5cd1a244be76e72bc5f9672ce4a"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/state_estimation.cpp",
+      "bytes": 16757,
+      "sha256": "e10cd1a384dc9c7ac04fbb5cbefa1c607f494bd2f62e88bf0be04f342847965a"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_base/src/state_estimation_node.cpp",
+      "bytes": 1715,
+      "sha256": "5b637b9a3e73356beceee37d0ecfd4ba6ad8daeb6171db58e29eb731b9aa821d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/CMakeLists.txt",
+      "bytes": 314,
+      "sha256": "794ee2911f1086b7ab7f121c1a19a04eeed729cfcadc61808ce7ee0253b0b5ea"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/champ_bringup/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/champ_bringup/joint_calibrator_relay.py",
+      "bytes": 4127,
+      "sha256": "8e5693bbc915aa7429552d524175820952f11d61af08c40c2ec1698165d72c1d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/bringup.launch",
+      "bytes": 4916,
+      "sha256": "117030121cf77534f3b4b9ba4adff115cff3e6c73575c4f8d688138252eec921"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/bringup.launch.py",
+      "bytes": 8922,
+      "sha256": "7baf478d99035cb4619236b0b55736c7c5ecc915ea58b0ca777450a700fadea2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/d435.launch",
+      "bytes": 1472,
+      "sha256": "cd31df0e1fbac78498acf3e766c4807a91e6d3b272d6796935fb1730bf9783c1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/hokuyo.launch",
+      "bytes": 857,
+      "sha256": "f877492654c88ffddd5a916d85afcfa335df4e052831b27a6e3f163032b42ceb"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/kinect.launch",
+      "bytes": 529,
+      "sha256": "d0379ef2aaf80863a639e317d98b36c1e24a56a0163a74a289f195e40612d7e6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/lms1xx.launch",
+      "bytes": 397,
+      "sha256": "19dc471ddc61bc438023b5fde19355df6b6dc0a705d56801ad62171797099288"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/realsense.launch",
+      "bytes": 545,
+      "sha256": "76927acc94f7a5a45997142bc8661a367c3910eeefaaac4a761af3dfa11cdd8d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/rplidar.launch",
+      "bytes": 439,
+      "sha256": "6a5d71f7401bc747aa3147e9b9555e6db6aa9a27de8357b320bb6c4730b2b2ac"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/sim.launch",
+      "bytes": 87,
+      "sha256": "34d20f17f37ed4a454cf0b53f453e9d7927cd649001ac80d3fd79f0278388c5f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/sweep.launch",
+      "bytes": 370,
+      "sha256": "aa6432203e66ba44981c180bb04a90ecc2a8fa4652e715f3deb5300072963f45"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/xv11.launch",
+      "bytes": 266,
+      "sha256": "77e2945057e8c019b37812d436a6bcfbfaec8acebb9c8a352c413268481de70f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/laser/ydlidar.launch",
+      "bytes": 1028,
+      "sha256": "d914620d7f484001ae60db6188815160cc7426bd262217d480bb7576d85d1592"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/include/velocity_smoother.launch",
+      "bytes": 1249,
+      "sha256": "49c5b5f46cf2b797b46deaea5dda502067d65f87c4b457c80373d406ee844d2c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/joints_gui.launch",
+      "bytes": 519,
+      "sha256": "584152f6eae17e4b012e9481360e09f9201a34ac531d6126d94df0f3e52df6b5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/launch/joints_gui.launch.py",
+      "bytes": 1699,
+      "sha256": "6998d18b743ae03a3f6d33dafda1b6724b0692654778516d1813ae617565ea83"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_bringup/package.xml",
+      "bytes": 933,
+      "sha256": "5fd68ccb6791ba6269ad9e6a4ca5326fbcc1e51f2e9b57fb1d897174d1c1a9b7"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/CMakeLists.txt",
+      "bytes": 196,
+      "sha256": "ce27c253f654dab1ea008bd4043496f7c03f5c85cb82deb837c1775278a22473"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/config/autonomy/navigation.yaml",
+      "bytes": 10806,
+      "sha256": "56f04206a8898c52f4b55f3a449d3ccfea40d7f0ff416a2d118a437936dc1a1e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/config/autonomy/slam.yaml",
+      "bytes": 2399,
+      "sha256": "509b2810cf478d4be4b31f94de25e9fb625cdb816859994e9bed86719f2b877e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/config/gait/gait.yaml",
+      "bytes": 358,
+      "sha256": "52b5be612379673ed1c3508dbb6f4ca7e5e87ed8e84f0822e745c27798a70ac8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/config/joints/joints.yaml",
+      "bytes": 535,
+      "sha256": "bef858fb7055f6f94d5b6d5f293c129573f572c19b9c9fd06870188600802cda"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/config/links/links.yaml",
+      "bytes": 547,
+      "sha256": "87acd33a4a87af95ee3802e8f6f618cae3dd78956b4ba024c7243b3107cb75f6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/include/gait_config.h",
+      "bytes": 457,
+      "sha256": "3b33bec2b2b226bd03ec0e93a93c4625a5c774d53cbaee21b9c929284ae499c1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/include/hardware_config.h",
+      "bytes": 1929,
+      "sha256": "5e814ed25a90c23f8d0a8bd6f60d67634ed658d11a7cb10f80f197339e895ec4"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/include/quadruped_description.h",
+      "bytes": 1235,
+      "sha256": "4859f79a63b4d3224c830d708ceb78e7122bd522023b1f0f138988d09407ba1d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/launch/bringup.launch.py",
+      "bytes": 2932,
+      "sha256": "e2580c91fe95de5cc39341df57e7be5377cb0ac4b61c36a4c61ec64d75bba3d0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/launch/gazebo.launch.py",
+      "bytes": 4848,
+      "sha256": "aeade9e48c32084206a2ada6c354b8f5ee74b0e3b02633ff8993fd5dfc7beb81"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/launch/navigate.launch.py",
+      "bytes": 2407,
+      "sha256": "a2c81d2630d919aac57d950e5679b39a4571535df7574e6765f5ab44938e5c62"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/launch/slam.launch.py",
+      "bytes": 2104,
+      "sha256": "178b803c3f30d04bf78ed10025302de32a72419bd153a5bfea7ee1076a67e0ac"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/maps/map.pgm",
+      "bytes": 3936310,
+      "sha256": "bce34eb3940c2eff60c814033e860f247e947f8140c2f9535e7149780bc2bc87"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/maps/map.yaml",
+      "bytes": 131,
+      "sha256": "5aea0cdbbf2b6ee08a93745673ca74d04e129bed4eba31aa31b92bb4abcc35cf"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/maps/playground.pgm",
+      "bytes": 281765,
+      "sha256": "6ff893dc2aa33242feb2c59d1f069d283c7efe47b511000f3d45aa4538ef6dee"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/maps/playground.yaml",
+      "bytes": 129,
+      "sha256": "dcf8078daf61d7cd20ea6c76abbe92d7255a0179667e78ca69bb5460ef66723d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/package.xml",
+      "bytes": 582,
+      "sha256": "13c9455f6800de3f1d8016f62d8b84e9af05176e32f3f412bb6f603f01631a81"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/setup.bash",
+      "bytes": 167,
+      "sha256": "6b5accec6b10cc15ff50a31d5c080d64e0e598138302b7c4c2768f2cdbbc7761"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/worlds/default.world",
+      "bytes": 3347,
+      "sha256": "5e7fdb9ba12a0bf454ef6065595b303d06a555c62a0e4ed0fd1cbd5909ef2cf0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/worlds/outdoor.world",
+      "bytes": 83370,
+      "sha256": "c3790eecef3f37332f6a4d14b10ef819a7111c6c725c19947bbc1d403dafa5b2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_config/worlds/playground.world",
+      "bytes": 45539,
+      "sha256": "e015d2ac3fe9e67352e1c9a7287150d3051fafd065309d95d4e6b84d9296f10f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/CMakeLists.txt",
+      "bytes": 585,
+      "sha256": "1b0fdfb4b7cc21200925c48f1e6d5eb4d2fe6db03ab02d5cfbc5268679832e60"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/launch/description.launch",
+      "bytes": 645,
+      "sha256": "6eff27eb5aed86274869da1833c00b9fef51504b3b0f69b43ec5b18e55fa5db5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/launch/description.launch.py",
+      "bytes": 1511,
+      "sha256": "536cdd8ac05c31bb5d1379da6bd28c6fb112f697d78bf1d3ef5a97125a5c2dc0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/launch/view_urdf.launch",
+      "bytes": 765,
+      "sha256": "72fed2ea199450fbc8c6a8120ba60256c9746fb13633d1243ea7c80d93816794"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/arm/base.stl",
+      "bytes": 606184,
+      "sha256": "b92a257e156faee3833d313cbbe24daf7d0efcf6949afabc30b183f37ca46e98"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/arm/lower_arm.stl",
+      "bytes": 116284,
+      "sha256": "8bb6c3dfa692ebaa5e44706f33d64267585a11ddf11786978cc3178b2d7e4080"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/arm/upper_arm.stl",
+      "bytes": 131484,
+      "sha256": "ad2d99642a653814c16bf09c0d7a35dc949636a486aa0ae366a9e02290361d8e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/arm/wrist1.stl",
+      "bytes": 108684,
+      "sha256": "73ddd83012861c7e6c449a49e65577ecbf4d1dfc8834fb815bab38a43576c7ce"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/arm/wrist2.stl",
+      "bytes": 58384,
+      "sha256": "fa76240239bf0838f09fc9b9a3860ab5a8cf8a81c2c86d6a7685aa4c01cf987e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/asus_camera_simple.dae",
+      "bytes": 11065,
+      "sha256": "ef27c906276bac17a9b0437fe11439653bc1246d3dc86cbc1f69b683f6f22213"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/base.stl",
+      "bytes": 90684,
+      "sha256": "69805a645242edd67883869eb8ebb6c250bef5f1c52388ff29d653ad16219a75"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/base_simple.stl",
+      "bytes": 28984,
+      "sha256": "89af6fe53cfed39ae90a39437180219d9d154749b4296668eefc68ae373c2ff5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/hip.stl",
+      "bytes": 684,
+      "sha256": "73fc6756a7a01467c301af0a440d5de674fedeb2a304b0204db4692aab8b75e9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/hokuyo_utm_30lx.dae",
+      "bytes": 10064,
+      "sha256": "9a183a197dc5a023654e541b98a979c3a49afe836c223a498d030a93ee0d4d9c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/lower_leg.stl",
+      "bytes": 70084,
+      "sha256": "7d2fe2f725a477a26e26d2d538886fb38025c0de57cf5c8e160674267208a006"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/lower_leg_simple.stl",
+      "bytes": 4084,
+      "sha256": "8d8b9b686fb53e97e05ae1d94128786ddc4ee809f0b67f9eecb56fecdc2cd27e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/upper_leg.stl",
+      "bytes": 7084,
+      "sha256": "7d0e4cff0b8aa0cb9c8030b41b41bc65b58ad04900b92c29b7cd210ec56f5e7c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/meshes/upper_leg_simple.stl",
+      "bytes": 3984,
+      "sha256": "12d846f6e9ca9f2fc640537d66248613710145b173024193fb98ead74c7683b9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/package.xml",
+      "bytes": 813,
+      "sha256": "396520a81b2e81b1259e3ff0a9f89ca841775924b56585c29d9b03b74fc79529"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/rviz/urdf_viewer.rviz",
+      "bytes": 10387,
+      "sha256": "3c859a991a0efc04e66ad0bab7073b6f6fbb15e2b3e01eb403ffaf20ae8d9284"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/accessories.urdf.xacro",
+      "bytes": 3108,
+      "sha256": "7b15ef0d07b7905040d3a3a8b1ec987861b358f47b08b8d143ad2a06d7210346"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/asus_camera.urdf.xacro",
+      "bytes": 8032,
+      "sha256": "f1b57b5de9826edf7468e834d4fe19e9ba63d5038e32ca114046bc6734edac3f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/champ.urdf",
+      "bytes": 35522,
+      "sha256": "818c6c62f4401d6691391637e287f4564134d8660e7f288d9d69cf6f89baceee"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/champ.urdf.xacro",
+      "bytes": 2892,
+      "sha256": "bbf7380226ffa82c9012d06dfbb05facdd4a8d5046f83f3ae1d5d46c3dc9816b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/champ_arm.urdf",
+      "bytes": 28557,
+      "sha256": "0b3fe9233e267bf0d87049712831f868672b1e06b9b6f6c9072b143166a1f9a0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/champ_velodyne.urdf",
+      "bytes": 29937,
+      "sha256": "08e2861aad0ff70beeb9f50ed232b31463f6607cb03a8daf7744a3c41e1b17d6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/gen_urdf",
+      "bytes": 78,
+      "sha256": "ce1b08640c74b47041d2da93316e076d090ef8c5cfb1be7a5f7ba314d8f94539"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/hokuyo_utm30lx.urdf.xacro",
+      "bytes": 4494,
+      "sha256": "e72e8205f3827b65a8d01c5bc100ca4a73f285ee29ae5e460b72b2261b67893b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/leg.urdf.xacro",
+      "bytes": 8143,
+      "sha256": "9909217c95f64366f2e04cab5bb6303806f3d464239860da2e3df30e3127aa57"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_description/urdf/properties.urdf.xacro",
+      "bytes": 1803,
+      "sha256": "20412a8ce69bb8dee69e3a4f5daa3cff4e82bee2ef5423566cf091e8e015ff67"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/CMakeLists.txt",
+      "bytes": 1204,
+      "sha256": "757093bebd7ba86cf6ee9386f2005ce94fcac6682f5222945fbba8ef2cad8a89"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/config/gazebo.yaml",
+      "bytes": 50,
+      "sha256": "c34da305d7b73626038238ee332c953ffe04e65f200c202d9f821c0e8203e1b9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/config/ros_control.yaml",
+      "bytes": 3633,
+      "sha256": "7853171cc77fd2884b7d0f169e440431c96d42156961e7060ff26fec0957667b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/launch/gazebo.launch",
+      "bytes": 1869,
+      "sha256": "40acf28f5bf31d22d0839db44cb6f9b0e4d9285866178c4e3def65354bc3acdc"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/launch/gazebo.launch.py",
+      "bytes": 6394,
+      "sha256": "0582dc02bcc5b43fa73f28caa55eaff2a58230d2a88bf38c0a75b4e98afa7ba3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/launch/spawn_robot.launch",
+      "bytes": 1155,
+      "sha256": "7114063f65c6709af0834f8e2877eb45e136b88557fd3bf90bed6e3a3642b92e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/launch/spawn_world.launch",
+      "bytes": 734,
+      "sha256": "792162f12906a5632acfa440736d572a318897923464f01ef1fa06619b72d76e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/package.xml",
+      "bytes": 861,
+      "sha256": "6c2336dbd50ba6cc4c3d0edbcf3c42a4e84e11077dcfd2155d23333b45f6e79c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/scripts/imu_sensor.py",
+      "bytes": 2333,
+      "sha256": "ca868e4eb0ad18af0ea97d9d85aea0f347d328c62144aa16bbd2fc433b56c144"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/scripts/odometry.py",
+      "bytes": 7382,
+      "sha256": "18900f014f0301b16c52dbeb2176af744a615c7ae1a77b571016cf45b700e0ad"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/scripts/odometry_tf.py",
+      "bytes": 2609,
+      "sha256": "6c6853bd6e100e4b8bd9dda01a410cd042b52baa6a6ca3c068b98d190660aeec"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/src/contact_sensor.cpp",
+      "bytes": 3288,
+      "sha256": "f7e64b93e6cff89bc8fddf356d8c7c436ad1ed047c3e2947f64b73fa9ae2e482"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/worlds/default.world",
+      "bytes": 3347,
+      "sha256": "5e7fdb9ba12a0bf454ef6065595b303d06a555c62a0e4ed0fd1cbd5909ef2cf0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/worlds/outdoor.world",
+      "bytes": 83370,
+      "sha256": "c3790eecef3f37332f6a4d14b10ef819a7111c6c725c19947bbc1d403dafa5b2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_gazebo/worlds/playground.world",
+      "bytes": 45539,
+      "sha256": "e015d2ac3fe9e67352e1c9a7287150d3051fafd065309d95d4e6b84d9296f10f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/CMakeLists.txt",
+      "bytes": 606,
+      "sha256": "7445877677363bbc35b8bff026e19db26767fc403a17bbaca6829764277421a2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Contacts.msg",
+      "bytes": 15,
+      "sha256": "956765993dcd8c7c7dc6f03fb9e783fc8dcbd012048919c429638fbbee1bcb21"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/ContactsStamped.msg",
+      "bytes": 38,
+      "sha256": "de4e5b05778760e4635e618a39a65350d4a9dfd4f9823250d713040b807ddef3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Imu.msg",
+      "bytes": 155,
+      "sha256": "b8b6908defa867ae77aeff79cf33ce5d5420fa6ab7084a25f2a71e6e1406acc3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Joints.msg",
+      "bytes": 18,
+      "sha256": "cf486f178c00c793b04512ac3765009e835277d775be9b7b69ca74eee96f6b4a"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/PID.msg",
+      "bytes": 30,
+      "sha256": "e4c927c51fd4e6da73fb290fc4480d55df0fec29ac09b1ccf1244d68457f129d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Point.msg",
+      "bytes": 29,
+      "sha256": "655ba746820eb8d51108feba96950738cfa9146b014344b2ca4b106f057779f6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/PointArray.msg",
+      "bytes": 79,
+      "sha256": "1af3101b78304139913675e909c60da815b6422c4d0624a57992c3249aca4e3a"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Pose.msg",
+      "bytes": 69,
+      "sha256": "323cc8c901b920b4c0de364d617a22f4c758ce76d904a291a25bbda5e9fdd312"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/msg/Velocities.msg",
+      "bytes": 53,
+      "sha256": "50c26fd3f8fa7c8c638161b9d0012d9a89dc4bdd65b27399023120e39345a1a0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_msgs/package.xml",
+      "bytes": 802,
+      "sha256": "877858db4e2faa71f4d3f4594cfe62686f1587adadb94fa11c468a360a2b0273"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/CMakeLists.txt",
+      "bytes": 187,
+      "sha256": "9c062c49e4102fc0608a94f77854c5abad2e05f46747d33df0e44b3e9f8f0922"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/launch/navigate.launch.py",
+      "bytes": 2692,
+      "sha256": "e74df40de29c01987ac367531a676c6bb6b869618b5ca8d418b755e82df59834"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/launch/slam.launch.py",
+      "bytes": 2644,
+      "sha256": "afa407264a0826f3e41627945a1eb931d60ce63f06b51fe5a6e0d216ff7cd8a0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/package.xml",
+      "bytes": 831,
+      "sha256": "7e98448bfd3babe59a87955261f89efb867ff870e44f0b5e631d1a6744eafdb3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/rviz/navigation.rviz",
+      "bytes": 19996,
+      "sha256": "aaaa0406b05ac5b2053d7dde6c00d7cbc3c5fe3267f604a812ac73aaa3e49218"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/rviz/navigation_minimal.rviz",
+      "bytes": 8156,
+      "sha256": "12f41d0a100d0aa1f8935394a77bbf9e8a1d5872c755abf9d8ff9c0e989cf0b8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/champ_navigation/rviz/slam.rviz",
+      "bytes": 8868,
+      "sha256": "23c474a8eb5f625e357f6f3f0125632cd205ffcdab859a0d9020ea3da61579e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/docs/images/leg_stretched.png",
+      "bytes": 8131,
+      "sha256": "d343a3c2c259c0573bd2be20ab25aaef7832620330b8eecac77b1a58021c1ab2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/docs/images/navigation.gif",
+      "bytes": 3317719,
+      "sha256": "42c247d068786b20f308dafd3bd2fa83557aff62e56fb666517c3e3310e78c51"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/docs/images/robots.gif",
+      "bytes": 3907212,
+      "sha256": "46e5a7a091834dea5d5463f8544e61a9985e4c98a5011aa820e630f6607e2750"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ/docs/images/slam.gif",
+      "bytes": 3620585,
+      "sha256": "3681588e65a7c93e8212dfffbdbab0cdbedf0c630a978988075abcce91533e05"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ_teleop/CMakeLists.txt",
+      "bytes": 245,
+      "sha256": "0dc7446a9f757682594783c53c0b8059672e7688bea75ea1fe04346249deccf6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ_teleop/README.md",
+      "bytes": 793,
+      "sha256": "a51c86a026081c8602d5a25a91b73a1eb8a419b6f01e5aca1d1338b67ff8b321"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ_teleop/champ_teleop.py",
+      "bytes": 7578,
+      "sha256": "8bc180bc13f470fa7c5561005ee985904d0fd4cbed317b79b11af6ac48e85c73"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ_teleop/launch/teleop.launch.py",
+      "bytes": 1599,
+      "sha256": "6b3ef959148b80aa436dfb3c7758073965d5f37ebdee0c8dbcef2733744f88da"
+    },
+    {
+      "path": "src/unitree-go2-ros2/champ_teleop/package.xml",
+      "bytes": 674,
+      "sha256": "a3e4f491efcf7fe7e311cda8644230f6ea498cea978d73df535a8e5934ee8e9d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/README.md",
+      "bytes": 2478,
+      "sha256": "3f057af42a58a868a42bb2674104ed4cd90f61430ba5f476ac1f2330647d3374"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/CMakeLists.txt",
+      "bytes": 194,
+      "sha256": "f6083e9e39fa57ad425092fcfb766c8862a3af1ac5a57bcdac99e5d7c73ce2f1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/autonomy/navigation.yaml",
+      "bytes": 10806,
+      "sha256": "56f04206a8898c52f4b55f3a449d3ccfea40d7f0ff416a2d118a437936dc1a1e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/autonomy/slam.yaml",
+      "bytes": 2399,
+      "sha256": "509b2810cf478d4be4b31f94de25e9fb625cdb816859994e9bed86719f2b877e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/gait/gait.yaml",
+      "bytes": 359,
+      "sha256": "2023616921fae638cd4f0e8fae8a3549fc537c01a5b0714de00f654083a0c3ab"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/joints/joints.yaml",
+      "bytes": 535,
+      "sha256": "bef858fb7055f6f94d5b6d5f293c129573f572c19b9c9fd06870188600802cda"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/links/links.yaml",
+      "bytes": 547,
+      "sha256": "87acd33a4a87af95ee3802e8f6f618cae3dd78956b4ba024c7243b3107cb75f6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/config/ros_control/ros_control.yaml",
+      "bytes": 3920,
+      "sha256": "9390753d2c2483e00fa75a7acd5c74985e83849f3d60905d687ef8c1d71cc720"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/include/gait_config.h",
+      "bytes": 457,
+      "sha256": "3b33bec2b2b226bd03ec0e93a93c4625a5c774d53cbaee21b9c929284ae499c1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/include/hardware_config.h",
+      "bytes": 1929,
+      "sha256": "5e814ed25a90c23f8d0a8bd6f60d67634ed658d11a7cb10f80f197339e895ec4"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/include/quadruped_description.h",
+      "bytes": 1235,
+      "sha256": "4859f79a63b4d3224c830d708ceb78e7122bd522023b1f0f138988d09407ba1d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/launch/bringup.launch.py",
+      "bytes": 2930,
+      "sha256": "7331be20a56e5ed3ffc79cd719519ef43792a48b74f66c4c9f56947a415df10f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/launch/gazebo.launch.py",
+      "bytes": 5009,
+      "sha256": "da51bdae26a6fb182299efbdf67b6b4b80e81f71a7aad4b1315d0acce07fe359"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/launch/gazebo_velodyne.launch.py",
+      "bytes": 5029,
+      "sha256": "5e7e0290995e0dba5702a3e78e933bbb608da8fe8e5ef9654173c85d4b9f6a40"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/launch/navigate.launch.py",
+      "bytes": 2405,
+      "sha256": "a993b6e0ec0398c00a001f19573757c67a44c552a64ef5a86acdd49d70128b91"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/launch/slam.launch.py",
+      "bytes": 2102,
+      "sha256": "003a31980e6ed510107f9fcf530d804d54093e881208711186a4c2cd4cdde761"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/maps/map.pgm",
+      "bytes": 3936310,
+      "sha256": "bce34eb3940c2eff60c814033e860f247e947f8140c2f9535e7149780bc2bc87"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/maps/map.yaml",
+      "bytes": 131,
+      "sha256": "5aea0cdbbf2b6ee08a93745673ca74d04e129bed4eba31aa31b92bb4abcc35cf"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/maps/playground.pgm",
+      "bytes": 281765,
+      "sha256": "6ff893dc2aa33242feb2c59d1f069d283c7efe47b511000f3d45aa4538ef6dee"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/maps/playground.yaml",
+      "bytes": 129,
+      "sha256": "dcf8078daf61d7cd20ea6c76abbe92d7255a0179667e78ca69bb5460ef66723d"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/package.xml",
+      "bytes": 438,
+      "sha256": "5eb6f299a8d807fea33ee73e74d6c1900628f1aac4a0d51e36556d685d3e6a35"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/setup.bash",
+      "bytes": 167,
+      "sha256": "6b5accec6b10cc15ff50a31d5c080d64e0e598138302b7c4c2768f2cdbbc7761"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/worlds/default.world",
+      "bytes": 3347,
+      "sha256": "5e7fdb9ba12a0bf454ef6065595b303d06a555c62a0e4ed0fd1cbd5909ef2cf0"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/worlds/outdoor.world",
+      "bytes": 83370,
+      "sha256": "c3790eecef3f37332f6a4d14b10ef819a7111c6c725c19947bbc1d403dafa5b2"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/configs/go2_config/worlds/playground.world",
+      "bytes": 45539,
+      "sha256": "e015d2ac3fe9e67352e1c9a7287150d3051fafd065309d95d4e6b84d9296f10f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/CMakeLists.txt",
+      "bytes": 579,
+      "sha256": "65c0840f297d9b3745d50913a08722c5252203e1bd8dd5e4001f7acb79f00f01"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/config/_joint_names_go2_description.yaml",
+      "bytes": 235,
+      "sha256": "d44d6a367e458619d226973a108d704fde69f560678a56da8a9529f03dd4a662"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/config/_robot_control.yaml",
+      "bytes": 2287,
+      "sha256": "c9f800011ef2b676d06dae36127314622279ead7df3e2024ead4c69ceb3f8cf5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/config/ros_control/ros_control.yaml",
+      "bytes": 3920,
+      "sha256": "9390753d2c2483e00fa75a7acd5c74985e83849f3d60905d687ef8c1d71cc720"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/base.dae",
+      "bytes": 10727399,
+      "sha256": "e52bebbb5c7ff1f6aedee620c9b5b349f6e965360ecc63a9bb743eeff2d0be64"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/calf.dae",
+      "bytes": 1125517,
+      "sha256": "29872fa1a435b92bc2b395fdfa7f0aee26101db3c494681896bd4ef24ee7883c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/calf_mirror.dae",
+      "bytes": 1125457,
+      "sha256": "79c66be7ed06760bd5001c067a1fb0ac517f639d8b1a5f89be471903b3f359e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/foot.dae",
+      "bytes": 506988,
+      "sha256": "ffbd95fd641866ce9bd277aa249b92dafc9148d70131fa2c52709a35ce5b710b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/hip.dae",
+      "bytes": 4666421,
+      "sha256": "8735e10617afe252cef0844c1d139d15bc6d4c653660d742fea9fe05c2704d8f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/thigh.dae",
+      "bytes": 3884136,
+      "sha256": "a622381ae308897ff143b8bbf02f075457c342b22984205040424a5a983246fa"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/dae/thigh_mirror.dae",
+      "bytes": 3896575,
+      "sha256": "c7bae0b0565c2aa4b7cc15a538d795e9153e0f10c821cc18429e92693172bdc6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/launch/description.launch.py",
+      "bytes": 1502,
+      "sha256": "a170c33f40be47f2146122993779d5fdef29c7670a141f8b3ceb4abe60aa855f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/calf.dae",
+      "bytes": 1125517,
+      "sha256": "29872fa1a435b92bc2b395fdfa7f0aee26101db3c494681896bd4ef24ee7883c"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/calf_mirror.dae",
+      "bytes": 1125457,
+      "sha256": "79c66be7ed06760bd5001c067a1fb0ac517f639d8b1a5f89be471903b3f359e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/foot.dae",
+      "bytes": 506988,
+      "sha256": "ffbd95fd641866ce9bd277aa249b92dafc9148d70131fa2c52709a35ce5b710b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/hip.dae",
+      "bytes": 4666421,
+      "sha256": "8735e10617afe252cef0844c1d139d15bc6d4c653660d742fea9fe05c2704d8f"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/hokuyo.dae",
+      "bytes": 87855,
+      "sha256": "a42fae2752bf64de16ff6fdf4f91f02d56c0f3bd259843890a43846acb215fb6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/thigh.dae",
+      "bytes": 3884136,
+      "sha256": "a622381ae308897ff143b8bbf02f075457c342b22984205040424a5a983246fa"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/thigh_mirror.dae",
+      "bytes": 3896575,
+      "sha256": "c7bae0b0565c2aa4b7cc15a538d795e9153e0f10c821cc18429e92693172bdc6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/meshes/trunk.dae",
+      "bytes": 10727399,
+      "sha256": "e52bebbb5c7ff1f6aedee620c9b5b349f6e965360ecc63a9bb743eeff2d0be64"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/package.xml",
+      "bytes": 741,
+      "sha256": "766554b9251dc39f5ef96673f34ebde666bfc66c8509c6469ee7ec1caf972eeb"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904144240.urdf",
+      "bytes": 23882,
+      "sha256": "7297f2b2324e07cfff29116c4756aaa4abb7b5920cc1884706c0fcdc5138a2c8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904182446.urdf",
+      "bytes": 23883,
+      "sha256": "fd494daf79b7822ca493201a544b0706cdee2e192c3fc1cc92d336116cd77570"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193628.urdf",
+      "bytes": 23904,
+      "sha256": "0896e3d3585222ce16bb1eec7ad38e9f9a2603e388c5c4d33de5207cc3cfe48e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193644.urdf",
+      "bytes": 23925,
+      "sha256": "e03f59543d6c0eae87337e03caa4a889ae8fb34ef3a01ae263e96bc17ab4cb2e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193653.urdf",
+      "bytes": 23946,
+      "sha256": "1dd98160b84b61c1910ef0d086045ce6025706e07f454ead09619d8ac6323171"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193705.urdf",
+      "bytes": 23967,
+      "sha256": "8cbabc19634a89087abcc687707b0f95c78447fd6124a0ecedca1f50a28abb69"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193710.urdf",
+      "bytes": 23967,
+      "sha256": "8cbabc19634a89087abcc687707b0f95c78447fd6124a0ecedca1f50a28abb69"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230904193711.urdf",
+      "bytes": 23967,
+      "sha256": "8cbabc19634a89087abcc687707b0f95c78447fd6124a0ecedca1f50a28abb69"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112047.urdf",
+      "bytes": 24570,
+      "sha256": "6c811509b717d36e024d3184efa5639d80b92dec5ff70dc08c4c1b8784e74bca"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112143.urdf",
+      "bytes": 24570,
+      "sha256": "7e193fe01008692f1a1d600ee0bfdde7495050ef3d8387f024e442a8a40d2ead"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112217.urdf",
+      "bytes": 24570,
+      "sha256": "6c811509b717d36e024d3184efa5639d80b92dec5ff70dc08c4c1b8784e74bca"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112735.urdf",
+      "bytes": 24576,
+      "sha256": "023f766950c53435d5fcff733eab4870a714bfc67a2902430a19dc1173e5d733"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112749.urdf",
+      "bytes": 24575,
+      "sha256": "32609caa1db1cbc94a1b303bc591d35bbddd2d204130df86977c963a825cf1ad"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112752.urdf",
+      "bytes": 24575,
+      "sha256": "3ebc3c66986928150cb92a1452f20dd9440b1a9e48401d3f5116dacb08a8161a"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905112944.urdf",
+      "bytes": 24585,
+      "sha256": "3b17d6b99a0e0f5d7d02609cdc0ee7664885ffff9e48b22798f6a77028c66ff8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113000.urdf",
+      "bytes": 24585,
+      "sha256": "aff30e3a5cde2b59dd9f796dadefb84369baffc9b5b748fb4b1a249284e93573"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113059.urdf",
+      "bytes": 24585,
+      "sha256": "aff30e3a5cde2b59dd9f796dadefb84369baffc9b5b748fb4b1a249284e93573"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113633.urdf",
+      "bytes": 24585,
+      "sha256": "7bfe9401e2c34ca2671c28293b35c6d9261d2d2de3edf60201ed9baaebdbe0e3"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113754.urdf",
+      "bytes": 24585,
+      "sha256": "0659e5d2e27a048386e3bbb56bbfae1b0eb4ab2407eb9acd0fe8de375a06dfd9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113755.urdf",
+      "bytes": 24585,
+      "sha256": "0659e5d2e27a048386e3bbb56bbfae1b0eb4ab2407eb9acd0fe8de375a06dfd9"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113839.urdf",
+      "bytes": 24585,
+      "sha256": "4684b87b206230b0196c34bf782ac87db05cb809528e140aa3f4242f1f842981"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905113840.urdf",
+      "bytes": 24585,
+      "sha256": "4684b87b206230b0196c34bf782ac87db05cb809528e140aa3f4242f1f842981"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905114759.urdf",
+      "bytes": 24573,
+      "sha256": "06fe1ba5bb642708c3356cbed71312b496e1f50e05019f25cf29945e23e410ff"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905114819.urdf",
+      "bytes": 24561,
+      "sha256": "6e685c6eb9ba61e8bf598bbf5d67c1b368d95c67a8b66496c9025459edda7805"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115021.urdf",
+      "bytes": 24555,
+      "sha256": "3dd9cf49363efe4367d0ed26784820205bf4d4c09e3d789e2967f3e6161973e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115022.urdf",
+      "bytes": 24555,
+      "sha256": "3dd9cf49363efe4367d0ed26784820205bf4d4c09e3d789e2967f3e6161973e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115040.urdf",
+      "bytes": 24563,
+      "sha256": "56bfb1192ed49748f1cc41c8b7831fbfc22990aaa06c0266f4320d46d63f0400"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115215.urdf",
+      "bytes": 24567,
+      "sha256": "3afe3ed10b4f7c71a8a76eee94bacdd2c20f8542fcf4b33839b66b77d3ed1357"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115226.urdf",
+      "bytes": 24571,
+      "sha256": "9eac355f65fa0c43619d7645476758065edbd01f64d87e70c3752198661c0d12"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115300.urdf",
+      "bytes": 24568,
+      "sha256": "84c14ee20f6f00531c258f793cc5f68fcbf5dab2dcec9b371027229121f598bd"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/.history/go2_description_20230905115313.urdf",
+      "bytes": 24565,
+      "sha256": "91d0370062bf1bd6b82d8be3a0f2816c32665a5bdee50149fc80227c7a030f70"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/Amended_collision_model.png",
+      "bytes": 218383,
+      "sha256": "4c2ce468f29313bd65a6109265f99b55b156f8dba8bf3f5c1b9afb0ad666cba6"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/Normal_collision_model.png",
+      "bytes": 205117,
+      "sha256": "4aaa869842b28436e8cf73a7d9cf67eb4f0651808cae4407f8975f0f87434ec5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/urdf/go2_description.urdf",
+      "bytes": 24565,
+      "sha256": "333c3331ef76793134aeb3e928fdc9213fc879a274dc6e02ba5ac4f6950143df"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/const.xacro",
+      "bytes": 5399,
+      "sha256": "884c1f685ee0a89cbeee320598d0d482b842f497096938d2a6a415b89a2007fb"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/gazebo.xacro",
+      "bytes": 5490,
+      "sha256": "4850c2bbd82f7e20c721e28486a8019255964ddd413d1d46f4b6ab6bc40a2bec"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/laser.xacro",
+      "bytes": 2121,
+      "sha256": "d7d7d8ddf611e4fd0db5599964faee3fb3bf649840c6aa9b8e18a4ca62d4f10b"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/leg.xacro",
+      "bytes": 8829,
+      "sha256": "b68234d154ba26f3bbcad68023d6494f4c4eac09c4b08f0562015a9721182ef4"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/materials.xacro",
+      "bytes": 865,
+      "sha256": "eb45dfe0751c08ee1e2cefafc08f0406fe9737036571e4dc1541fa31d7f753e1"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/robot.xacro",
+      "bytes": 4625,
+      "sha256": "4dd554aec302b3fe6c89b11a822cf67b9a8f267872252dcef156d6a62366f72e"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/robot_VLP.xacro",
+      "bytes": 4568,
+      "sha256": "fe9ce1cba4e743570cd94351b69390a6d879a504d2ef5f41e060cc261c0e6ed8"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/transmission.xacro",
+      "bytes": 1746,
+      "sha256": "acda3cff07fb0ffe30e1c577503f04bce113a29e57a95ba2a60397c372cb62d5"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/descriptions/go2_description/xacro/velodyne.xacro",
+      "bytes": 3262,
+      "sha256": "9ee2d531548d24d34d65c05bf9a66fcd208abecdee6b4da7bb7c272280277936"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/install_descriptions",
+      "bytes": 940,
+      "sha256": "232b6e30bf16550b50b0044d6385a936ca9784082ee36f20a13cc803b85be0ba"
+    },
+    {
+      "path": "src/unitree-go2-ros2/robots/update_robots",
+      "bytes": 344,
+      "sha256": "0d3db1ba57e0a4127b02cf0b9a59c45aceed9513f0a894f3cdef5abc07ba5a58"
+    },
+    {
+      "path": "read_nav_result.sh",
+      "bytes": 288,
+      "sha256": "4e46c135946f24b4a60d3c6ece9fb81189d719dcb0dba2a5c10701fee1a02cf6"
+    },
+    {
+      "path": "worlds/generate_research_two_floor.py",
+      "bytes": 9359,
+      "sha256": "d9cb5293fdba6f146c17d29adc078a8945837ee3a2927064ace8079fb3e21e8b"
+    },
+    {
+      "path": "worlds/indoor.world",
+      "bytes": 31309,
+      "sha256": "1389789303c937795032af20e113825042ebbf21433379390f9594a6f489244c"
+    },
+    {
+      "path": "worlds/launch_research_two_floor.sh",
+      "bytes": 680,
+      "sha256": "2c7aa7e1a8795490c9b7e7745bc3d2fcbb55dae2d8763c6dced6a9ef9b5771b3"
+    },
+    {
+      "path": "worlds/research_two_floor.world",
+      "bytes": 129946,
+      "sha256": "560c02cf29529be83ef5095af29772188fbe5341e3ecca62d893f4628a0f24dd"
+    },
+    {
+      "path": "RANDOM_RECOVERY.md",
+      "bytes": 4665,
+      "sha256": "f09d1fb888c53be972bf0ad2a54f1a1a587277e6aff59983383cd8ff041a2040"
+    },
+    {
+      "path": "cancel_navigation_and_stop.sh",
+      "bytes": 535,
+      "sha256": "ea836929d9ba9479eaa40767b4c79425a201780537cf0a3f43d94addad0ee0e1"
+    },
+    {
+      "path": "VIEWPOINT_SELECTION_VALIDATION.md",
+      "bytes": 4620,
+      "sha256": "67456c71f238effa8e2b21751f6b38e2b3f1e335ded5d66ba43702044d3a8d09"
+    },
+    {
+      "path": "tools/record_navigation.py",
+      "bytes": 7123,
+      "sha256": "234df5c06b3ea5715025ea8480384e367b200881a6d3a001ae2bfe92d6aefcf2"
+    },
+    {
+      "path": "tools/start_fresh_multifloor.sh",
+      "bytes": 1989,
+      "sha256": "70aedec7196148ac6505dcb309326626b0da1f4929c17a0415f22dea0f54ad70"
+    },
+    {
+      "path": "verify_goal_tolerance.py",
+      "bytes": 2429,
+      "sha256": "767fda588e6d16e42a76d4af8a8bb4384686dd8b8d92666cc52bb23b02930ee3"
+    },
+    {
+      "path": "restart_localization_nav_stack.sh",
+      "bytes": 2980,
+      "sha256": "bbf6c99d57baa2167ad5134a634636853d43ad6231df221c53f261ae35a74144"
+    },
+    {
+      "path": "inspect_fastlio_failure.sh",
+      "bytes": 611,
+      "sha256": "da12de7370c60837763e52757f28375b0b67686fffa127a2c2499f1b37f281a4"
+    },
+    {
+      "path": "test_compute_path.sh",
+      "bytes": 401,
+      "sha256": "42610182f95779003f4bd8fc8333410120f000d3ab22f32c0411c845ad46a974"
+    },
+    {
+      "path": "ISSUES_AND_SOLUTIONS.md",
+      "bytes": 6071,
+      "sha256": "90a26d4589908fc23a43e16741d439df43c104f1eb49a32e2709a3a39313fb41"
+    },
+    {
+      "path": "inspect_pose_topics.sh",
+      "bytes": 549,
+      "sha256": "af84c1ed611480e99dcd4ebe6b378e8b06d785ce1984e59a0272396180887bdc"
+    },
+    {
+      "path": "maps/ybsz_map.pcd",
+      "bytes": 21626747,
+      "sha256": "bfef30b1b3bddc348c41621a7b8f20d961eabfef5e1855c5f17b932cae6309f1"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.before_voxel_diag_20260917.yaml",
+      "bytes": 10571,
+      "sha256": "e2f9713b87210b1a5cef742cd72ad8c308b687911030004c4725a26d3dda0ff2"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.yaml",
+      "bytes": 13324,
+      "sha256": "f275cb5b48f4fb322803704df1ded99789eb06db6523e33299e86e1aba37a773"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.yaml.before_astar_20260916",
+      "bytes": 10572,
+      "sha256": "4713b796736d1b595bb0cd51d0524e0b56c6ec6fd994d9bb67f0db3e56e39a95"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.yaml.before_controller_5hz_20260916",
+      "bytes": 10573,
+      "sha256": "866e39d7f13b9335ca14296d0a8c8b2271da02d42025808d772a194519c26ff2"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.yaml.before_costmap_ready_fix_",
+      "bytes": 10571,
+      "sha256": "1b81e5dc2a0a840d8c84c181d526825c8b67e6b0cb78567a550606d483fde953"
+    },
+    {
+      "path": "config/nav2_go2_fastlio.yaml.before_goal_checker_fix_20260916",
+      "bytes": 10572,
+      "sha256": "f56debc164ea9593079f22bff856b24f74570962c6344d0c57c07dead5075b49"
+    },
+    {
+      "path": "config/nav2_multifloor.rviz",
+      "bytes": 18309,
+      "sha256": "e9f06113168f93b854b37d59cd9f49a97c08c621ccdcfd2f40e43ed61a87a9b6"
+    },
+    {
+      "path": "config/navigate_go2_recovery.xml",
+      "bytes": 1190,
+      "sha256": "1f2ba9b75c7e6a1c9c0b44437ba5b42b07d1f81204a7acd7ca0c72f75ab3d357"
+    },
+    {
+      "path": "check_go2_stack.sh",
+      "bytes": 606,
+      "sha256": "3c8a2042a70cea8ac75b3fb9137891a6eaadeda01ea60fdedd0e3ead9b5c5b82"
+    },
+    {
+      "path": "restart_go2_diagnostic_stack.sh",
+      "bytes": 1040,
+      "sha256": "1a40cac59d0d98b1d8d5813fb9b8c0a4371b0c60f8ed4b0246c8cc08508e6591"
+    },
+    {
+      "path": "EXPLORATION_LOGIC_AND_STALL_AUDIT_20261022.md",
+      "bytes": 9451,
+      "sha256": "275ab449d803cd7994d594edc75c3571a05a7556f00954f1a489867c0a886c35"
+    },
+    {
+      "path": "probe_corridor_paths.py",
+      "bytes": 2077,
+      "sha256": "80596a8631ade1f026f2ad19f75b9ff3a39745d5028b31d5792d2db09428053c"
+    },
+    {
+      "path": "final_stack_audit.sh",
+      "bytes": 1048,
+      "sha256": "628a547a5cd8f08f3853dae7f21ccc17656b9b71aaad36d98c39007c9c63dede"
+    },
+    {
+      "path": "CONNECTIVITY_FIX_README.md",
+      "bytes": 5408,
+      "sha256": "ac65aa23b741de3edb39dfeff2ff41692de450cc8fa4c35b01e002566f4a6244"
+    },
+    {
+      "path": "TURN_STALL_RECOVERY.md",
+      "bytes": 4106,
+      "sha256": "b77e5df26c5f052fd81811e26e81baa93a38d012a7edf9fbb9ab515cb043e7f7"
+    },
+    {
+      "path": "compare_fastlio_truth.py",
+      "bytes": 1816,
+      "sha256": "f3e71d06847f9afd034066cb198bca5aaf62716c6f7d9951de752cc185bb2c5b"
+    },
+    {
+      "path": "check_sensor_timestamps.py",
+      "bytes": 2380,
+      "sha256": "ab36035a525676d35d78972dd3581925768e403cc46ead5af0a625d07fd7f169"
+    },
+    {
+      "path": "inspect_controller_thresholds.sh",
+      "bytes": 687,
+      "sha256": "ef97af33bd2fe00a78c66037f60f8791ce3ff7220d23b47687393be7954be65b"
+    },
+    {
+      "path": "run_stationary_probe.sh",
+      "bytes": 273,
+      "sha256": "349845cd6c4626aef45b9a85444d228cb5c8bdd244ae3b5f8f0aaf51106d293b"
+    },
+    {
+      "path": "inspect_fastlio_bridge.sh",
+      "bytes": 736,
+      "sha256": "5ee8aa23d4e076cc62064883db533ef5653fcf86208f91884623bc6ac13899ed"
+    },
+    {
+      "path": "inspect_tf_chain.sh",
+      "bytes": 611,
+      "sha256": "598640fb58cd700057fca07b643380191f731437fd7dce94d38a30795d26dda3"
+    },
+    {
+      "path": "run_nav_goal_probe.sh",
+      "bytes": 949,
+      "sha256": "4d821997bdb55c2c182fbf96790811a530857ce4559790f13064e6f62c39de9a"
+    },
+    {
+      "path": "run_direct_motion_probe.sh",
+      "bytes": 533,
+      "sha256": "c9a638442e76d5db2ebaf94ca038041989a9deaa887354004de2e5898adbc5b6"
+    },
+    {
+      "path": "start_go2_diagnostic_stack.sh",
+      "bytes": 1631,
+      "sha256": "4f705095cc6e0ed8eeb90c2b0b7a14bd4db129e881c74fbdf515e505cf905fff"
+    },
+    {
+      "path": "run_corridor_nav_probe.sh",
+      "bytes": 1172,
+      "sha256": "b96168b8b20901674947c7e473b3c92b17c5edb90428333e9bd1f3567600d075"
+    },
+    {
+      "path": "CHECKPOINT_RESUME.md",
+      "bytes": 5523,
+      "sha256": "d928a182a9d6f6e271db2c8ce0be60af1ec15544d5f8599b390135e9f09ac109"
+    },
+    {
+      "path": "verify_corridor_goal_fix.sh",
+      "bytes": 880,
+      "sha256": "5bfd0d40fff605cf2e3bf99ac931cffb781afbdb362bd4d1be2dbcdbedcbeafd"
+    }
+  ]
+}
