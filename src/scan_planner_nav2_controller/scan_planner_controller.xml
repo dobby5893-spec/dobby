@@ -1,0 +1,10 @@
+<library path="scan_planner_nav2_controller">
+  <class
+    name="scan_planner_nav2_controller::ScanPlannerController"
+    type="scan_planner_nav2_controller::ScanPlannerController"
+    base_class_type="nav2_core::Controller">
+    <description>
+      Sends the Nav2 global path to SCAN-Planner and returns SCAN's closed-loop velocity command.
+    </description>
+  </class>
+</library>

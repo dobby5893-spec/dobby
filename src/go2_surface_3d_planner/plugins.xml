@@ -1,0 +1,20 @@
+<library path="go2_surface_3d_planner">
+  <class
+    name="go2_surface_3d_planner::ClearanceAStarPlanner"
+    type="go2_surface_3d_planner::ClearanceAStarPlanner"
+    base_class_type="nav2_core::GlobalPlanner">
+    <description>2D A-star planner with a finite wall-clearance cost that keeps narrow passages traversable.</description>
+  </class>
+  <class
+    name="go2_surface_3d_planner::Surface3DPlanner"
+    type="go2_surface_3d_planner::Surface3DPlanner"
+    base_class_type="nav2_core::GlobalPlanner">
+    <description>OctoMap support-surface constrained 3D A-star planner.</description>
+  </class>
+  <class
+    name="go2_surface_3d_planner::GoalChecker3D"
+    type="go2_surface_3d_planner::GoalChecker3D"
+    base_class_type="nav2_core::GoalChecker">
+    <description>Goal checker that includes vertical error.</description>
+  </class>
+</library>

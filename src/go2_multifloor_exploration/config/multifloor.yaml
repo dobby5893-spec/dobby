@@ -1,0 +1,83 @@
+floor_slice_node:
+  ros__parameters:
+    use_sim_time: true
+    frame_id: map
+    octomap_topic: /octomap_full
+    output_topic: /map_floor
+    floor_height_topic: /multifloor/active_floor_height
+    publish_period_s: 1.0
+    initial_floor_z: 0.0
+    resolution: 0.10
+    min_x: -12.0
+    max_x: 12.0
+    min_y: -9.0
+    max_y: 9.0
+    support_probe_depth: 0.20
+    obstacle_min_height: 0.12
+    obstacle_max_height: 1.00
+    support_xy_tolerance: 0.08
+    free_space_min_height: 0.20
+    free_space_max_height: 0.80
+    free_space_min_samples: 1
+    # Keep raw unknowns; explorer classifies stable closed regions separately.
+    enclosed_unknown_max_area: 0.0
+    enclosed_unknown_max_span: 1.6
+
+multifloor_manager:
+  ros__parameters:
+    use_sim_time: true
+    map_frame: map
+    robot_base_frame: base_link
+    octomap_topic: /octomap_full
+    floor_completion_topic: /exploration_complete
+    floor_height_topic: /multifloor/active_floor_height
+    frontier_control_service: /control_exploration
+    floor_planner_id: Floor3D
+    stair_planner_id: Stair3D
+    controller_id: FollowPath
+    stair_goal_checker_id: stair_goal_checker
+    stair_entry_goal_checker_id: stair_entry_goal_checker
+    # This demo has two floors. Set zero for buildings with an unknown floor count.
+    expected_floor_count: 2
+    stair_detection_range: 8.0
+    stair_minimum_treads: 3
+    stair_minimum_chain_rise: 0.14
+    stair_minimum_width: 0.50
+    stair_approach_distance: 0.85
+    stair_segment_length: 1.2
+    new_floor_patch_radius: 0.70
+    stair_scan_interval_s: 5.0
+    stair_search_budget_s: 3.0
+    stair_observation_wait_s: 2.0
+    stair_observation_attempts: 4
+    transition_rpc_timeout_s: 10.0
+    stair_segment_timeout_s: 90.0
+    stair_progress_timeout_s: 25.0
+    transition_map_max_age_s: 3.0
+    timer_period_s: 1.0
+    floor_height_separation: 1.0
+    visited_floor_tolerance: 0.45
+    floor_slice_settle_s: 3.0
+    suppression_radius: 1.0
+    suppression_timeout_s: 60.0
+    gait_controller_node: /quadruped_controller_node
+    gait_control_required: true
+    flat_swing_height: 0.04
+    flat_stance_duration: 0.25
+    stair_swing_height: 0.14
+    stair_stance_duration: 0.36
+    xy_resolution: 0.10
+    z_resolution: 0.05
+    collision_radius: 0.21
+    body_height: 0.48
+    clearance_margin: 0.01
+    support_probe_depth: 0.16
+    max_step_height: 0.12
+    snap_radius: 0.15
+    snap_vertical_range: 0.55
+    search_padding_xy: 1.50
+    search_padding_z: 0.35
+    vertical_cost_weight: 2.0
+    goal_tolerance: 0.16
+    max_iterations: 50000
+    require_known_clearance: false

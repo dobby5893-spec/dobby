@@ -1,0 +1,9 @@
+build/
+install/
+log/
+checkpoints/
+test_records/
+.codex_logs/
+**/__pycache__/
+*.pyc
+*.log

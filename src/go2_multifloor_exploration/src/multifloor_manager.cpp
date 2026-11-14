@@ -1,0 +1,571 @@
+#include "go2_multifloor_exploration/floor_handoff.hpp"
+#include "go2_multifloor_exploration/transition_footprint.hpp"
+#include "go2_multifloor_exploration/simulation_progress.hpp"
+#include "go2_multifloor_exploration/stair_transition.hpp"
+#include <frontier_exploration_ros2/srv/control_exploration.hpp>
+#include <nav2_msgs/action/compute_path_to_pose.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <nav2_msgs/action/follow_path.hpp>
+#include <octomap_msgs/conversions.h>
+#include <octomap_msgs/msg/octomap.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/parameter_client.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/empty.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <visualization_msgs/msg/marker.hpp>
+#include <algorithm>
+#include <limits>
+#include <functional>
+#include <cstdint>
+#include <chrono>
+#include <cmath>
+#include <future>
+#include <optional>
+#include <sstream>
+#include <iomanip>
+
+namespace go2_multifloor_exploration {
+using go2_surface_3d_planner::SurfaceGraph;
+using go2_surface_3d_planner::configureSupportPlane;
+using go2_surface_3d_planner::SurfaceSearchTimeout;
+class MultifloorManager : public rclcpp::Node {
+ using Compute=nav2_msgs::action::ComputePathToPose;
+ using Follow=nav2_msgs::action::FollowPath;
+ using Control=frontier_exploration_ros2::srv::ControlExploration;
+ // Values 0..8 are retained for existing checkpoint files.
+ enum class State {WAIT_INITIAL_MAP,EXPLORE_FLOOR,STOPPING_FRONTIER,SEARCH_TRANSITION,
+  PREPARING_STAIR_GAIT,COMPUTE_3D_PATH,FOLLOW_3D_PATH,STARTING_NEXT_FLOOR,COMPLETE,
+  APPROACH_STAIR,OBSERVE_STAIR,VERIFY_LANDING,RESTORING_FLAT_GAIT};
+ enum class Motion {APPROACH,ASCENT,OBSERVATION};
+ struct Robot {SurfacePoint feet,body;};
+ struct SearchResult {
+  StairScan scan;std::optional<StairCandidate> selected;
+  std::optional<SurfacePoint> observation;std::vector<SurfacePoint> path;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr slice;TransitionFootprint footprint;
+  bool selecting{false},handoff_check{false};SurfacePoint start;
+  rclcpp::Time stamp{0,0,RCL_ROS_TIME};
+ };
+public:
+ MultifloorManager():Node("multifloor_manager") {
+  map_frame_=declare_parameter<std::string>("map_frame","map");
+  body_frame_=declare_parameter<std::string>("robot_base_frame","base_link");
+  feet_frame_=declare_parameter<std::string>("robot_footprint_frame","base_footprint");
+  floor_planner_=declare_parameter<std::string>("floor_planner_id","Floor3D");
+  stair_planner_=declare_parameter<std::string>("stair_planner_id","Stair3D");
+  controller_=declare_parameter<std::string>("controller_id","FollowPath");
+  stair_checker_=declare_parameter<std::string>("stair_goal_checker_id","stair_goal_checker");
+  entry_checker_=declare_parameter<std::string>("stair_entry_goal_checker_id","stair_entry_goal_checker");
+  gait_node_=declare_parameter<std::string>("gait_controller_node","/quadruped_controller_node");
+  gait_required_=declare_parameter<bool>("gait_control_required",true);
+  flat_swing_=declare_parameter<double>("flat_swing_height",.04);
+  flat_stance_=declare_parameter<double>("flat_stance_duration",.25);
+  stair_swing_=declare_parameter<double>("stair_swing_height",.14);
+  stair_stance_=declare_parameter<double>("stair_stance_duration",.36);
+  separation_=declare_parameter<double>("floor_height_separation",1.0);
+  visited_tolerance_=declare_parameter<double>("visited_floor_tolerance",.45);
+  expected_floors_=declare_parameter<int>("expected_floor_count",0);
+  settle_=declare_parameter<double>("floor_slice_settle_s",3.0);
+  observe_wait_=declare_parameter<double>("stair_observation_wait_s",2.0);
+  search_interval_=declare_parameter<double>("stair_scan_interval_s",5.0);
+  search_budget_=declare_parameter<double>("stair_search_budget_s",3.0);
+  rpc_timeout_=declare_parameter<double>("transition_rpc_timeout_s",10.0);
+  motion_timeout_=declare_parameter<double>("stair_segment_timeout_s",90.0);
+  progress_timeout_=declare_parameter<double>("stair_progress_timeout_s",25.0);
+  max_map_age_=declare_parameter<double>("transition_map_max_age_s",3.0);
+  max_observations_=declare_parameter<int>("stair_observation_attempts",4);
+  suppression_time_=declare_parameter<double>("suppression_timeout_s",60.0);
+  resume_=declare_parameter<bool>("resume_enabled",false);
+  resume_z_=declare_parameter<double>("resume_floor_z",0.0);
+  resume_phase_=declare_parameter<int>("resume_phase",1);
+  has_residuals_=declare_parameter<bool>("resume_has_residuals",false);
+  if(!resume_)has_residuals_=false;
+  visited_=declare_parameter<std::vector<double>>("resume_visited_floors",std::vector<double>{});
+  cfg_.continuous_floor_region=declare_parameter<std::vector<double>>("continuous_floor_region",std::vector<double>{});
+  cfg_.xy_resolution=declare_parameter<double>("xy_resolution",.10);
+  cfg_.z_resolution=declare_parameter<double>("z_resolution",.05);
+  cfg_.collision_radius=declare_parameter<double>("collision_radius",.21);
+  cfg_.cylinder_offset=declare_parameter<double>("cylinder_offset",.10);
+  cfg_.body_height=declare_parameter<double>("body_height",.48);
+  cfg_.clearance_margin=declare_parameter<double>("clearance_margin",.01);
+  cfg_.support_probe_depth=declare_parameter<double>("support_probe_depth",.16);
+  cfg_.max_step_height=declare_parameter<double>("max_step_height",.12);
+  cfg_.snap_radius=declare_parameter<double>("snap_radius",.15);
+  cfg_.snap_vertical_range=declare_parameter<double>("snap_vertical_range",.55);
+  cfg_.max_iterations=declare_parameter<int>("max_iterations",50000);
+  cfg_.infer_flat_support=true;
+  options_.range=declare_parameter<double>("stair_detection_range",8.0);
+  options_.minimum_steps=declare_parameter<int>("stair_minimum_treads",3);
+  options_.minimum_chain_rise=declare_parameter<double>("stair_minimum_chain_rise",.14);
+  options_.maximum_rise=cfg_.max_step_height;
+  options_.maximum_segment_length=declare_parameter<double>("stair_segment_length",1.2);
+  options_.minimum_width=declare_parameter<double>("stair_minimum_width",.50);
+  options_.approach_distance=declare_parameter<double>("stair_approach_distance",.85);
+  options_.landing_radius=declare_parameter<double>("new_floor_patch_radius",.70);
+  if(search_budget_<=0 || rpc_timeout_<=0 || options_.minimum_steps<3 ||
+   options_.maximum_segment_length<.5 || options_.minimum_width<2*cfg_.collision_radius ||
+   options_.approach_distance<cfg_.collision_radius+cfg_.cylinder_offset+.15 ||
+   stair_swing_<cfg_.max_step_height+.01 || expected_floors_<0)
+   throw std::invalid_argument("Invalid stair transition parameters");
+  tf_=std::make_shared<tf2_ros::Buffer>(get_clock());listener_=std::make_shared<tf2_ros::TransformListener>(*tf_);
+  gait_=std::make_shared<rclcpp::AsyncParametersClient>(this,gait_node_);
+  auto qos=rclcpp::QoS(1).reliable().transient_local();
+  map_sub_=create_subscription<octomap_msgs::msg::Octomap>(declare_parameter<std::string>("octomap_topic","/octomap_full"),qos,
+   [this](octomap_msgs::msg::Octomap::SharedPtr msg) {
+    if(msg->header.frame_id!=map_frame_ || msg->binary) {return;}
+    std::unique_ptr<octomap::AbstractOcTree> raw(octomap_msgs::msgToMap(*msg));
+    auto tree=dynamic_cast<octomap::OcTree*>(raw.get());if(!tree) {return;}
+    raw.release();map_.reset(tree);map_stamp_=rclcpp::Time(msg->header.stamp);
+   });
+  exhausted_sub_=create_subscription<std_msgs::msg::String>(
+   "/explore/floor_exhausted",qos,[this](std_msgs::msg::String::SharedPtr msg) {
+    if(state_!=State::EXPLORE_FLOOR)return;
+    const auto report=parseFloorExhaustion(msg->data);
+    if(!report || !matchesActiveFloor(*report,active_floor_,sim())) {
+      RCLCPP_WARN(get_logger(),"Ignoring malformed/stale/other-floor residual report");return;
+    }
+    has_residuals_=true;residual_report_=msg->data;
+    if(report->transition_unknown_area>0 || (msg->data.rfind("v3;",0)==0 || msg->data.rfind("v4;",0)==0)) {
+      pending_handoff_=*report;next_scan_=sim();
+      RCLCPP_INFO(get_logger(),"Flat-floor audit received; verifying complete route to stair entry before stopping exploration");
+    } else completion_pending_=true;
+    RCLCPP_WARN(get_logger(),
+      "Floor handoff accepted: remaining=%.3fm2, deferred_unresolved=%.3fm2; evaluate verified stair approach",
+      report->remaining_unknown_area,report->deferred_unknown_area);
+   });
+  deferred_=create_publisher<std_msgs::msg::String>("/multifloor/exploration_deferred",qos);
+  completion_sub_=create_subscription<std_msgs::msg::Empty>(
+   declare_parameter<std::string>("floor_completion_topic","/exploration_complete"),qos,
+   [this](std_msgs::msg::Empty::SharedPtr){if(state_==State::EXPLORE_FLOOR) completion_pending_=true;});
+  slice_sub_=create_subscription<nav_msgs::msg::OccupancyGrid>("/map_floor",qos,
+   [this](nav_msgs::msg::OccupancyGrid::SharedPtr m) {if(m->header.frame_id==map_frame_ && !m->data.empty()) {slice_height_=m->info.origin.position.z;slice_stamp_=rclcpp::Time(m->header.stamp);slice_map_=m;}});
+  checkpoint_=create_publisher<std_msgs::msg::String>("/multifloor/checkpoint_state",qos);
+  floor_pub_=create_publisher<std_msgs::msg::Float64>(declare_parameter<std::string>("floor_height_topic","/multifloor/active_floor_height"),qos);
+  mode_pub_=create_publisher<std_msgs::msg::Bool>("/multifloor/stair_mode",qos);
+  transition_mask_pub_=create_publisher<nav_msgs::msg::OccupancyGrid>("/multifloor/transition_mask",qos);
+  regions_pub_=create_publisher<std_msgs::msg::Float64MultiArray>("/multifloor/stair_regions",qos);
+  done_=create_publisher<std_msgs::msg::Empty>("/multifloor/exploration_complete",qos);
+  marker_=create_publisher<visualization_msgs::msg::Marker>("/multifloor/transition_target",qos);
+  control_=create_client<Control>(declare_parameter<std::string>("frontier_control_service","/control_exploration"));
+  compute_=rclcpp_action::create_client<Compute>(this,"/compute_path_to_pose");
+  follow_=rclcpp_action::create_client<Follow>(this,"/follow_path");
+  const double period=declare_parameter<double>("timer_period_s",1.0);
+  timer_=create_wall_timer(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(std::max(.1,period))),[this]{tick();});
+  publishMode(false);publishRegions();
+ }
+private:
+ double sim() const {return now().seconds();}
+ void publishMode(bool enabled) {stair_mode_=enabled;std_msgs::msg::Bool m;m.data=enabled;mode_pub_->publish(m);}
+ void publishFloor() {std_msgs::msg::Float64 m;m.data=active_floor_;floor_pub_->publish(m);}
+ std::optional<Robot> robot() const {
+  try {
+   const auto body=tf_->lookupTransform(map_frame_,body_frame_,tf2::TimePointZero);
+   const double age=(now()-rclcpp::Time(body.header.stamp)).seconds();if(age<-.1 || age>.5) return {};
+   const auto feet=tf_->lookupTransform(map_frame_,feet_frame_,rclcpp::Time(body.header.stamp));
+   Robot r;const auto & p=body.transform.translation;const auto & f=feet.transform.translation;
+   r.body={p.x,p.y,p.z,tf2::getYaw(body.transform.rotation)};
+   // Use the body projection at measured foot height consistently with the path controller.
+   r.feet={p.x,p.y,f.z,r.body.yaw};return r;
+  }catch(const tf2::TransformException &){return {};}
+ }
+ bool freshMap() const {double age=(now()-map_stamp_).seconds();return map_ && age>=-.1 && age<=max_map_age_;}
+ SurfaceSearchConfig config(const Robot & r,bool strict) const {
+  auto c=cfg_;c.support_reference_height=r.body.z-r.feet.z;c.flat_support_requires_prior=strict;
+  configureSupportPlane(c,*map_,r.body);c.excluded_regions.clear();
+  if(!strict) for(const auto & entry:entries_) c.excluded_regions.push_back(entry.region);
+  return c;
+ }
+ bool visited(double z) const {return std::any_of(visited_.begin(),visited_.end(),[&](double v){return std::abs(v-z)<visited_tolerance_;});}
+ void publishRegions() {
+  std_msgs::msg::Float64MultiArray m;m.layout.dim.resize(1);m.layout.dim[0].label=map_frame_;
+  m.layout.dim[0].size=entries_.size();m.layout.dim[0].stride=7;
+  for(const auto & e:entries_) {const auto & r=e.region;m.data.insert(m.data.end(),{r.x,r.y,r.yaw,r.half_length,r.half_width,r.min_z,r.max_z});}
+  regions_pub_->publish(m);
+ }
+ void remember(const StairScan & scan) {
+  bool changed=false;
+  for(const auto & c:scan.candidates) {
+   if(std::none_of(entries_.begin(),entries_.end(),[&](const auto & old){return std::hypot(old.first_tread.x-c.first_tread.x,old.first_tread.y-c.first_tread.y)<.65 &&
+    std::abs(old.first_tread.z-c.first_tread.z)<.15 && std::abs(std::remainder(old.first_tread.yaw-c.first_tread.yaw,2*M_PI))<.35;})) {
+    if(entries_.size()<128) {entries_.push_back(c);changed=true;}
+   }
+  }
+  if(changed) publishRegions();
+ }
+ void publishState() {
+  std::ostringstream s;s<<"{\"phase\":"<<static_cast<int>(state_)<<",\"active_floor_z\":"<<active_floor_<<",\"visited_floors\":[";
+  for(std::size_t i=0;i<visited_.size();++i) {if(i)s<<",";s<<visited_[i];}
+  s<<"],\"stair_segments\":"<<segments_<<",\"stair_mode\":"<<(stair_mode_?"true":"false")<<",\"has_residuals\":"<<(has_residuals_?"true":"false")<<",\"residual_report\":"<<std::quoted(residual_report_)<<"}";
+  std_msgs::msg::String m;m.data=s.str();checkpoint_->publish(m);
+ }
+ uint64_t begin(State state) {state_=state;rpc_pending_=true;rpc_deadline_=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(rpc_timeout_));return ++epoch_;}
+ void cancelOwnGoals() {
+  if(compute_handle_) compute_->async_cancel_goal(compute_handle_);
+  if(follow_handle_) follow_->async_cancel_goal(follow_handle_);
+  compute_handle_.reset();follow_handle_.reset();
+ }
+ void fail(const std::string & reason) {
+   const auto measured=robot();
+   if(stair_mode_ && measured && measured->feet.z>active_floor_+.06)ascent_started_=true;
+   ++epoch_;rpc_pending_=false;cancelOwnGoals();
+   RCLCPP_WARN(get_logger(),"Stair transition waiting: %s; no floor switch committed",reason.c_str());
+   if(selected_) {suppressed_.push_back({selected_->first_tread,sim()+suppression_time_});selected_.reset();}
+   state_=ascent_started_?State::OBSERVE_STAIR:State::SEARCH_TRANSITION;
+   observe_since_=sim();next_search_=sim()+3.;
+   if(!ascent_started_ && stair_mode_ && measured &&
+      std::abs(measured->feet.z-active_floor_)<.04)restoreEntryGait();
+ }
+ void restoreEntryGait() {
+   gait(false,[this](bool ok) {
+     if(ok) {state_=State::SEARCH_TRANSITION;next_search_=sim()+3.;}
+     else {
+       gait_callback_=[this](bool accepted) {
+         if(accepted) {state_=State::SEARCH_TRANSITION;next_search_=sim()+3.;}
+         else restoreEntryGait();
+       };
+       gait_retry_=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+     }
+   });
+ }
+ void stopFrontier() {
+  if(!control_->service_is_ready() || rpc_pending_) {return;}
+  const auto id=begin(State::STOPPING_FRONTIER);auto request=std::make_shared<Control::Request>();request->action=Control::Request::ACTION_STOP;
+  control_->async_send_request(request,[this,id](rclcpp::Client<Control>::SharedFuture future) {
+   if(id!=epoch_) {return;}rpc_pending_=false;
+   try {auto reply=future.get();
+    if(reply->accepted && reply->state==Control::Request::STATE_IDLE) {state_=State::SEARCH_TRANSITION;next_search_=sim();}
+    else if(!reply->accepted) RCLCPP_WARN(get_logger(),"Frontier stop rejected; waiting for idle");
+   }catch(const std::exception & e){RCLCPP_WARN(get_logger(),"%s",e.what());}
+  });
+ }
+ void startFrontier() {
+  if(!control_->service_is_ready() || rpc_pending_) {return;}
+  const auto id=begin(State::STARTING_NEXT_FLOOR);auto request=std::make_shared<Control::Request>();request->action=Control::Request::ACTION_START;
+  control_->async_send_request(request,[this,id](rclcpp::Client<Control>::SharedFuture future) {
+   if(id!=epoch_) {return;}rpc_pending_=false;
+   try {if(future.get()->accepted) state_=State::EXPLORE_FLOOR;}
+   catch(const std::exception & e){RCLCPP_WARN(get_logger(),"%s",e.what());}
+  });
+ }
+ void gait(bool stairs,std::function<void(bool)> callback) {
+  desired_gait_=stairs;gait_callback_=std::move(callback);requestGait();
+ }
+ void requestGait() {
+  if(!gait_->service_is_ready()) {
+   auto callback=gait_callback_;gait_callback_={};
+   if(callback) callback(!gait_required_);
+   return;
+  }
+  const bool stairs=desired_gait_;
+  const auto id=begin(stairs?State::PREPARING_STAIR_GAIT:State::RESTORING_FLAT_GAIT);
+  gait_->set_parameters_atomically({rclcpp::Parameter("gait.swing_height",stairs?stair_swing_:flat_swing_),
+    rclcpp::Parameter("gait.stance_duration",stairs?stair_stance_:flat_stance_)},
+   [this,id,stairs](auto future) {
+    if(id!=epoch_) {return;}
+    rpc_pending_=false;
+    bool ok=false;
+    try {ok=future.get().successful;}
+    catch(const std::exception &) {
+     gait_retry_=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+     return;
+    }
+    if(ok) publishMode(stairs);
+    auto callback=gait_callback_;gait_callback_={};
+    if(callback) callback(ok || !gait_required_);
+   });
+ }
+ void requestPath(const SurfacePoint & target,Motion motion) {
+  if(!compute_->action_server_is_ready()) {fail("planner action unavailable");return;}
+  visualization_msgs::msg::Marker marker;marker.header.frame_id=map_frame_;marker.header.stamp=now();
+  marker.ns="multifloor_transition";marker.id=0;marker.type=visualization_msgs::msg::Marker::SPHERE;
+  marker.action=visualization_msgs::msg::Marker::ADD;marker.pose.position.x=target.x;marker.pose.position.y=target.y;
+  marker.pose.position.z=target.z+.15;marker.pose.orientation.w=1.;marker.scale.x=marker.scale.y=marker.scale.z=.25;
+  marker.color.r=1.;marker.color.g=.55;marker.color.a=1.;marker_->publish(marker);
+  motion_=motion;motion_target_=target;const auto id=begin(State::COMPUTE_3D_PATH);
+  Compute::Goal goal;goal.goal.header.frame_id=map_frame_;goal.goal.header.stamp=now();
+  goal.goal.pose.position.x=target.x;goal.goal.pose.position.y=target.y;goal.goal.pose.position.z=target.z;
+  tf2::Quaternion q;q.setRPY(0,0,target.yaw);goal.goal.pose.orientation=tf2::toMsg(q);
+  goal.planner_id=(!ascent_started_ && motion!=Motion::ASCENT)?floor_planner_:stair_planner_;
+  rclcpp_action::Client<Compute>::SendGoalOptions options;
+  options.goal_response_callback=[this,id](auto h) {
+   if(id!=epoch_) {if(h)compute_->async_cancel_goal(h);return;}
+   compute_handle_=h;if(!h) fail("path goal rejected");
+  };
+  options.result_callback=[this,id](const auto & result) {
+   if(id!=epoch_) {return;}rpc_pending_=false;compute_handle_.reset();
+   if(result.code!=rclcpp_action::ResultCode::SUCCEEDED || !result.result || result.result->path.poses.empty()) {fail("no fresh verified segment path");return;}
+   auto path=result.result->path;
+   if(path.header.frame_id!=map_frame_) {fail("wrong path frame");return;}
+   if(motion_!=Motion::APPROACH) {
+    double length=0.;std::size_t end=1;
+    for(;end<path.poses.size();++end) {
+     const auto & a=path.poses[end-1].pose.position;const auto & b=path.poses[end].pose.position;
+     length+=std::hypot(b.x-a.x,b.y-a.y);
+     if(length>options_.maximum_segment_length && end>1) {break;}
+    }
+    path.poses.resize(end);
+   }
+   const auto & p=path.poses.back().pose;motion_target_={p.position.x,p.position.y,p.position.z,tf2::getYaw(p.orientation)};
+   followPath(path);
+  };
+  compute_->async_send_goal(goal,options);
+ }
+ void followPath(const nav_msgs::msg::Path & path) {
+  if(!follow_->action_server_is_ready()) {fail("controller action unavailable");return;}
+  const auto id=++epoch_;rpc_pending_=true;
+  rpc_deadline_=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(rpc_timeout_));
+  state_=motion_==Motion::APPROACH?State::APPROACH_STAIR:State::FOLLOW_3D_PATH;
+  motion_start_=last_progress_=sim();progress_pose_.reset();
+  Follow::Goal goal;goal.path=path;goal.controller_id=controller_;goal.goal_checker_id=motion_==Motion::APPROACH?entry_checker_:stair_checker_;
+  rclcpp_action::Client<Follow>::SendGoalOptions options;
+  options.goal_response_callback=[this,id](auto h) {
+   if(id!=epoch_) {if(h)follow_->async_cancel_goal(h);return;}
+   rpc_pending_=false;follow_handle_=h;if(!h) fail("segment rejected by controller");
+  };
+  options.result_callback=[this,id](const auto & result) {
+   if(id!=epoch_) {return;}follow_handle_.reset();
+   if(result.code!=rclcpp_action::ResultCode::SUCCEEDED) {fail("segment execution failed");return;}
+   auto actual=robot();if(!actual || !reachedStairTarget(actual->feet,motion_target_)) {fail("action success without measured segment arrival");return;}
+   if(motion_==Motion::APPROACH) {
+    if(!selected_) {fail("missing stair entry");return;}
+    if(!reachedStairTarget(actual->feet,selected_->approach,.20,.08) ||
+     std::abs(std::remainder(actual->feet.yaw-selected_->approach.yaw,2*M_PI))>.20) {state_=State::SEARCH_TRANSITION;next_search_=sim();return;}
+    gait(true,[this](bool ok) {
+     if(!ok) {fail("stair gait not acknowledged");return;}
+     requestPath(selected_->target,Motion::ASCENT);
+    });return;
+   }
+   if(motion_==Motion::ASCENT) {ascent_started_|=actual->feet.z>active_floor_+.06;++segments_;}observe_since_=sim();last_segment_map_=map_stamp_;stable_since_=-1;
+   state_=State::OBSERVE_STAIR;
+  };
+  follow_->async_send_goal(goal,options);
+ }
+ void launchSearch(const Robot & robot,bool selecting) {
+  if(search_.valid() || !freshMap()) {return;}
+  suppressed_.erase(std::remove_if(suppressed_.begin(),suppressed_.end(),[this](const auto & item){return item.second<=sim();}),suppressed_.end());
+  auto blocked=suppressed_;
+  auto tree=map_;auto c=config(robot,ascent_started_);auto known=entries_;auto points=observation_points_;
+  const auto stance=robot.feet;auto opt=options_;bool climbing=ascent_started_;auto stamp=map_stamp_;auto slice=slice_map_;bool handoff_check=state_==State::EXPLORE_FLOOR && pending_handoff_.has_value();
+  c.search_deadline=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(search_budget_));
+  search_=std::async(std::launch::async,[tree,c,known,points,stance,opt,climbing,stamp,selecting,blocked,slice,handoff_check]() mutable {
+   SearchResult result;result.stamp=stamp;result.selecting=selecting;result.handoff_check=handoff_check;result.start=stance;result.slice=slice;
+   try {
+    result.scan=detectStairs(*tree,c,stance,opt);
+    for(const auto & candidate:result.scan.candidates) known.push_back(candidate);
+    if(slice)result.footprint=transitionFootprint(*tree,known,slice->info.width,slice->info.height,
+      slice->info.resolution,slice->info.origin.position.x,slice->info.origin.position.y,
+      slice->info.origin.position.z,c.max_step_height,c.search_deadline);
+    if(!selecting)return result;
+    if(!climbing) {c.excluded_regions.clear();for(const auto & entry:known)c.excluded_regions.push_back(entry.region);}
+    for(const auto & candidate:known) {
+     if(std::any_of(blocked.begin(),blocked.end(),[&](const auto & item){return std::hypot(item.first.x-candidate.first_tread.x,item.first.y-candidate.first_tread.y)<.65 && std::abs(item.first.z-candidate.first_tread.z)<.15;})) {continue;}
+     if(candidate.first_tread.z<stance.z+.025 || candidate.first_tread.z>stance.z+opt.maximum_rise+.05) {continue;}
+     if(std::chrono::steady_clock::now()>=c.search_deadline) {break;}
+     auto attempt=c;attempt.search_deadline=std::min(c.search_deadline,std::chrono::steady_clock::now()+std::chrono::milliseconds(handoff_check?2000:500));
+     try {
+      auto path=handoff_check?SurfaceGraph(*tree,attempt).plan(stance,candidate.approach):
+        climbing?SurfaceGraph(*tree,attempt).plan(stance,candidate.target):verifyStairApproach(*tree,attempt,stance,candidate);
+      if(handoff_check && (!path.empty()) && (std::hypot(path.back().x-candidate.approach.x,path.back().y-candidate.approach.y)>.10 ||
+        std::any_of(path.begin(),path.end(),[&](auto p){return std::abs(p.z-stance.z)>.08;})))path.clear();
+      if(!path.empty()) {result.selected=candidate;result.path=std::move(path);return result;}
+     }catch(const SurfaceSearchTimeout &) {}
+    }
+    if(handoff_check)return result;
+    // At a partially observed flight/turnaround, advance only on verified, same-height support.
+    for(double distance:{.8,1.2}) for(int i=0;i<8;++i) {
+     if(std::chrono::steady_clock::now()>=c.search_deadline) return result;
+     const double yaw=i*M_PI/4;SurfacePoint target{stance.x+distance*std::cos(yaw),stance.y+distance*std::sin(yaw),stance.z,stance.yaw};
+     if(std::any_of(points.begin(),points.end(),[&](const auto & p){return std::hypot(p.x-target.x,p.y-target.y)<.5;})) {continue;}
+     auto attempt=c;attempt.search_deadline=std::min(c.search_deadline,std::chrono::steady_clock::now()+std::chrono::milliseconds(150));
+     try {
+      auto path=SurfaceGraph(*tree,attempt).plan(stance,target);bool flat=!path.empty();
+      for(const auto & p:path)if(std::abs(p.z-stance.z)>.08)flat=false;
+      if(flat) {result.observation=path.back();result.path=std::move(path);return result;}
+     }catch(const SurfaceSearchTimeout &) {}
+    }
+   }catch(const SurfaceSearchTimeout &){result.scan.timed_out=true;}
+   return result;
+  });
+ }
+ void collectSearch() {
+  if(!search_.valid() || search_.wait_for(std::chrono::seconds(0))!=std::future_status::ready) {return;}
+  SearchResult result;
+  try {result=search_.get();}catch(const std::exception & e){RCLCPP_WARN(get_logger(),"Stair search: %s",e.what());next_search_=sim()+3;return;}
+  if((now()-result.stamp).seconds()>max_map_age_) {next_search_=sim();return;}
+  remember(result.scan);
+  if(result.slice && result.footprint.complete && std::abs(result.slice->info.origin.position.z-active_floor_)<.15) {
+    auto mask=*result.slice;mask.header.stamp=now();mask.data=result.footprint.cells;
+    transition_mask_pub_->publish(mask);
+  }
+  if(result.handoff_check && state_==State::EXPLORE_FLOOR) {
+    const auto current=robot();
+    if(result.selected && pending_handoff_ && matchesActiveFloor(*pending_handoff_,active_floor_,sim()) &&
+       current && std::hypot(current->feet.x-result.start.x,current->feet.y-result.start.y)<.2) {
+      completion_pending_=true;selected_=result.selected;pending_handoff_.reset();
+      RCLCPP_WARN(get_logger(),"Complete stair-entry route verified; flat-floor audit may now hand over execution");
+    } else RCLCPP_INFO(get_logger(),"Handoff remains pending: no complete fresh stair-entry route yet");
+    return;
+  }
+  if(!result.selecting || (state_!=State::SEARCH_TRANSITION && state_!=State::OBSERVE_STAIR)) {return;}
+  next_search_=sim()+search_interval_;
+  if(result.selected) {
+   selected_=result.selected;observation_attempts_=0;
+   if(ascent_started_) requestPath(result.path.back(),Motion::ASCENT);
+   else requestPath(result.path.back(),Motion::APPROACH);
+  } else if(result.observation && observation_attempts_<max_observations_) {
+   ++observation_attempts_;observation_points_.push_back(*result.observation);
+   if(!ascent_started_) requestPath(*result.observation,Motion::OBSERVATION);
+   else if(!stair_mode_) gait(true,[this,target=*result.observation](bool ok){if(ok)requestPath(target,Motion::OBSERVATION);else fail("observation gait unavailable");});
+   else requestPath(*result.observation,Motion::OBSERVATION);
+  } else {
+   RCLCPP_WARN_THROTTLE(get_logger(),*get_clock(),10000,
+    "No verified stair continuation yet; waiting for observed support, not declaring exploration complete");
+  }
+ }
+ void checkLanding(const Robot & r) {
+  if(r.feet.z<active_floor_+separation_ || visited(r.feet.z) || !freshMap()) {stable_since_=-1;if(state_==State::VERIFY_LANDING)state_=State::OBSERVE_STAIR;return;}
+  auto c=config(r,true);c.search_deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(200);
+  auto strict=c;strict.infer_flat_support=false;
+  auto surface=SurfaceGraph(*map_,strict).snapToSurface(r.feet);
+  if(!surface || !hasLandingPatch(*map_,strict,*surface,options_.landing_radius)) {stable_since_=-1;if(state_==State::VERIFY_LANDING)state_=State::OBSERVE_STAIR;return;}
+  state_=State::VERIFY_LANDING;
+  if(stable_since_<0 || std::hypot(r.feet.x-stable_pose_.x,r.feet.y-stable_pose_.y)>.08 || std::abs(r.feet.z-stable_pose_.z)>.04) {
+   stable_since_=sim();stable_pose_=r.feet;return;
+  }
+  if(sim()-stable_since_<settle_) {return;}
+  const double new_height=r.feet.z;
+  gait(false,[this,new_height](bool ok) {
+   if(!ok) {fail("flat gait restoration not acknowledged");return;}
+   active_floor_=new_height;visited_.push_back(new_height);ascent_started_=false;selected_.reset();
+   observation_points_.clear();observation_attempts_=0;publishFloor();state_=State::STARTING_NEXT_FLOOR;switch_time_=sim();
+   RCLCPP_INFO(get_logger(),"Verified new floor at z=%.2f; waiting for refreshed floor slice",active_floor_);
+  });
+ }
+ void tick() {
+  publishState();
+  const auto wall=std::chrono::steady_clock::now();
+  const bool advancing=simulation_progress_.sample(sim(),std::chrono::duration<double>(wall.time_since_epoch()).count());
+  if(simulation_progress_.extend_deadlines>0) {
+    const auto extension=std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+      std::chrono::duration<double>(simulation_progress_.extend_deadlines));
+    rpc_deadline_+=extension;gait_retry_+=extension;
+  }
+  if(!advancing)return;
+  auto current=robot();
+   if(stair_mode_ && motion_==Motion::ASCENT && current &&
+      current->feet.z>active_floor_+.06)ascent_started_=true;
+  if(state_==State::OBSERVE_STAIR && ascent_started_ && current && freshMap()) {
+   try {checkLanding(*current);}catch(const SurfaceSearchTimeout &){stable_since_=-1;}
+  }
+  collectSearch();
+  if(state_==State::COMPLETE) {return;}
+  if(rpc_pending_ && std::chrono::steady_clock::now()>rpc_deadline_) {
+   if(state_==State::STOPPING_FRONTIER || state_==State::STARTING_NEXT_FLOOR) {
+    ++epoch_;rpc_pending_=false;return;
+   }
+   if(state_==State::PREPARING_STAIR_GAIT || state_==State::RESTORING_FLAT_GAIT) {
+    ++epoch_;rpc_pending_=false;
+    gait_retry_=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+    RCLCPP_WARN(get_logger(),"Gait response timeout; holding motion until the desired gait is acknowledged");
+    return;
+   }
+   fail("service/action response timeout");return;
+  }
+  if(state_==State::WAIT_INITIAL_MAP) {
+   if(!current || !freshMap()) {return;}
+   if(resume_) {
+    active_floor_=resume_z_;if(visited_.empty())visited_.push_back(active_floor_);
+    state_=(resume_phase_==8 && (expected_floors_==0 || static_cast<int>(visited_.size())>=expected_floors_))?State::COMPLETE:
+     (resume_phase_==1?State::EXPLORE_FLOOR:State::STOPPING_FRONTIER);
+    resume_=false;publishFloor();return;
+   }
+   auto c=config(*current,false);auto surface=SurfaceGraph(*map_,c).snapToSurface(current->feet);
+   if(!surface) {return;}active_floor_=current->feet.z;visited_.push_back(active_floor_);publishFloor();state_=State::EXPLORE_FLOOR;
+  }
+  if(state_==State::EXPLORE_FLOOR) {
+   if(completion_pending_) {completion_pending_=false;state_=State::STOPPING_FRONTIER;stopFrontier();return;}
+   if(pending_handoff_ && !matchesActiveFloor(*pending_handoff_,active_floor_,sim()))pending_handoff_.reset();
+   if(current && sim()>=next_scan_) {launchSearch(*current,pending_handoff_.has_value());next_scan_=sim()+search_interval_;}
+  } else if(state_==State::STOPPING_FRONTIER) stopFrontier();
+  else if(state_==State::SEARCH_TRANSITION || state_==State::OBSERVE_STAIR) {
+   if(expected_floors_>0 && static_cast<int>(visited_.size())>=expected_floors_ && !ascent_started_) {
+    state_=State::COMPLETE;
+    if(has_residuals_) {
+      std_msgs::msg::String msg;msg.data="Expected floors processed; residual unknowns remain; "+residual_report_;
+      deferred_->publish(msg);
+    } else done_->publish(std_msgs::msg::Empty());
+    return;
+   }
+   if(!current || !freshMap()) {return;}
+   if(ascent_started_) {
+    try {checkLanding(*current);}catch(const SurfaceSearchTimeout &) {stable_since_=-1;}
+    if(state_==State::RESTORING_FLAT_GAIT || state_==State::VERIFY_LANDING) {return;}
+    if(sim()-observe_since_<observe_wait_ || map_stamp_<=last_segment_map_) {return;}
+   }
+   if(sim()>=next_search_) launchSearch(*current,true);
+  } else if(state_==State::PREPARING_STAIR_GAIT || state_==State::RESTORING_FLAT_GAIT) {
+   if(!rpc_pending_ && std::chrono::steady_clock::now()>=gait_retry_) requestGait();
+  } else if(state_==State::VERIFY_LANDING) {
+   if(current) {try {checkLanding(*current);}catch(const SurfaceSearchTimeout &){stable_since_=-1;state_=State::OBSERVE_STAIR;}}
+  } else if(state_==State::FOLLOW_3D_PATH || state_==State::APPROACH_STAIR) {
+   if(!current || !freshMap()) {fail("stale map or stance while executing a segment");return;}
+   if(!progress_pose_ || std::hypot(current->feet.x-progress_pose_->x,current->feet.y-progress_pose_->y)>.08 ||
+    std::abs(current->feet.z-progress_pose_->z)>.04) {progress_pose_=current->feet;last_progress_=sim();}
+   if(sim()-motion_start_>motion_timeout_ || sim()-last_progress_>progress_timeout_) fail("segment made no measured progress");
+  } else if(state_==State::STARTING_NEXT_FLOOR && sim()-switch_time_>=settle_) {
+   if(slice_stamp_.seconds()>=switch_time_ && (now()-slice_stamp_).seconds()<=max_map_age_ &&
+    std::abs(slice_height_-active_floor_)<.05) startFrontier();
+   else RCLCPP_WARN_THROTTLE(get_logger(),*get_clock(),10000,"New floor confirmed; waiting for matching fresh /map_floor before exploration restart");
+  }
+ }
+ std::string map_frame_,body_frame_,feet_frame_,floor_planner_,stair_planner_,controller_,stair_checker_,entry_checker_,gait_node_;
+ bool gait_required_{true},resume_{false},stair_mode_{false},ascent_started_{false},completion_pending_{false},rpc_pending_{false};
+ int resume_phase_{1},expected_floors_{0},segments_{0},max_observations_{4},observation_attempts_{0};
+ double active_floor_{0},resume_z_{0},separation_{1},visited_tolerance_{.45},settle_{3},observe_wait_{2},search_interval_{5},search_budget_{3};
+ double flat_swing_{.04},flat_stance_{.25},stair_swing_{.14},stair_stance_{.36},rpc_timeout_{10},motion_timeout_{90},progress_timeout_{25},max_map_age_{3},suppression_time_{60};
+ double next_scan_{0},next_search_{0},motion_start_{0},last_progress_{0},observe_since_{0},stable_since_{-1},switch_time_{0};
+ bool desired_gait_{false};std::function<void(bool)> gait_callback_;
+ std::chrono::steady_clock::time_point gait_retry_{};
+ uint64_t epoch_{0};State state_{State::WAIT_INITIAL_MAP};Motion motion_{Motion::APPROACH};
+ SurfaceSearchConfig cfg_;StairOptions options_;SurfacePoint motion_target_,stable_pose_;
+ std::vector<std::pair<SurfacePoint,double>> suppressed_;
+ std::vector<double> visited_;std::vector<SurfacePoint> observation_points_;std::vector<StairCandidate> entries_;
+ std::optional<SurfacePoint> progress_pose_;std::optional<StairCandidate> selected_;std::future<SearchResult> search_;
+ double slice_height_{std::numeric_limits<double>::quiet_NaN()};rclcpp::Time slice_stamp_{0,0,RCL_ROS_TIME};
+ rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr slice_sub_;
+ std::shared_ptr<const octomap::OcTree> map_;rclcpp::Time map_stamp_{0,0,RCL_ROS_TIME},last_segment_map_{0,0,RCL_ROS_TIME};
+ std::chrono::steady_clock::time_point rpc_deadline_;
+ std::shared_ptr<tf2_ros::Buffer> tf_;std::shared_ptr<tf2_ros::TransformListener> listener_;
+ std::shared_ptr<rclcpp::AsyncParametersClient> gait_;
+ rclcpp::Subscription<octomap_msgs::msg::Octomap>::SharedPtr map_sub_;
+ rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr completion_sub_;
+ rclcpp::Subscription<std_msgs::msg::String>::SharedPtr exhausted_sub_;
+ rclcpp::Publisher<std_msgs::msg::String>::SharedPtr deferred_;
+ bool has_residuals_{false};std::string residual_report_;
+ SimulationProgress simulation_progress_;
+ std::optional<FloorExhaustion> pending_handoff_;
+ nav_msgs::msg::OccupancyGrid::ConstSharedPtr slice_map_;
+ rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr transition_mask_pub_;
+ rclcpp::Publisher<std_msgs::msg::String>::SharedPtr checkpoint_;
+ rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr floor_pub_;
+ rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr mode_pub_;
+ rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr regions_pub_;
+ rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr done_;
+ rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_;
+ rclcpp::Client<Control>::SharedPtr control_;
+ rclcpp_action::Client<Compute> ::SharedPtr compute_;
+ rclcpp_action::Client<Follow>::SharedPtr follow_;
+ rclcpp_action::ClientGoalHandle<Compute>::SharedPtr compute_handle_;
+ rclcpp_action::ClientGoalHandle<Follow>::SharedPtr follow_handle_;
+ rclcpp::TimerBase::SharedPtr timer_;
+};
+}  // namespace go2_multifloor_exploration
+int main(int argc,char ** argv) {rclcpp::init(argc,argv);rclcpp::spin(std::make_shared<go2_multifloor_exploration::MultifloorManager>());rclcpp::shutdown();return 0;}
