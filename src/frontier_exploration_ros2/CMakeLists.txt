@@ -28,6 +28,8 @@ find_package(visualization_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ControlExploration.srv"
+  "msg/FloorMapSnapshot.msg"
+  DEPENDENCIES nav_msgs octomap_msgs
 )
 
 add_library(${PROJECT_NAME}_core
@@ -179,6 +181,16 @@ install(
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_residual_snapshot_node test/test_residual_snapshot_node.cpp)
+  target_include_directories(test_residual_snapshot_node PRIVATE include)
+  target_link_libraries(test_residual_snapshot_node ${PROJECT_NAME}_node octomap)
+  set_tests_properties(test_residual_snapshot_node PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=190;ROS_LOCALHOST_ONLY=1")
+  ament_add_gtest(test_map_consistency test/test_map_consistency.cpp)
+  target_include_directories(test_map_consistency PRIVATE include)
+  target_link_libraries(test_map_consistency ${cpp_typesupport_target} octomap)
+  target_compile_features(test_map_consistency PRIVATE cxx_std_17)
+  ament_target_dependencies(test_map_consistency nav_msgs octomap_msgs go2_surface_3d_planner)
+
   ament_add_gtest(test_region_observation_task test/test_region_observation_task.cpp)
   target_include_directories(test_region_observation_task PRIVATE include)
   target_link_libraries(test_region_observation_task ${PROJECT_NAME}_core)
@@ -402,6 +414,7 @@ ament_export_dependencies(
   geometry_msgs
   nav2_msgs
   nav_msgs
+  octomap_msgs
   rclcpp
   rclcpp_action
   rosidl_default_runtime

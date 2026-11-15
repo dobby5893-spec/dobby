@@ -2,6 +2,7 @@
 #include "frontier_exploration_ros2/frontier_types.hpp"
 #include "frontier_exploration_ros2/exploration_boundary.hpp"
 #include <functional>
+#include "frontier_exploration_ros2/map_consistency.hpp"
 #include "frontier_exploration_ros2/floor_completion.hpp"
 #include <queue>
 #include <sstream>
@@ -13,9 +14,11 @@
 namespace frontier_exploration_ros2 {
 struct ResidualRegion {
  uint64_t id{0};double area{0};std::string state;
+ std::vector<int> cells;
 };
 struct ResidualAudit {
  uint64_t fingerprint{0},epoch{0};bool complete{true};
+ AuditMapEvidence map_evidence;size_t reused_regions{0};uint64_t support_context{0};
  std::pair<double,double> start{0,0};
  double remaining{0},closed{0},deferred{0},pending{0},transition{0};
  uint64_t transition_hash{0},runtime_hash{0};
@@ -74,7 +77,8 @@ inline ResidualAudit auditResidualRegions(
  const std::function<int(std::pair<double,double>,std::pair<double,double>)> & can_observe,
  std::chrono::steady_clock::time_point deadline,
  const std::function<bool(int,int)> & transition_cell={},
- const std::function<int(int,int)> & runtime_cell={}) {
+ const std::function<int(int,int)> & runtime_cell={},
+ const std::function<bool(const ResidualRegion &)> & reuse_occluded={}) {
  ResidualAudit out;out.fingerprint=residualMapFingerprint(map);
  const int w=map.getSizeX(),h=map.getSizeY();const double area=map.map().info.resolution*map.map().info.resolution;
  auto valid=[&](int x,int y){return x>=0 && y>=0 && x<w && y<h;};
@@ -122,6 +126,7 @@ inline ResidualAudit auditResidualRegions(
   }
   std::sort(component.begin(),component.end());
   ResidualRegion region;region.id=1469598103934665603ULL;region.area=component.size()*area;
+  region.cells=component;
   std::vector<int> frontier;
   for(int i:component) {
    region.id=(region.id^uint64_t(i))*1099511628211ULL;
@@ -140,6 +145,11 @@ inline ResidualAudit auditResidualRegions(
   if(timed()){out.complete=false;return out;}
   if(item.stair) {
     region.state="transition";out.transition+=region.area;out.regions.push_back(region);continue;
+  }
+  // Reuse only exact regional map dependencies from a previously complete 3D
+  // occlusion audit. Runtime no-gain/deferred evidence is never a substitute.
+  if(reuse_occluded && reuse_occluded(region)) {
+    region.state="occluded";out.deferred+=region.area;out.regions.push_back(region);++out.reused_regions;continue;
   }
   // Runtime evidence never skips visibility/support/route validation.
   bool opportunity=false,uncertain=false,route_rejected=false;
@@ -167,6 +177,49 @@ inline ResidualAudit auditResidualRegions(
 
  }
  return out;
+}
+inline bool canReuseOccludedRegion(const ResidualAudit & old,const ResidualRegion & region,
+ const PairedFloorMap & pair,double start_x,double start_y,uint64_t support_context,
+ uint64_t transition_hash,uint64_t runtime_hash) {
+ if(old.support_context!=support_context || old.runtime_hash!=runtime_hash || old.transition_hash!=transition_hash ||
+    old.map_evidence.schema!=floorSchemaDigest(*pair.floor) ||
+    old.map_evidence.version.octomap_generation>pair.version.octomap_generation ||
+    old.map_evidence.version.floor_map_generation>pair.version.floor_map_generation)return false;
+ const auto previous=std::find_if(old.regions.begin(),old.regions.end(),
+   [&](const auto & r){return r.id==region.id && r.state=="occluded" && r.cells==region.cells;});
+ if(previous==old.regions.end())return false;
+ auto e=old.map_evidence;e.start_x=start_x;e.start_y=start_y;
+ const auto d=std::find_if(e.dependencies.begin(),e.dependencies.end(),[&](const auto & d){return d.region==region.id;});
+ const auto start=std::find_if(e.dependencies.begin(),e.dependencies.end(),[](const auto & d){return d.region==0;});
+ return start!=e.dependencies.end() && dependencyUnchanged(*start,e,pair) &&
+   d!=e.dependencies.end() && dependencyUnchanged(*d,e,pair);
+}
+// Record conservative dependencies for every independently reusable region.
+// Negative/unfinished route searches may inspect the whole floor; do not claim
+// their dependencies are local. Occlusion-only proofs depend on the 4m view
+// lattice plus sensor/support/body margins, and on reachable-view membership.
+inline void sealResidualAudit(ResidualAudit & audit,const PairedFloorMap & pair,
+ const ExplorationBoundaryPolygon & boundary,double margin,double padding) {
+ audit.map_evidence=beginMapEvidence(pair,audit.start.first,audit.start.second,boundary,margin);
+ auto & e=audit.map_evidence;
+ // estimateSupportPlane reads a 4m neighbourhood at the measured start.
+ const double start_radius=4.+padding;
+ sealDependency(e,{0,e.start_x-start_radius,e.start_y-start_radius,e.start_x+start_radius,e.start_y+start_radius,0,0},pair);
+ OccupancyGrid2d grid(*pair.floor);
+ for(const auto & region:audit.regions) {
+  if(region.cells.empty())continue;
+  MapDependency d;d.region=region.id;d.min_x=d.min_y=INFINITY;d.max_x=d.max_y=-INFINITY;
+  for(int i:region.cells){auto p=grid.mapToWorld(i%grid.getSizeX(),i/grid.getSizeX());
+   d.min_x=std::min(d.min_x,p.first);d.min_y=std::min(d.min_y,p.second);
+   d.max_x=std::max(d.max_x,p.first);d.max_y=std::max(d.max_y,p.second);}
+  if(region.state!="occluded" && region.state!="transition") {
+   double lo_x,lo_y,lo_z,hi_x,hi_y,hi_z;pair.tree->getMetricMin(lo_x,lo_y,lo_z);pair.tree->getMetricMax(hi_x,hi_y,hi_z);
+   d.min_x=std::min(d.min_x,lo_x);d.min_y=std::min(d.min_y,lo_y);
+   d.max_x=std::max(d.max_x,hi_x);d.max_y=std::max(d.max_y,hi_y);
+  }
+  d.min_x-=4.+padding;d.min_y-=4.+padding;d.max_x+=4.+padding;d.max_y+=4.+padding;
+  sealDependency(e,d,pair);
+ }
 }
 // Exact ray test for one residual boundary cell; no 256-cell truncation.
 // A known-free endpoint can still contain an unknown half-voxel on the ray.
@@ -274,8 +327,9 @@ public:
  bool observe(const ResidualAudit & audit,double now,int64_t stamp) {
   if(!audit.handoff()){reset();return false;}
   auto records=audit.records()+":"+std::to_string(audit.transition_hash)+":"+std::to_string(audit.runtime_hash);
-  if(hash_!=audit.fingerprint || records_!=records || now<last_now_) {
-   reset();hash_=audit.fingerprint;records_=records;since_=now;
+  const auto fingerprint=audit.map_evidence.present()?audit.map_evidence.stableDigest():audit.fingerprint;
+  if(hash_!=fingerprint || records_!=records || now<last_now_) {
+   reset();hash_=fingerprint;records_=records;since_=now;
   }
   if(stamp>stamp_){++samples_;stamp_=stamp;}
   last_now_=now;return samples_>=3 && now-since_>=10.;

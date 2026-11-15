@@ -1,4 +1,5 @@
 #include "go2_multifloor_exploration/floor_slice.hpp"
+#include <frontier_exploration_ros2/msg/floor_map_snapshot.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <octomap/AbstractOcTree.h>
@@ -65,6 +66,7 @@ public:
         }
       });
     publisher_ = create_publisher<nav_msgs::msg::OccupancyGrid>(output_topic_, map_qos);
+    snapshot_pub_ = create_publisher<frontier_exploration_ros2::msg::FloorMapSnapshot>(output_topic_ + "/snapshot", map_qos);
     timer_ = create_wall_timer(
       std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::duration<double>(std::max(0.1, publish_period_s_))),
@@ -83,6 +85,8 @@ private:
     abstract.release();
     std::lock_guard<std::mutex> lock(mutex_);
     tree_.reset(raw);
+    source_ = msg;
+    ++octomap_generation_;
     dirty_ = true;
   }
 
@@ -90,12 +94,15 @@ private:
   {
     std::shared_ptr<const octomap::OcTree> tree;
     double floor_z = 0.0;
+    octomap_msgs::msg::Octomap::ConstSharedPtr source;
+    uint64_t source_generation = 0;
     {
       std::lock_guard<std::mutex> lock(mutex_);
       if (!tree_ || !dirty_) {
         return;
       }
       tree = tree_;
+      source = source_;source_generation = octomap_generation_;
       floor_z = floor_z_;
       dirty_ = false;
     }
@@ -113,6 +120,14 @@ private:
     msg.info.origin.position.z = floor_z;
     msg.info.origin.orientation.w = 1.0;
     msg.data = slice.data;
+    // One message transports the immutable pair: delayed independent topics cannot
+    // accidentally associate a slice with a different OctoMap. Legacy map is kept.
+    frontier_exploration_ros2::msg::FloorMapSnapshot snapshot;
+    snapshot.octomap_generation = source_generation;
+    snapshot.source_octomap_generation = source_generation;
+    snapshot.floor_map_generation = ++floor_map_generation_;
+    snapshot.octomap = *source;snapshot.floor_map = msg;
+    snapshot_pub_->publish(snapshot);
     publisher_->publish(msg);
   }
 
@@ -126,6 +141,9 @@ private:
   std::unique_ptr<FloorSliceBuilder> builder_;
   std::mutex mutex_;
   std::shared_ptr<const octomap::OcTree> tree_;
+  octomap_msgs::msg::Octomap::ConstSharedPtr source_;
+  uint64_t octomap_generation_{0},floor_map_generation_{0};
+  rclcpp::Publisher<frontier_exploration_ros2::msg::FloorMapSnapshot>::SharedPtr snapshot_pub_;
   rclcpp::Subscription<octomap_msgs::msg::Octomap>::SharedPtr map_sub_;
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr floor_sub_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr publisher_;

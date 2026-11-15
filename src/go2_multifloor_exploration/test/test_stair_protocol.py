@@ -25,6 +25,7 @@ from rosgraph_msgs.msg import Clock
 from std_msgs.msg import Empty, Float64, String, Bool
 from tf2_msgs.msg import TFMessage
 from frontier_exploration_ros2.srv import ControlExploration
+from frontier_exploration_ros2.msg import FloorMapSnapshot
 
 
 @pytest.mark.parametrize("handoff_kind", ["complete", "residual", "bounded_residual", "region_audit", "region_audit_v3", "region_audit_v4"])
@@ -33,6 +34,7 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     fixture = tmp_path / 'stairs.ot'
     subprocess.run([os.environ['STAIR_TEST_FIXTURE'], str(fixture)], check=True)
     data = fixture.read_bytes().split(b'\ndata\n', 1)[1]
+    evidence = {z: subprocess.check_output([os.environ['STAIR_TEST_FIXTURE'], '--evidence', str(z)], text=True) for z in (0., .3)}
     rclpy.init()
     node = Node('stair_protocol_fixture')
     node.declare_parameter('gait.swing_height', .04)
@@ -53,6 +55,7 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     map_pub = node.create_publisher(Octomap, '/octomap_full', qos)
     tf_pub = node.create_publisher(TFMessage, '/tf', 20)
     slice_pub = node.create_publisher(OccupancyGrid, '/map_floor', qos)
+    paired_pub = node.create_publisher(FloorMapSnapshot, '/map_floor/snapshot', qos)
     completion = node.create_publisher(Empty, '/exploration_complete', qos)
     verified = node.create_publisher(String, '/explore/floor_completion', qos)
 
@@ -62,7 +65,7 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
             f"status={'VERIFIED_WITH_RESIDUALS' if residual else 'VERIFIED_COMPLETE'};"
             f"floor_z={floor_z};stamp={state['stamp']};remaining={area};residual={area};transition=0;"
             f"region_count={1 if residual else 0};regions={'11:.1:occluded' if residual else ''};"
-            "safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10")
+            f"safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10;map_evidence={evidence[floor_z]}")
 
     exhausted = node.create_publisher(String, '/explore/floor_exhausted', qos)
     node.create_subscription(Empty, '/multifloor/exploration_complete',
@@ -172,6 +175,8 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
             floor.info.origin.position.z = state['slice_height']
             floor.data = [0]
             slice_pub.publish(floor)
+            paired_pub.publish(FloorMapSnapshot(octomap_generation=1, floor_map_generation=1,
+                source_octomap_generation=1, octomap=octree, floor_map=floor))
             time.sleep(.05)
         assert condition(), (state, (tmp_path / 'manager.log').read_text()[-5000:])
 

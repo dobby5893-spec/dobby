@@ -35,7 +35,7 @@ target_include_directories(floor_slice_node PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include ${OCTOMAP_INCLUDE_DIRS})
 target_link_libraries(floor_slice_node floor_slice ${OCTOMAP_LIBRARIES})
 ament_target_dependencies(floor_slice_node
-  nav_msgs octomap_msgs rclcpp std_msgs)
+  frontier_exploration_ros2 nav_msgs octomap_msgs rclcpp std_msgs)
 
 add_library(stair_transition STATIC src/stair_transition.cpp)
 set_target_properties(stair_transition PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -63,6 +63,13 @@ install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_handoff_consistency test/test_handoff_consistency.cpp)
+  target_include_directories(test_handoff_consistency PRIVATE include)
+  target_link_libraries(test_handoff_consistency stair_transition ${OCTOMAP_LIBRARIES})
+  ament_target_dependencies(test_handoff_consistency
+    frontier_exploration_ros2 geometry_msgs go2_surface_3d_planner nav_msgs nav2_msgs
+    octomap_msgs rclcpp rclcpp_action std_msgs tf2 tf2_geometry_msgs tf2_ros visualization_msgs)
+  set_tests_properties(test_handoff_consistency PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=189;ROS_LOCALHOST_ONLY=1")
   ament_add_gtest(test_transition_footprint test/test_transition_footprint.cpp)
   target_link_libraries(test_transition_footprint stair_transition)
   ament_target_dependencies(test_transition_footprint go2_surface_3d_planner)
@@ -76,6 +83,11 @@ if(BUILD_TESTING)
   add_executable(make_stair_fixture test/make_stair_fixture.cpp)
   target_include_directories(make_stair_fixture PRIVATE ${OCTOMAP_INCLUDE_DIRS})
   target_link_libraries(make_stair_fixture ${OCTOMAP_LIBRARIES})
+  ament_target_dependencies(make_stair_fixture frontier_exploration_ros2 nav_msgs octomap_msgs)
+  ament_add_pytest_test(test_floor_snapshot test/test_floor_snapshot.py TIMEOUT 40
+    ENV "ROS_DOMAIN_ID=188" "ROS_LOCALHOST_ONLY=1"
+      "FLOOR_SLICE_NODE=$<TARGET_FILE:floor_slice_node>"
+      "STAIR_TEST_FIXTURE=$<TARGET_FILE:make_stair_fixture>")
   ament_add_pytest_test(test_stair_protocol test/test_stair_protocol.py TIMEOUT 90
     ENV "ROS_DOMAIN_ID=179" "ROS_LOCALHOST_ONLY=1"
       "STAIR_TEST_MANAGER=$<TARGET_FILE:multifloor_manager>"

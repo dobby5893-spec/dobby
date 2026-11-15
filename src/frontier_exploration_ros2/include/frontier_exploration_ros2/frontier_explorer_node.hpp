@@ -18,6 +18,7 @@ limitations under the License.
 #pragma once
 
 #include <chrono>
+#include "frontier_exploration_ros2/msg/floor_map_snapshot.hpp"
 #include <future>
 #include <map>
 #include <memory>
@@ -59,6 +60,7 @@ namespace frontier_exploration_ros2
 // ROS 2 wiring layer for FrontierExplorerCore (subscriptions, actions, worker queue, diagnostics).
 class FrontierExplorerNode : public rclcpp::Node
 {
+  friend struct MapConsistencyNodeTestAccess;
 public:
   explicit FrontierExplorerNode(
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -140,6 +142,9 @@ private:
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr transition_mask_;
 
   std::future<ResidualAudit> residual_audit_future_;
+  std::optional<ResidualAudit> residual_audit_cache_;
+  std::shared_ptr<const PairedFloorMap> paired_floor_map_;
+  rclcpp::Subscription<msg::FloorMapSnapshot>::SharedPtr paired_floor_sub_;
   FloorCoveragePolicy residual_closed_policy_;
   ResidualAuditStability residual_audit_stability_;
   uint64_t residual_audit_epoch_{std::numeric_limits<uint64_t>::max()};

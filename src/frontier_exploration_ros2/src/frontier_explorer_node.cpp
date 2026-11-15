@@ -656,6 +656,13 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
     "/explore/floor_exhausted",rclcpp::QoS(1).reliable().transient_local());
   verified_completion_pub_=create_publisher<std_msgs::msg::String>(
     "/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local());
+  paired_floor_sub_=create_subscription<msg::FloorMapSnapshot>(
+    params_.map_topic + "/snapshot",rclcpp::QoS(1).reliable().transient_local(),
+    [this](msg::FloorMapSnapshot::ConstSharedPtr msg) {
+      if(msg->floor_map.header.frame_id!=params_.global_frame)return;
+      auto pair=decodeFloorSnapshot(*msg);if(!pair)return;
+      std::lock_guard<std::mutex> lock(surface_map_mutex_);paired_floor_map_=std::move(pair);
+    });
   callbacks.request_floor_completion_audit=[this]() {floor_cleanup_mode_=true;};
   callbacks.on_floor_exhausted=[this](const std::string & report) {
     std_msgs::msg::String msg;msg.data=report;floor_exhausted_pub_->publish(msg);
@@ -1785,11 +1792,16 @@ void FrontierExplorerNode::serviceResidualAudit()
     random_stair_mode_ || core_->goal_in_progress)return;
  double now=get_clock()->now().seconds();
  if(now<residual_audit_clock_ || residual_audit_epoch_!=random_epoch_) {
-  residual_audit_stability_.reset();residual_closed_policy_.clear();residual_audit_next_=now;
+  residual_audit_stability_.reset();residual_audit_cache_.reset();residual_closed_policy_.clear();residual_audit_next_=now;
  }
  residual_audit_clock_=now;residual_audit_epoch_=random_epoch_;
- std::shared_ptr<const octomap::OcTree> tree;nav_msgs::msg::OccupancyGrid::ConstSharedPtr hint,transition_mask;
- {std::lock_guard<std::mutex> lock(surface_map_mutex_);tree=surface_map_;hint=surface_hint_map_;transition_mask=transition_mask_;}
+ std::shared_ptr<const PairedFloorMap> pair;
+ std::shared_ptr<const octomap::OcTree> tree,live;nav_msgs::msg::OccupancyGrid::ConstSharedPtr hint,transition_mask;
+ {std::lock_guard<std::mutex> lock(surface_map_mutex_);pair=paired_floor_map_;live=surface_map_;hint=surface_hint_map_;transition_mask=transition_mask_;}
+ if(!pair || !hint || floorDigest(*hint)!=pair->version.floor_digest) {
+  RCLCPP_WARN_THROTTLE(get_logger(),*get_clock(),10000,"Residual audit waiting for source-matched /map_floor/snapshot");return;
+ }
+ tree=pair->tree;hint=pair->floor;
  auto actual=getCurrentPose();
  if(!tree || !hint || !actual || hint->header.frame_id!=params_.global_frame)return;
  double age=now-rclcpp::Time(hint->header.stamp).seconds();
@@ -1821,12 +1833,14 @@ void FrontierExplorerNode::serviceResidualAudit()
    residual_audit_stability_.reset();
    RCLCPP_ERROR(get_logger(),"Floor completion assessment: ERROR; residual audit failed: %s",e.what());return;
   }
-  if(result.fingerprint!=residualMapFingerprint(grid) || result.transition_hash!=transition_hash || result.runtime_hash!=runtime_hash || result.epoch!=random_epoch_ ||
+  if(!mapEvidenceCurrent(result.map_evidence,*pair,live.get()) || result.transition_hash!=transition_hash || result.runtime_hash!=runtime_hash || result.epoch!=random_epoch_ ||
      std::hypot(actual->position.x-result.start.first,actual->position.y-result.start.second)>.3) {
+    RCLCPP_INFO(get_logger(),"Discarding stale residual audit: map dependencies, runtime evidence, epoch or pose changed");
     residual_audit_stability_.reset();residual_audit_next_=now+2;return;
   }
-  RCLCPP_INFO(get_logger(),"Per-region residual audit: regions=%zu, deferred=%.3fm2, pending=%.3fm2, complete=%s, tested_sites=%zu",
-    result.regions.size(),result.deferred,result.pending,result.complete?"true":"false",result.sites);
+  residual_audit_cache_=result;
+  RCLCPP_INFO(get_logger(),"Per-region residual audit: regions=%zu, deferred=%.3fm2, pending=%.3fm2, complete=%s, tested_sites=%zu, reused_regions=%zu",
+    result.regions.size(),result.deferred,result.pending,result.complete?"true":"false",result.sites,result.reused_regions);
   RCLCPP_INFO(get_logger(),"Residual region classifications: %s",result.records().c_str());
   if(result.reference && result.view && core_->pending_frontier_sequence.empty()) {
     FrontierCandidate candidate{*result.reference,*result.view,1};
@@ -1838,7 +1852,7 @@ void FrontierExplorerNode::serviceResidualAudit()
   int64_t stamp=int64_t(hint->header.stamp.sec)*1000000000LL+hint->header.stamp.nanosec;
   RCLCPP_INFO(get_logger(),"Floor completion assessment: %s",completionStatusName(result.status()));
   bool stable=residual_audit_stability_.observe(result,now,stamp);
-  if(stable && measuredClearanceRestored(true)) {
+  if(stable && pairedSourceCaughtUp(*pair,live.get()) && measuredClearanceRestored(true)) {
     std::ostringstream report;report<<std::setprecision(10);
     report<<"v4;floor_z="<<hint->info.origin.position.z<<";stamp="<<now
       <<";reason=region_observability_audit;remaining_unknown_area="<<result.remaining
@@ -1856,7 +1870,8 @@ void FrontierExplorerNode::serviceResidualAudit()
       <<";remaining="<<result.remaining<<";residual="<<result.deferred<<";transition="<<result.transition
       <<";region_count="<<result.regions.size()<<";regions="<<result.records()
       <<";safe_start=1;complete_views=1;complete_routes=1;stable_samples="<<residual_audit_stability_.samples()
-      <<";stable_seconds="<<residual_audit_stability_.seconds(now);
+      <<";stable_seconds="<<residual_audit_stability_.seconds(now)
+      <<";map_evidence="<<encodeMapEvidence(result.map_evidence);
     if(parseVerifiedFloorCompletion(formal.str())) {
       std_msgs::msg::String verified;verified.data=formal.str();verified_completion_pub_->publish(verified);
     }
@@ -1883,15 +1898,22 @@ void FrontierExplorerNode::serviceResidualAudit()
   excluded[y*grid.getSizeX()+x]=residual_closed_policy_.excludedCell(x,y);
  auto boundary=params_.exploration_boundary_polygon;double margin=params_.exploration_boundary_margin_m;
  auto pose=*actual;double budget=residual_audit_budget_;auto epoch=random_epoch_;
- residual_audit_future_=std::async(std::launch::async,[tree,hint,config,sensor,excluded,boundary,margin,pose,budget,epoch,transition,transition_hash,runtime,runtime_hash]() mutable {
+ auto previous=residual_audit_cache_;
+ residual_audit_future_=std::async(std::launch::async,[pair,tree,hint,config,sensor,excluded,boundary,margin,pose,budget,epoch,transition,transition_hash,runtime,runtime_hash,previous]() mutable {
   auto deadline=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(budget));
   config.search_deadline=deadline;
   const auto & q=pose.orientation;double yaw=std::atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z));
   OccupancyGrid2d grid(*hint);
   if(!go2_surface_3d_planner::configureSupportPlane(config,*tree,{pose.position.x,pose.position.y,pose.position.z,yaw})) {
     ResidualAudit result;result.fingerprint=residualMapFingerprint(grid);result.epoch=epoch;result.transition_hash=transition_hash;result.runtime_hash=runtime_hash;
-    result.start={pose.position.x,pose.position.y};result.complete=false;return result;
+    result.start={pose.position.x,pose.position.y};result.complete=false;
+    sealResidualAudit(result,*pair,boundary,margin,1.);return result;
   }
+  uint64_t support_context=mapHashSeed();
+  for(double value:{config.flat_support_height,config.flat_support_origin_x,config.flat_support_origin_y,
+      config.flat_support_slope_x,config.flat_support_slope_y,config.support_reference_height,
+      pose.position.z,sensor.x,sensor.y,sensor.z,sensor.qx,sensor.qy,sensor.qz,sensor.qw,sensor.min_pitch,sensor.max_pitch})
+    mapHashDouble(support_context,value);
   AuditRouteCache routes;
   const go2_surface_3d_planner::SurfacePoint origin{pose.position.x,pose.position.y,
     pose.position.z-config.support_reference_height,yaw};
@@ -1899,7 +1921,15 @@ void FrontierExplorerNode::serviceResidualAudit()
     [&](int x,int y){return bool(excluded[y*grid.getSizeX()+x]);},
     [&](auto view,auto target){return auditAdmissibleView(*tree,config,view,target,hint->info.origin.position.z,sensor,deadline,origin,&routes,std::min(4.,std::max(.5,budget/10.)));},deadline,
     [&](int x,int y){return transition[y*grid.getSizeX()+x]==100;},
-    [&](int x,int y){return runtime[y*grid.getSizeX()+x];});
+    [&](int x,int y){return runtime[y*grid.getSizeX()+x];},
+    [&](const ResidualRegion & region){
+      return previous && canReuseOccludedRegion(*previous,region,*pair,pose.position.x,pose.position.y,
+        support_context,transition_hash,runtime_hash);
+    });
+  result.start={pose.position.x,pose.position.y};result.support_context=support_context;
+  const double padding=config.snap_radius+config.collision_radius+std::abs(config.cylinder_offset)+
+    std::hypot(sensor.x,sensor.y)+grid.map().info.resolution;
+  sealResidualAudit(result,*pair,boundary,margin,std::max(.3,padding));
   result.epoch=epoch;result.transition_hash=transition_hash;result.runtime_hash=runtime_hash;result.start={pose.position.x,pose.position.y};return result;
  });
 }
