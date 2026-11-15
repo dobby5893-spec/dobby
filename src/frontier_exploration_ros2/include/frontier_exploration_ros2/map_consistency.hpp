@@ -41,17 +41,23 @@ inline uint64_t floorDigest(const nav_msgs::msg::OccupancyGrid & m) {
  auto h=floorSchemaDigest(m);for(auto v:m.data){mapHashMix(h,uint8_t(v));}
  return h;
 }
-template<class Message> inline std::shared_ptr<const PairedFloorMap> decodeFloorSnapshot(const Message & m) {
+template<class Message> inline std::shared_ptr<const PairedFloorMap> decodeFloorSnapshot(const Message & m,
+ std::shared_ptr<const octomap::OcTree> reusable={},uint64_t reusable_digest=0) {
  const auto & f=m.floor_map;
  if(!m.octomap_generation || !m.floor_map_generation || m.source_octomap_generation!=m.octomap_generation ||
     f.header.frame_id!=m.octomap.header.frame_id || f.header.frame_id.empty() ||
     !std::isfinite(f.info.resolution) || f.info.resolution<=0 || !f.info.width || !f.info.height ||
     uint64_t(f.info.width)*f.info.height!=f.data.size() || !std::isfinite(f.info.origin.position.z))return {};
- std::unique_ptr<octomap::AbstractOcTree> raw(octomap_msgs::msgToMap(m.octomap));
- auto tree=dynamic_cast<octomap::OcTree*>(raw.get());if(!tree)return {};
- auto out=std::make_shared<PairedFloorMap>();raw.release();out->tree.reset(tree);
+ const auto source_digest=octomapDigest(m.octomap);
+ auto out=std::make_shared<PairedFloorMap>();
+ if(reusable && reusable_digest==source_digest)out->tree=std::move(reusable);
+ else {
+  std::unique_ptr<octomap::AbstractOcTree> raw(octomap_msgs::msgToMap(m.octomap));
+  auto tree=dynamic_cast<octomap::OcTree*>(raw.get());if(!tree)return {};
+  raw.release();out->tree.reset(tree);
+ }
  out->floor=std::make_shared<const nav_msgs::msg::OccupancyGrid>(f);
- out->version={m.octomap_generation,m.floor_map_generation,octomapDigest(m.octomap),floorDigest(f)};
+ out->version={m.octomap_generation,m.floor_map_generation,source_digest,floorDigest(f)};
  out->source_stamp=m.octomap.header.stamp.sec+m.octomap.header.stamp.nanosec*1e-9;return out;
 }
 struct MapDependency {

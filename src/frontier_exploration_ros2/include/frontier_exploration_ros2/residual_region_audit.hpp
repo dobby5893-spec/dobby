@@ -34,9 +34,10 @@ struct ResidualAudit {
    if(!std::isfinite(region.area) || region.area<=0)return CompletionStatus::ERROR;
    total+=region.area;
    if(region.state=="verification_deferred" || region.state=="observed_no_gain" ||
-      region.state=="undetermined" || region.state=="actionable")return CompletionStatus::INCOMPLETE;
+      region.state=="undetermined" || region.state=="actionable" || region.state=="occluded" ||
+      region.state=="support_unverified" || region.state=="map_insufficient" || region.state=="outside_fov" || region.state=="navigation_failed")return CompletionStatus::INCOMPLETE;
    if(region.state=="no_route" || region.state=="no_known_access")blocked=true;
-   else if(region.state!="occluded" && region.state!="transition")return CompletionStatus::ERROR;
+   else if(region.state!="verified_enclosed" && region.state!="transition")return CompletionStatus::ERROR;
   }
   if(std::abs(total-remaining)>1e-4)return CompletionStatus::ERROR;
   if(blocked)return CompletionStatus::BLOCKED;
@@ -64,22 +65,17 @@ inline uint64_t residualMapFingerprint(const OccupancyGrid2d & m) {
  for(auto v:m.map().data)mix(v<0?0:v>=65?2:1);
  return hash;
 }
-// Audit is exhaustive over the currently known-free floor-grid observation
-// lattice and its connected boundary cells. It is a current-capability report,
-// never proof that raw unknowns are occupied or permanently unreachable.
-// can_observe: 1=admissible viewpoint exists, 0=geometrically rejected,
-// -2=complete route search rejected, -1=uncertain/budget exceeded.
-// Incomplete searches must never certify a region as inaccessible.
-inline ResidualAudit auditResidualRegions(
+struct ResidualLayout {
+ struct Work {ResidualRegion region;std::vector<int> frontier;bool stair;int proof;};
+ bool complete{true};double remaining{0};std::vector<Work> work;std::vector<int> reachable;
+};
+inline ResidualLayout extractResidualLayout(
  const OccupancyGrid2d & map,std::pair<double,double> robot,
  const ExplorationBoundaryPolygon & boundary,double margin,
- const std::function<bool(int,int)> & excluded,
- const std::function<int(std::pair<double,double>,std::pair<double,double>)> & can_observe,
  std::chrono::steady_clock::time_point deadline,
  const std::function<bool(int,int)> & transition_cell={},
- const std::function<int(int,int)> & runtime_cell={},
- const std::function<bool(const ResidualRegion &)> & reuse_occluded={}) {
- ResidualAudit out;out.fingerprint=residualMapFingerprint(map);
+ const std::function<int(int,int)> & runtime_cell={}) {
+ ResidualLayout out;
  const int w=map.getSizeX(),h=map.getSizeY();const double area=map.map().info.resolution*map.map().info.resolution;
  auto valid=[&](int x,int y){return x>=0 && y>=0 && x<w && y<h;};
  auto timed=[&](){return std::chrono::steady_clock::now()>=deadline;};
@@ -100,14 +96,13 @@ inline ResidualAudit auditResidualRegions(
    }
   }
  }
- struct Work {ResidualRegion region;std::vector<int> frontier;bool stair;int proof;};
- std::vector<Work> work;
+
  for(int start=0;start<w*h;++start) {
   if(timed()){out.complete=false;return out;}
   int x=start%w,y=start/w;
   if(map.getCost(x,y)>=0 || !is_inside_exploration_boundary(map.mapToWorld(x,y),boundary,margin))continue;
   out.remaining+=area;
-  (void)excluded; // A 2D exclusion is a candidate classification, never 3D proof.
+
   if(seen[start])continue;
   const bool stair=transition_cell && transition_cell(x,y);
   const int proof=stair?0:(runtime_cell?runtime_cell(x,y):0);
@@ -135,8 +130,32 @@ inline ResidualAudit auditResidualRegions(
    }
   }
   if(frontier.empty())frontier=component;
-  work.push_back({region,std::move(frontier),stair,proof});
+  out.work.push_back({region,std::move(frontier),stair,proof});
  }
+ out.reachable=std::move(queue);return out;
+}
+// Audit is exhaustive over the currently known-free floor-grid observation
+// lattice and its connected boundary cells. It is a current-capability report,
+// never proof that raw unknowns are occupied or permanently unreachable.
+// can_observe: 1=admissible viewpoint exists, 0=geometrically rejected,
+// -2=complete route search rejected, -1=uncertain/budget exceeded.
+// Incomplete searches must never certify a region as inaccessible.
+inline ResidualAudit auditResidualRegions(
+ const OccupancyGrid2d & map,std::pair<double,double> robot,
+ const ExplorationBoundaryPolygon & boundary,double margin,
+ const std::function<bool(int,int)> & excluded,
+ const std::function<int(std::pair<double,double>,std::pair<double,double>)> & can_observe,
+ std::chrono::steady_clock::time_point deadline,
+ const std::function<bool(int,int)> & transition_cell={},
+ const std::function<int(int,int)> & runtime_cell={},
+ const std::function<bool(const ResidualRegion &)> & reuse_occluded={}) {
+ ResidualAudit out;out.fingerprint=residualMapFingerprint(map);(void)excluded;
+ const int w=map.getSizeX();
+ const auto layout=extractResidualLayout(map,robot,boundary,margin,deadline,transition_cell,runtime_cell);
+ out.remaining=layout.remaining;if(!layout.complete){out.complete=false;return out;}
+ auto work=layout.work;
+ const auto & queue=layout.reachable;
+ auto timed=[&](){return std::chrono::steady_clock::now()>=deadline;};
  // Inspect large unexplored regions before spending the budget on tiny slivers.
  // A handoff still requires completion of every region.
  std::stable_sort(work.begin(),work.end(),[](const auto & a,const auto & b){return a.region.area>b.region.area;});
@@ -212,7 +231,7 @@ inline void sealResidualAudit(ResidualAudit & audit,const PairedFloorMap & pair,
   for(int i:region.cells){auto p=grid.mapToWorld(i%grid.getSizeX(),i/grid.getSizeX());
    d.min_x=std::min(d.min_x,p.first);d.min_y=std::min(d.min_y,p.second);
    d.max_x=std::max(d.max_x,p.first);d.max_y=std::max(d.max_y,p.second);}
-  if(region.state!="occluded" && region.state!="transition") {
+  if(region.state!="occluded" && region.state!="verified_enclosed" && region.state!="transition") {
    double lo_x,lo_y,lo_z,hi_x,hi_y,hi_z;pair.tree->getMetricMin(lo_x,lo_y,lo_z);pair.tree->getMetricMax(hi_x,hi_y,hi_z);
    d.min_x=std::min(d.min_x,lo_x);d.min_y=std::min(d.min_y,lo_y);
    d.max_x=std::max(d.max_x,hi_x);d.max_y=std::max(d.max_y,hi_y);

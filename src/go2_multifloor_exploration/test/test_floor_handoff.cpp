@@ -133,12 +133,12 @@ TEST(CompletionAuthority, LegacyMessagesNeverAuthorize) {
 }
 TEST(CompletionAuthority, ZeroAndAuditedResidualsUseSameEntrance) {
  EXPECT_TRUE(parseAuthorizedFloorCompletion(authorized()));
- EXPECT_TRUE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1","11:.1:occluded","1")));
+ EXPECT_TRUE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1","11:.1:verified_enclosed","1")));
  for(auto state:{"INCOMPLETE","BLOCKED","ERROR"})
   EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized(state)));
 }
 TEST(CompletionAuthority, RuntimeDeferralAndNoRouteAreNotVerifiedResiduals) {
- for(auto reason:{"verification_deferred","observed_no_gain","no_route","no_known_access","undetermined","actionable"})
+ for(auto reason:{"occluded","support_unverified","navigation_failed","verification_deferred","observed_no_gain","no_route","no_known_access","undetermined","actionable"})
   EXPECT_FALSE(parseAuthorizedFloorCompletion(authorized("VERIFIED_WITH_RESIDUALS",".1",".1",std::string("11:.1:")+reason,"1")));
 }
 TEST(CompletionAuthority, MissingSafetyStabilityOrAreaEvidenceRejects) {

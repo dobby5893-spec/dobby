@@ -64,7 +64,7 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         return String(data=f"floor_completion;authority=joint_residual_audit;"
             f"status={'VERIFIED_WITH_RESIDUALS' if residual else 'VERIFIED_COMPLETE'};"
             f"floor_z={floor_z};stamp={state['stamp']};remaining={area};residual={area};transition=0;"
-            f"region_count={1 if residual else 0};regions={'11:.1:occluded' if residual else ''};"
+            f"region_count={1 if residual else 0};regions={'11:.1:verified_enclosed' if residual else ''};"
             f"safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10;map_evidence={evidence[floor_z]}")
 
     exhausted = node.create_publisher(String, '/explore/floor_exhausted', qos)

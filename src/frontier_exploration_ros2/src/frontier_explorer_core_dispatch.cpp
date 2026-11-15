@@ -59,6 +59,10 @@ void FrontierExplorerCore::try_send_next_goal()
     return;
   }
 
+  if(callbacks.residual_task_pending && callbacks.residual_task_pending()) {
+    no_next_goal_.pause(callbacks.now_ns()*1e-9);return;
+  }
+
   if (return_to_start_completed) {
     // Exploration is fully finished.
     return;
@@ -458,6 +462,8 @@ void FrontierExplorerCore::try_send_next_goal()
       widen_unknown_search();
       floor_coverage_.exhaustedSearch(callbacks.now_ns()*1e-9,frontiers.empty(),
         callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending());
+      if((!callbacks.frontier_goal_validation_pending || !callbacks.frontier_goal_validation_pending()) &&
+         callbacks.request_residual_observation && callbacks.request_residual_observation())return;
       if(try_random_recovery(*current_pose,true)) {return;}
       publish_frontier_markers(filtered_frontiers);
       no_frontiers_reported = false;
@@ -1602,6 +1608,8 @@ bool FrontierExplorerCore::send_frontier_goal(
   if (dispatch_sequence.empty()) {
     floor_coverage_.exhaustedSearch(callbacks.now_ns()*1e-9,false,
       callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending());
+    if((!callbacks.frontier_goal_validation_pending || !callbacks.frontier_goal_validation_pending()) &&
+       callbacks.request_residual_observation && callbacks.request_residual_observation())return true;
     if(try_random_recovery(current_pose,true)) {return true;}
     if (callbacks.frontier_goal_validation_pending && callbacks.frontier_goal_validation_pending()) {
       callbacks.log_info("3D observation validation pending; exploration executor remains responsive");
@@ -1936,6 +1944,7 @@ void FrontierExplorerCore::get_result_callback(
     return;
   }
 
+  if(goal_kind=="residual_observation"){clear_post_goal_wait_state();return;}
   if(goal_kind=="symmetry_relocation")pending_frontier_sequence.clear();
   // A queued replacement cannot bypass a regional arrival/observation evaluation.
   if ((!params.region_observation_tasks_enabled || !pending_observation_progress_) &&

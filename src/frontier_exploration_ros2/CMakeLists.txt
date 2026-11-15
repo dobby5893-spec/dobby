@@ -62,6 +62,8 @@ ament_target_dependencies(${PROJECT_NAME}_core
 
 add_library(${PROJECT_NAME}_node
   src/frontier_explorer_node.cpp
+  src/active_residual.cpp
+  src/active_residual_node.cpp
 )
 target_include_directories(${PROJECT_NAME}_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -181,6 +183,13 @@ install(
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_active_residual_node test/test_active_residual_node.cpp)
+  target_include_directories(test_active_residual_node PRIVATE include)
+  target_link_libraries(test_active_residual_node ${PROJECT_NAME}_node octomap)
+  set_tests_properties(test_active_residual_node PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=191;ROS_LOCALHOST_ONLY=1")
+  ament_add_gtest(test_active_residual test/test_active_residual.cpp)
+  target_include_directories(test_active_residual PRIVATE include)
+  target_link_libraries(test_active_residual ${PROJECT_NAME}_node octomap)
   ament_add_gtest(test_residual_snapshot_node test/test_residual_snapshot_node.cpp)
   target_include_directories(test_residual_snapshot_node PRIVATE include)
   target_link_libraries(test_residual_snapshot_node ${PROJECT_NAME}_node octomap)

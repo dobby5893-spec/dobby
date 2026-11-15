@@ -53,7 +53,7 @@ inline std::optional<VerifiedFloorCompletion> parseVerifiedFloorCompletion(const
    size_t end=0;double v=std::stod(area,&end);
    if(end!=area.size() || !std::isfinite(v) || v<=0)return {};
    if(reason=="transition")transition+=v;
-   else if(reason=="occluded")residual+=v;
+   else if(reason=="verified_enclosed")residual+=v;
    else return {}; // No-gain, deferred validation and blocked access are not completion.
   }
   if(ids.size()!=size_t(count) || std::abs(residual-out.residual)>1e-4 ||

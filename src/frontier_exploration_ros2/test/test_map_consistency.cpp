@@ -48,8 +48,9 @@ TEST(MapConsistency, LiveOctomapAheadOfSliceCannotCertify) {
 TEST(MapConsistency, UnrelatedFloorChangePreservesEvidenceAndStability) {
  auto old=pairMap();auto a=audited(*old);auto newer=pairMap(2,19*40+39);
  EXPECT_TRUE(mapEvidenceCurrent(a.map_evidence,*newer));
+ for(auto & region:a.regions)region.state="verified_enclosed";
  ResidualAuditStability stability;EXPECT_FALSE(stability.observe(a,0,1));EXPECT_FALSE(stability.observe(a,5,2));
- auto b=audited(*newer);EXPECT_TRUE(stability.observe(b,11,3));
+ auto b=audited(*newer);for(auto & region:b.regions)region.state="verified_enclosed";EXPECT_TRUE(stability.observe(b,11,3));
 }
 TEST(MapConsistency, UnrelatedOctomapChangePreservesEvidence) {
  auto p=pairMap();auto a=audited(*p);octomap::OcTree tree(*p->tree);tree.updateNode(octomap::point3d(100,100,0),true);

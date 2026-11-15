@@ -32,6 +32,8 @@ limitations under the License.
 #include <nav2_msgs/action/drive_on_heading.hpp>
 #include "frontier_exploration_ros2/recovery_start.hpp"
 #include "frontier_exploration_ros2/residual_region_audit.hpp"
+#include "frontier_exploration_ros2/active_residual.hpp"
+#include <nav2_msgs/action/compute_path_to_pose.hpp>
 #include "frontier_exploration_ros2/visited_open_return.hpp"
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -61,6 +63,7 @@ namespace frontier_exploration_ros2
 class FrontierExplorerNode : public rclcpp::Node
 {
   friend struct MapConsistencyNodeTestAccess;
+  friend struct ActiveResidualNodeTestAccess;
 public:
   explicit FrontierExplorerNode(
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -138,6 +141,28 @@ private:
   bool takeClearanceRecoveryRequest();
   double contact_probe_at_{-1},contact_request_at_{-1};
   void serviceResidualAudit();
+  void serviceActiveResidual();
+  void activeResidualNavigationResult(int dispatch,int status);
+  void beginResidualNav2Check(const SpatialAttempt & option,uint64_t region,const AuditMapEvidence & evidence);
+  void finishResidualAttempt(SpatialOutcome outcome);
+  void considerResidualCompletion(const ResidualAudit &,const PairedFloorMap &,const octomap::OcTree *,double now);
+  using ResidualCompute=nav2_msgs::action::ComputePathToPose;
+  rclcpp_action::Client<ResidualCompute>::SharedPtr residual_compute_client_;
+  rclcpp_action::ClientGoalHandle<ResidualCompute>::SharedPtr residual_compute_handle_;
+  ActiveResidualBook active_residual_;
+  RegionObservationTask active_observation_window_;
+  std::future<SpatialPlan> active_plan_future_;
+  enum class ResidualPhase {Idle,CheckingPath,Navigating,AwaitBaseline,Observing};
+  ResidualPhase residual_phase_{ResidualPhase::Idle};
+  std::optional<SpatialAttempt> residual_option_;
+  uint64_t residual_region_{0},residual_token_{0},active_residual_epoch_{0},active_layout_digest_{0};
+  ResidualLayout active_layout_;
+  AuditMapEvidence residual_option_evidence_;
+  UnknownVoxelWindow residual_unknown_window_;
+  int residual_dispatch_{-1};
+  double residual_phase_started_{0},residual_arrived_at_{0},residual_cloud_stamp_{-1},latest_lidar_stamp_{-1};
+  uint64_t residual_arrival_generation_{0},active_sync_octomap_{0},active_sync_floor_{0},active_sync_layout_{0};
+  double active_clock_{-1};
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr transition_mask_sub_;
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr transition_mask_;
 
@@ -215,7 +240,7 @@ private:
   uint64_t surface_goal_epoch_{0};
   std::mutex surface_map_mutex_;
   std::shared_ptr<const octomap::OcTree> surface_map_;
-  double surface_map_time_s_{-1};
+  double surface_map_time_s_{-1};uint64_t surface_map_source_digest_{0};
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr surface_hint_map_;
   go2_surface_3d_planner::SurfaceSearchConfig surface_goal_config_;
   rclcpp::Subscription<octomap_msgs::msg::Octomap>::SharedPtr surface_map_sub_;

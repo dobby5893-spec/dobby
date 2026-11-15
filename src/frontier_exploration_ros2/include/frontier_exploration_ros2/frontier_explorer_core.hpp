@@ -196,6 +196,8 @@ struct FrontierExplorerCoreCallbacks
   std::function<void(bool)> set_floor_cleanup_mode;
   std::function<void(const std::string &)> on_floor_exhausted;
   std::function<void()> request_floor_completion_audit;
+  std::function<bool()> residual_task_pending;
+  std::function<bool()> request_residual_observation;
   std::function<bool()> frontier_goal_validation_pending;
   std::function<std::optional<geometry_msgs::msg::PoseStamped>(
     const geometry_msgs::msg::Pose &,bool)> request_random_recovery;

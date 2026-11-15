@@ -571,7 +571,7 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
         std::shared_ptr<const octomap::OcTree> snapshot(tree);
         std::lock_guard<std::mutex> lock(surface_map_mutex_);
         surface_map_ = std::move(snapshot);
-        surface_map_time_s_=rclcpp::Time(msg->header.stamp).seconds();
+        surface_map_time_s_=rclcpp::Time(msg->header.stamp).seconds();surface_map_source_digest_=octomapDigest(*msg);
       });
     callbacks.frontier_goal_validation_pending = [this]() {
         return surface_goal_future_.valid() ||
@@ -660,9 +660,23 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
     params_.map_topic + "/snapshot",rclcpp::QoS(1).reliable().transient_local(),
     [this](msg::FloorMapSnapshot::ConstSharedPtr msg) {
       if(msg->floor_map.header.frame_id!=params_.global_frame)return;
-      auto pair=decodeFloorSnapshot(*msg);if(!pair)return;
+      std::shared_ptr<const octomap::OcTree> reuse;uint64_t digest;
+      {std::lock_guard<std::mutex> lock(surface_map_mutex_);reuse=surface_map_;digest=surface_map_source_digest_;}
+      auto pair=decodeFloorSnapshot(*msg,reuse,digest);if(!pair)return;
       std::lock_guard<std::mutex> lock(surface_map_mutex_);paired_floor_map_=std::move(pair);
     });
+  residual_compute_client_=rclcpp_action::create_client<ResidualCompute>(this,"/compute_path_to_pose");
+  callbacks.residual_task_pending=[this]() {return floor_cleanup_mode_ && runtime_state_==RuntimeState::RUNNING && (residual_phase_!=ResidualPhase::Idle || active_plan_future_.valid());};
+  callbacks.request_residual_observation=[this]() {
+    if(!params_.floor_cleanup_enabled || runtime_state_!=RuntimeState::RUNNING || random_stair_mode_)return false;
+    bool work=active_layout_digest_==0 || active_plan_future_.valid() || residual_phase_!=ResidualPhase::Idle;
+    {std::lock_guard<std::mutex> lock(surface_map_mutex_);
+     work|=paired_floor_map_ && (paired_floor_map_->version.octomap_generation!=active_sync_octomap_ || paired_floor_map_->version.floor_map_generation!=active_sync_floor_);
+    }
+    for(const auto & region:active_residual_.regions)work|=region.second.schedulable(params_.floor_cleanup_budget_s);
+    if(work)floor_cleanup_mode_=true;
+    return work;
+  };
   callbacks.request_floor_completion_audit=[this]() {floor_cleanup_mode_=true;};
   callbacks.on_floor_exhausted=[this](const std::string & report) {
     std_msgs::msg::String msg;msg.data=report;floor_exhausted_pub_->publish(msg);
@@ -1013,7 +1027,7 @@ void FrontierExplorerNode::startExplorationRuntime()
     params_.local_costmap_topic,
     topic_qos_profiles_.make_local_costmap_qos(),
     std::bind(&FrontierExplorerNode::localCostmapCallback, this, std::placeholders::_1));
-  if (params_.geometry_scoring_enabled) {
+  if (params_.geometry_scoring_enabled || params_.floor_cleanup_enabled) {
     point_cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       params_.geometry_point_cloud_topic,
       rclcpp::SensorDataQoS(),
@@ -1173,6 +1187,9 @@ void FrontierExplorerNode::requestStopExplorationRuntime(
   const std::string & reason)
 {
   ++surface_goal_epoch_; ++random_epoch_;clearance_request_ready_=false;force_no_goal_recovery_=false;
+  if(residual_compute_handle_)residual_compute_client_->async_cancel_goal(residual_compute_handle_);
+  if(residual_phase_!=ResidualPhase::Idle)finishResidualAttempt(SpatialOutcome::StaleMap);
+  active_residual_.clear();active_layout_={};active_layout_digest_=0;latest_lidar_stamp_=-1;
   random_policy_.last_time=-1;random_avoid_.clear();
   surface_goal_cache_.clear();
   surface_goal_queue_.clear();
@@ -1184,7 +1201,7 @@ void FrontierExplorerNode::requestStopExplorationRuntime(
   publishFrontierMarkers({});
   enterColdIdle();
 
-  if (core_->ready_for_shutdown()) {
+  if (core_->ready_for_shutdown() && !active_plan_future_.valid()) {
     if (pending_quit_after_stop_) {
       runtime_state_ = RuntimeState::SHUTDOWN_PENDING;
       deferred_shutdown_timer_ = this->create_wall_timer(
@@ -1347,7 +1364,12 @@ void FrontierExplorerNode::controlTimerCallback()
 
 void FrontierExplorerNode::stopCompletionPollCallback()
 {
-  if (!core_ || !core_->ready_for_shutdown()) {
+  // Drain cancelled-context work without blocking the executor or retaining
+  // completed region buffers/source snapshots until the next exploration run.
+  if(active_plan_future_.valid() && active_plan_future_.wait_for(std::chrono::seconds(0))==std::future_status::ready) {
+    try{(void)active_plan_future_.get();}catch(const std::exception & e){RCLCPP_DEBUG(get_logger(),"Stopped residual worker: %s",e.what());}
+  }
+  if (!core_ || !core_->ready_for_shutdown() || active_plan_future_.valid()) {
     return;
   }
 
@@ -1788,6 +1810,7 @@ std::optional<geometry_msgs::msg::PoseStamped> FrontierExplorerNode::requestRand
 
 void FrontierExplorerNode::serviceResidualAudit()
 {
+ if(params_.floor_cleanup_enabled){serviceActiveResidual();return;}
  if(!core_ || !floor_cleanup_mode_ || runtime_state_!=RuntimeState::RUNNING ||
     random_stair_mode_ || core_->goal_in_progress)return;
  double now=get_clock()->now().seconds();
@@ -1849,34 +1872,7 @@ void FrontierExplorerNode::serviceResidualAudit()
   }
   if(!result.complete)residual_audit_budget_=std::min(60.,residual_audit_budget_*2);
   else residual_audit_budget_=5.;
-  int64_t stamp=int64_t(hint->header.stamp.sec)*1000000000LL+hint->header.stamp.nanosec;
-  RCLCPP_INFO(get_logger(),"Floor completion assessment: %s",completionStatusName(result.status()));
-  bool stable=residual_audit_stability_.observe(result,now,stamp);
-  if(stable && pairedSourceCaughtUp(*pair,live.get()) && measuredClearanceRestored(true)) {
-    std::ostringstream report;report<<std::setprecision(10);
-    report<<"v4;floor_z="<<hint->info.origin.position.z<<";stamp="<<now
-      <<";reason=region_observability_audit;remaining_unknown_area="<<result.remaining
-      <<";actionable_unknown_area=0;excluded_unknown_area="<<result.closed
-      <<";deferred_unknown_area="<<result.deferred<<";transition_unknown_area="<<result.transition<<";unresolved_unknown_area=0"
-      <<";scope=per_region_current_floor;region_count="<<result.regions.size()
-      <<";stable_samples="<<residual_audit_stability_.samples()
-      <<";stable_seconds="<<residual_audit_stability_.seconds(now)
-      <<";safe_start=1;complete_views=1;complete_routes="<<(result.verification_deferred>0?0:1)
-      <<";runtime_evidence=1;runtime_min_positions=3;runtime_min_healthy_s=60;attempts=0;regions="<<result.records();
-    std_msgs::msg::String msg;msg.data=report.str();floor_exhausted_pub_->publish(msg);
-    std::ostringstream formal;formal<<std::setprecision(10);
-    formal<<"floor_completion;authority=joint_residual_audit;status="<<completionStatusName(result.status())
-      <<";floor_z="<<hint->info.origin.position.z<<";stamp="<<now
-      <<";remaining="<<result.remaining<<";residual="<<result.deferred<<";transition="<<result.transition
-      <<";region_count="<<result.regions.size()<<";regions="<<result.records()
-      <<";safe_start=1;complete_views=1;complete_routes=1;stable_samples="<<residual_audit_stability_.samples()
-      <<";stable_seconds="<<residual_audit_stability_.seconds(now)
-      <<";map_evidence="<<encodeMapEvidence(result.map_evidence);
-    if(parseVerifiedFloorCompletion(formal.str())) {
-      std_msgs::msg::String verified;verified.data=formal.str();verified_completion_pub_->publish(verified);
-    }
-    RCLCPP_WARN(get_logger(),"Current-floor residual regions individually audited; requesting stair evaluation: %s",msg.data.c_str());
-  }
+  considerResidualCompletion(result,*pair,live.get(),now);
   residual_audit_next_=now+3.;
  }
  if(now<residual_audit_next_)return;
@@ -1932,6 +1928,42 @@ void FrontierExplorerNode::serviceResidualAudit()
   sealResidualAudit(result,*pair,boundary,margin,std::max(.3,padding));
   result.epoch=epoch;result.transition_hash=transition_hash;result.runtime_hash=runtime_hash;result.start={pose.position.x,pose.position.y};return result;
  });
+}
+
+void FrontierExplorerNode::considerResidualCompletion(const ResidualAudit & result,
+ const PairedFloorMap & pair,const octomap::OcTree * live,double now)
+{
+ const auto hint=pair.floor;
+  int64_t stamp=int64_t(hint->header.stamp.sec)*1000000000LL+hint->header.stamp.nanosec;
+  RCLCPP_INFO(get_logger(),"Floor completion assessment: %s",completionStatusName(result.status()));
+  bool stable=residual_audit_stability_.observe(result,now,stamp);
+  if(stable && pairedSourceCaughtUp(pair,live) && measuredClearanceRestored(true)) {
+    std::ostringstream report;report<<std::setprecision(10);
+    report<<"v4;floor_z="<<hint->info.origin.position.z<<";stamp="<<now
+      <<";reason=region_observability_audit;remaining_unknown_area="<<result.remaining
+      <<";actionable_unknown_area=0;excluded_unknown_area="<<result.closed
+      <<";deferred_unknown_area="<<result.deferred<<";transition_unknown_area="<<result.transition<<";unresolved_unknown_area=0"
+      <<";scope=per_region_current_floor;region_count="<<result.regions.size()
+      <<";stable_samples="<<residual_audit_stability_.samples()
+      <<";stable_seconds="<<residual_audit_stability_.seconds(now)
+      <<";safe_start=1;complete_views=1;complete_routes="<<(result.verification_deferred>0?0:1)
+      <<";runtime_evidence="<<(params_.floor_cleanup_enabled?0:1)
+      <<";runtime_min_positions="<<(params_.floor_cleanup_enabled?0:3)
+      <<";runtime_min_healthy_s="<<(params_.floor_cleanup_enabled?0:60)<<";attempts=0;regions="<<result.records();
+    std_msgs::msg::String msg;msg.data=report.str();floor_exhausted_pub_->publish(msg);
+    std::ostringstream formal;formal<<std::setprecision(10);
+    formal<<"floor_completion;authority=joint_residual_audit;status="<<completionStatusName(result.status())
+      <<";floor_z="<<hint->info.origin.position.z<<";stamp="<<now
+      <<";remaining="<<result.remaining<<";residual="<<result.deferred<<";transition="<<result.transition
+      <<";region_count="<<result.regions.size()<<";regions="<<result.records()
+      <<";safe_start=1;complete_views=1;complete_routes=1;stable_samples="<<residual_audit_stability_.samples()
+      <<";stable_seconds="<<residual_audit_stability_.seconds(now)
+      <<";map_evidence="<<encodeMapEvidence(result.map_evidence);
+    if(parseVerifiedFloorCompletion(formal.str())) {
+      std_msgs::msg::String verified;verified.data=formal.str();verified_completion_pub_->publish(verified);
+    }
+    RCLCPP_WARN(get_logger(),"Current-floor residual regions individually audited; requesting stair evaluation: %s",msg.data.c_str());
+  }
 }
 
 void FrontierExplorerNode::serviceSurfaceValidation()
@@ -2194,6 +2226,27 @@ void FrontierExplorerNode::localCostmapCallback(const nav_msgs::msg::OccupancyGr
 void FrontierExplorerNode::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
+  // Fresh lidar evidence is independent of optional geometry scoring. Retain
+  // timestamps only; never accumulate raw clouds in the residual task history.
+  if(runtime_state_==RuntimeState::RUNNING && msg->width*msg->height>0U && msg->point_step>0 &&
+     msg->row_step>0 && msg->data.size()>=size_t(msg->row_step)*msg->height) {
+    const double stamp=rclcpp::Time(msg->header.stamp).seconds(),now=get_clock()->now().seconds();
+    try {
+      (void)tf_buffer_->lookupTransform(params_.global_frame,msg->header.frame_id,rclcpp::Time(msg->header.stamp));
+      bool finite=false,fields_ok=true;
+      for(const auto * name:{"x","y","z"}) {
+        auto field=std::find_if(msg->fields.begin(),msg->fields.end(),[&](const auto & f){return f.name==name;});
+        fields_ok&=field!=msg->fields.end() && field->datatype==sensor_msgs::msg::PointField::FLOAT32 && field->count>=1 && field->offset+sizeof(float)<=msg->point_step;
+      }
+      try {
+        if(!fields_ok)throw std::runtime_error("Unsupported lidar xyz layout");
+        sensor_msgs::PointCloud2ConstIterator<float> x(*msg,"x"),y(*msg,"y"),z(*msg,"z");
+        for(size_t i=0;x!=x.end() && i<params_.geometry_max_points;++x,++y,++z,++i)
+          if(std::isfinite(*x) && std::isfinite(*y) && std::isfinite(*z)){finite=true;break;}
+      }catch(const std::runtime_error &){}
+      if(finite && stamp<=now+.1 && now-stamp<=1.5)latest_lidar_stamp_=std::max(latest_lidar_stamp_,stamp);
+    }catch(const tf2::TransformException &){}
+  }
   if (
     runtime_state_ != RuntimeState::RUNNING ||
     !params_.geometry_scoring_enabled ||
@@ -2587,6 +2640,7 @@ void FrontierExplorerNode::dispatchGoalRequest(const GoalDispatchRequest & reque
           });
       }
 
+      if(!accepted)activeResidualNavigationResult(dispatch_id,action_msgs::msg::GoalStatus::STATUS_ABORTED);
       core_->goal_response_callback(
         dispatch_id,
         wrapped_handle,
@@ -2622,6 +2676,7 @@ void FrontierExplorerNode::dispatchGoalRequest(const GoalDispatchRequest & reque
         error_msg = compat::extractNav2ResultErrorMessage(*wrapped_result.result);
       }
 
+      activeResidualNavigationResult(dispatch_id,status);
       core_->get_result_callback(
         dispatch_id,
         status,
@@ -2632,6 +2687,7 @@ void FrontierExplorerNode::dispatchGoalRequest(const GoalDispatchRequest & reque
   try {
     navigate_to_pose_client_->async_send_goal(goal_request, options);
   } catch (const std::exception & exc) {
+    activeResidualNavigationResult(request.dispatch_id,action_msgs::msg::GoalStatus::STATUS_ABORTED);
     core_->goal_response_callback(
       request.dispatch_id,
       nullptr,

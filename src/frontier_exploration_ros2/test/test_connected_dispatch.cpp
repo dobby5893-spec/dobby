@@ -276,7 +276,7 @@ TEST(ResidualRegions, OneUnvisitedRegionBlocksHandoffEvenWhenAnotherIsOccluded) 
 TEST(ResidualRegions, EachOccludedRegionIsListedAndRawUnknownsArePreserved) {
  auto m=room();m.data[10*60+30]=-1;m.data[30*60+30]=-1;auto original=m.data;
  auto result=auditFixture(m,[](auto,auto){return 0;});
- ASSERT_TRUE(result.handoff());EXPECT_EQ(result.regions.size(),2U);
+ ASSERT_FALSE(result.handoff());EXPECT_EQ(result.regions.size(),2U);
  EXPECT_NEAR(result.remaining,.02,1e-6);EXPECT_NEAR(result.deferred,.02,1e-6);
  EXPECT_NE(result.regions[0].id,result.regions[1].id);EXPECT_EQ(m.data,original);
 }
@@ -296,7 +296,9 @@ TEST(ResidualRegions, UnsafeOrUnknownRobotSeedCannotCertifyAnything) {
 }
 TEST(ResidualRegions, FreshIndependentStableMapsRequiredAndOpeningRevokes) {
  auto m=room();m.data[10*60+30]=-1;
- auto result=auditFixture(m,[](auto,auto){return 0;});ASSERT_TRUE(result.handoff());
+ auto result=auditFixture(m,[](auto,auto){return 0;});ASSERT_FALSE(result.handoff());
+ // Stability accepts only the stronger independently certified classification.
+ result.regions.front().state="verified_enclosed";ASSERT_TRUE(result.handoff());
  ResidualAuditStability stable;
  EXPECT_FALSE(stable.observe(result,0,1));EXPECT_FALSE(stable.observe(result,20,1));
  EXPECT_FALSE(stable.observe(result,21,2));EXPECT_TRUE(stable.observe(result,22,3));
@@ -311,7 +313,7 @@ TEST(ResidualRegions, TwoDimensionalClosedAreaMustBeIndependentlyAudited) {
   std::chrono::steady_clock::now()+std::chrono::seconds(3));
  EXPECT_EQ(result.closed,0);EXPECT_NEAR(result.deferred,.02,1e-6);
  EXPECT_EQ(result.regions.size(),2U);EXPECT_GT(result.sites,0U);
- EXPECT_TRUE(result.handoff());
+ EXPECT_FALSE(result.handoff());
 }
 TEST(ResidualRegions, TwoDimensionalDisconnectionDoesNotProveThreeDimensionalOcclusion) {
  auto m=room();
@@ -445,8 +447,8 @@ TEST(ResidualRegions, RuntimeHistoryStillAllowsIndependentOcclusionProof) {
   auto result=auditResidualRegions(grid,{1.05,2.05},{},0,[](int,int){return true;},
     [&](auto,auto){++calls;return 0;},std::chrono::steady_clock::now()+std::chrono::seconds(2),
     {},[&](int,int){return kind;});
-  EXPECT_GT(calls,0);EXPECT_TRUE(result.handoff());
-  EXPECT_EQ(result.status(),CompletionStatus::VERIFIED_WITH_RESIDUALS);
+  EXPECT_GT(calls,0);EXPECT_FALSE(result.handoff());
+  EXPECT_EQ(result.status(),CompletionStatus::INCOMPLETE);
   EXPECT_EQ(result.regions.front().state,"occluded");
  }
 }

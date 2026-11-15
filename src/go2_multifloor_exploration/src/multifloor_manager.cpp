@@ -131,7 +131,7 @@ public:
     if(msg->header.frame_id!=map_frame_ || msg->binary) {return;}
     std::unique_ptr<octomap::AbstractOcTree> raw(octomap_msgs::msgToMap(*msg));
     auto tree=dynamic_cast<octomap::OcTree*>(raw.get());if(!tree) {return;}
-    raw.release();map_.reset(tree);map_stamp_=rclcpp::Time(msg->header.stamp);
+    raw.release();map_.reset(tree);map_stamp_=rclcpp::Time(msg->header.stamp);map_source_digest_=maps::octomapDigest(*msg);
    });
   exhausted_sub_=create_subscription<std_msgs::msg::String>(
    "/explore/floor_exhausted",qos,[this](std_msgs::msg::String::SharedPtr msg) {
@@ -153,7 +153,7 @@ public:
   paired_floor_sub_=create_subscription<maps::msg::FloorMapSnapshot>("/map_floor/snapshot",qos,
     [this](maps::msg::FloorMapSnapshot::ConstSharedPtr msg) {
       if(msg->floor_map.header.frame_id!=map_frame_)return;
-      const auto pair=maps::decodeFloorSnapshot(*msg);if(pair)paired_floor_map_=pair;
+      const auto pair=maps::decodeFloorSnapshot(*msg,map_,map_source_digest_);if(pair)paired_floor_map_=pair;
     });
   checkpoint_=create_publisher<std_msgs::msg::String>("/multifloor/checkpoint_state",qos);
   floor_pub_=create_publisher<std_msgs::msg::Float64>(declare_parameter<std::string>("floor_height_topic","/multifloor/active_floor_height"),qos);
@@ -615,7 +615,7 @@ private:
  bool has_residuals_{false};std::string residual_report_;
  SimulationProgress simulation_progress_;
  std::optional<PendingHandoff> pending_handoff_;
- uint64_t handoff_request_id_{0};
+ uint64_t handoff_request_id_{0},map_source_digest_{0};
  std::shared_ptr<const maps::PairedFloorMap> paired_floor_map_;
  rclcpp::Subscription<maps::msg::FloorMapSnapshot>::SharedPtr paired_floor_sub_;
  nav_msgs::msg::OccupancyGrid::ConstSharedPtr slice_map_;
