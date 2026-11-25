@@ -61,6 +61,9 @@ class MultifloorManager : public rclcpp::Node {
   maps::AuditMapEvidence evidence;
   uint64_t request_id;
  };
+ struct FirstFollow {
+  uint64_t context, authorization, approach_map;
+ };
  struct Handoff {
   std::string id, task, floor, report;
   double source_z;
@@ -263,55 +266,74 @@ private:
   RCLCPP_INFO(get_logger(),"Opened floor session %s task=%s z=%.3f",
     session_.floor_session_id.c_str(),session_.task_id.c_str(),active_floor_);
  }
+ bool refreshMatches(const PendingHandoff & prior,const Completion & message,
+   const maps::AuditMapEvidence & evidence) const {
+  const auto & original=prior.message;
+  const auto & old=prior.evidence;
+  return message.report_id==original.report_id && message.sequence==original.sequence &&
+   message.completion_status==original.completion_status &&
+   message.remaining_area==original.remaining_area && message.residual_area==original.residual_area &&
+   message.transition_area==original.transition_area && message.regions==original.regions &&
+   message.transition_digest==original.transition_digest && message.runtime_digest==original.runtime_digest &&
+   evidence.floor_z==old.floor_z && evidence.schema==old.schema && evidence.unknowns==old.unknowns &&
+   evidence.margin==old.margin && evidence.boundary==old.boundary &&
+   evidence.start_x==old.start_x && evidence.start_y==old.start_y &&
+   message.dependencies==original.dependencies &&
+   evidence.version.octomap_generation>=old.version.octomap_generation &&
+   evidence.version.floor_map_generation>=old.version.floor_map_generation;
+ }
  void acceptFloorCompletion(const Completion & message) {
-  if(clock_rewound_.load() || !maps::completionIdentity(message,session_,now().nanoseconds())) {
+  if(clock_rewound_.load() || session_.phase==Session::CLOSED ||
+    !maps::completionIdentity(message,session_,now().nanoseconds())) {
    RCLCPP_DEBUG(get_logger(),"Ignored floor completion from an incompatible session or producer");
    return;
   }
   if(message.revoked) {
+   const auto matches=[&](const auto & candidate){
+    return candidate && message.report_id==candidate->message.report_id &&
+      message.sequence==candidate->message.sequence;
+   };
    report_sequence_=std::max(report_sequence_,message.sequence);
-   if(pending_handoff_ && message.report_id==pending_handoff_->message.report_id &&
-     message.sequence==pending_handoff_->message.sequence) {
+   if(handled_reports_.size()<4096)handled_reports_.insert(message.report_id);
+   if(matches(pending_handoff_) || matches(suspended_handoff_)) {
     RCLCPP_INFO(get_logger(),"Publisher revoked floor report %s",message.report_id.c_str());
     invalidateHandoff();
    }
    return;
   }
-  if(state_!=State::EXPLORE_FLOOR || session_.phase!=Session::ACTIVE ||
+  if(state_!=State::EXPLORE_FLOOR || session_.phase!=Session::ACTIVE || handoff_ || follow_owner_ ||
     !participantCurrent(explorer_,Session::ACTIVE) || !participantCurrent(slice_,Session::ACTIVE))return;
   const auto report=maps::verifyFloorCompletion(message);
   if(!report || !reportFresh(*report))return;
   const auto evidence=maps::completionMapEvidence(message);
-  const auto measured=robot();
-  if(!evidence || !measured || std::abs(measured->feet.z-active_floor_)>=.15 ||
-    std::hypot(measured->feet.x-evidence->start_x,measured->feet.y-evidence->start_y)>.3 ||
-    !pairedInputsReady() || !maps::mapEvidenceCurrent(*evidence,*paired_floor_map_,liveAuditTree()))return;
+  if(pending_handoff_ && !handoffReady())suspendHandoff();
+  const auto * previous=pending_handoff_?&*pending_handoff_:suspended_handoff_?&*suspended_handoff_:nullptr;
+  const bool refresh=message.sequence==report_sequence_ && previous &&
+    maps::sessionStamp(message.generated_at)>maps::sessionStamp(previous->message.generated_at);
   if(message.sequence<=report_sequence_) {
-   // A live reassessment may refresh validity of the same still-pending report.
-   // It cannot replace its request identity or create a new handoff.
-   if(pending_handoff_ && message.sequence==report_sequence_ &&
-     message.report_id==pending_handoff_->message.report_id &&
-     report->stamp>pending_handoff_->report.stamp &&
-     report->records==pending_handoff_->report.records &&
-     report->remaining==pending_handoff_->report.remaining &&
-     report->residual==pending_handoff_->report.residual &&
-     report->transition==pending_handoff_->report.transition &&
-     report->status==pending_handoff_->report.status &&
-     message.transition_digest==pending_handoff_->message.transition_digest &&
-     message.runtime_digest==pending_handoff_->message.runtime_digest &&
-     evidence->stableDigest()==pending_handoff_->evidence.stableDigest()) {
-     pending_handoff_->report=*report;
-     pending_handoff_->message.generated_at=message.generated_at;
-   }
-   RCLCPP_DEBUG(get_logger(),"Ignored duplicate authorization %s",message.report_id.c_str());
+   if(!refresh || !evidence || !refreshMatches(*previous,message,*evidence))return;
+  }else if(handled_reports_.size()>=4096 || handled_reports_.count(message.report_id))return;
+
+  const auto measured=robot();
+  if(!evidence || !measured || !stationMatchesAudit(*measured,*evidence) || !pairedInputsReady() ||
+    !maps::mapEvidenceCurrent(*evidence,*paired_floor_map_,liveAuditTree()) ||
+    !maps::pairedSourceCaughtUp(*paired_floor_map_,liveAuditTree()) ||
+    ((!refresh || !pending_handoff_) && !safeStandingPose(*measured)))return;
+
+  if(refresh && pending_handoff_) {
+   pending_handoff_->report=*report;
+   pending_handoff_->message=message;
+   pending_handoff_->evidence=*evidence;
    return;
   }
-  if(handled_reports_.size()>=4096 || !handled_reports_.insert(message.report_id).second)return;
+  if(!refresh)handled_reports_.insert(message.report_id);
+  invalidateHandoff();
   report_sequence_=message.sequence;
-  pending_handoff_=PendingHandoff{message,*report,*evidence,++handoff_request_id_};
+  pending_handoff_=PendingHandoff{message,*report,*evidence,handoff_request_id_};
   completion_pending_=lastFloor();
   next_scan_=sim();
-  RCLCPP_INFO(get_logger(),"Accepted floor report %s floor=%s",message.report_id.c_str(),message.floor_session_id.c_str());
+  RCLCPP_INFO(get_logger(),"%s floor report %s floor=%s",refresh?"Revalidated":"Accepted",
+    message.report_id.c_str(),message.floor_session_id.c_str());
  }
  double sim() const {return now().seconds();}
  bool lastFloor() const {return expected_floors_>0 && static_cast<int>(visited_.size())>=expected_floors_;}
@@ -330,7 +352,7 @@ private:
  bool pendingHandoffValid() const {
   // At entry to CLOSING the report was fresh. Subsequent gates revalidate
   // current maps and stance within the bounded, already-admitted transaction.
-  const bool time_valid=pending_handoff_ && (closing_started_at_<0 ?
+  const bool time_valid=!clock_rewound_.load() && pending_handoff_ && (closing_started_at_<0 ?
     reportFresh(pending_handoff_->report) :
     sim()>=closing_started_at_ && sim()-closing_started_at_<=rpc_timeout_);
   return time_valid && pairedInputsReady() &&
@@ -338,15 +360,46 @@ private:
    participantCurrent(explorer_) && participantCurrent(slice_) &&
    maps::mapEvidenceCurrent(pending_handoff_->evidence,*paired_floor_map_,liveAuditTree());
  }
+ bool stationMatchesAudit(const Robot & measured,const maps::AuditMapEvidence & evidence) const {
+  return std::hypot(measured.feet.x-evidence.start_x,measured.feet.y-evidence.start_y)<=.3 &&
+    std::abs(measured.feet.z-active_floor_)<.15;
+ }
  bool handoffReady() const {
   if(!pendingHandoffValid() || !maps::pairedSourceCaughtUp(*paired_floor_map_,liveAuditTree()))return false;
   const auto measured=robot();
-  const auto & evidence=pending_handoff_->evidence;
-  return measured && std::hypot(measured->feet.x-evidence.start_x,measured->feet.y-evidence.start_y)<=.3 &&
-    std::abs(measured->feet.z-active_floor_)<.15;
+  return measured && stationMatchesAudit(*measured,pending_handoff_->evidence);
+ }
+ bool safeStandingPose(const Robot & measured) const {
+  if(!freshMap())return false;
+  try {
+   auto c=config(measured,false);
+   c.clearance_margin=std::max(.01,c.clearance_margin);  // Existing Explorer hard-clearance floor.
+   c.search_deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(250);
+   const auto stance=SurfaceGraph(*map_,c).diagnosePose(measured.feet);
+   return stance.surface && stance.support && stance.clearance;
+  }catch(const SurfaceSearchTimeout &){return false;}
+ }
+ bool stoppedHandoffReady(bool check_stance) const {
+  if(!handoffReady() || session_.phase!=Session::CLOSING ||
+    !participantCurrent(explorer_,Session::CLOSING) || stair_mode_ ||
+    idle_handoff_request_!=pending_handoff_->request_id)return false;
+  if(!check_stance)return true;
+  const auto measured=robot();
+  return measured && stationMatchesAudit(*measured,pending_handoff_->evidence) && safeStandingPose(*measured);
  }
  void invalidateHandoff() {
-  pending_handoff_.reset();completion_pending_=false;closing_started_at_=-1.;++handoff_request_id_;
+  pending_handoff_.reset();suspended_handoff_.reset();
+  completion_pending_=false;closing_started_at_=-1.;idle_handoff_request_=0;
+  pre_handoff_pose_.reset();++handoff_request_id_;
+ }
+ void suspendHandoff() {
+  if(!pending_handoff_)return;
+  auto suspended=std::move(*pending_handoff_);
+  invalidateHandoff();
+  suspended_handoff_=std::move(suspended);
+  selected_.reset();
+  RCLCPP_INFO(get_logger(),"Floor report suspended pending fresh verification: %s",
+    suspended_handoff_->message.report_id.c_str());
  }
  void waitForSession(const char * reason) {
   invalidateHandoff();
@@ -375,7 +428,10 @@ private:
    const double age=(now()-rclcpp::Time(body.header.stamp)).seconds();if(age<-.1 || age>.5) return {};
    const auto feet=tf_->lookupTransform(map_frame_,feet_frame_,rclcpp::Time(body.header.stamp));
    Robot r;const auto & p=body.transform.translation;const auto & f=feet.transform.translation;
-   r.body={p.x,p.y,p.z,tf2::getYaw(body.transform.rotation)};
+   const auto yaw=tf2::getYaw(body.transform.rotation);
+   if(!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z) ||
+     !std::isfinite(f.z) || !std::isfinite(yaw) || p.z<=f.z)return {};
+   r.body={p.x,p.y,p.z,yaw};
    // Use the body projection at measured foot height consistently with the path controller.
    r.feet={p.x,p.y,f.z,r.body.yaw};return r;
   }catch(const tf2::TransformException &){return {};}
@@ -414,11 +470,17 @@ private:
  uint64_t begin(State state) {state_=state;rpc_pending_=true;rpc_deadline_=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(rpc_timeout_));return ++epoch_;}
  void cancelOwnGoals() {
   if(compute_handle_) compute_->async_cancel_goal(compute_handle_);
-  if(follow_handle_) follow_->async_cancel_goal(follow_handle_);
+  if(follow_handle_)cancelFollow(follow_handle_);
   compute_handle_.reset();
   // FollowPath owns motion until its terminal result, even after requesting cancellation.
  }
  void fail(const std::string & reason) {
+   if(first_follow_) {
+    ++epoch_;rpc_pending_=false;
+    abandonUnconsumedHandoff(reason.c_str());
+    cancelOwnGoals();
+    return;
+   }
    const auto measured=robot();
    if(stair_mode_ && measured && measured->feet.z>active_floor_+.06)ascent_started_=true;
    ++epoch_;rpc_pending_=false;cancelOwnGoals();
@@ -455,7 +517,8 @@ private:
     const auto reply=future.get();
     if(!reply->accepted || !maps::sessionControlMatches(*reply,session_) ||
       reply->command_sequence!=id || reply->state!=Control::Request::STATE_IDLE)return;
-    if(!handoffReady() || pending_handoff_->request_id!=request_id) {
+    idle_handoff_request_=request_id;
+    if(!stoppedHandoffReady(true)) {
      const bool recoverable=state_!=State::SESSION_WAIT;
      waitForSession("authorization changed before Explorer reached idle");
      restart_floor_when_closed_=recoverable;
@@ -495,13 +558,18 @@ private:
    }catch(const std::exception & e){RCLCPP_WARN(get_logger(),"%s",e.what());}
   });
  }
- bool checkBeforeMotion() {
+ void abandonUnconsumedHandoff(const char * reason) {
+  waitForSession(reason);
+  restart_floor_when_closed_=true;
+  // An outstanding goal could start without a response. Close this floor only
+  // after that owner sends a rejection or a terminal result.
+  if(!follow_owner_)setPhase(Session::CLOSED);
+ }
+ bool checkBeforeMotion(bool check_stance=true) {
   if(clock_rewound_.load())return false;
   if(handoff_)return true;
-  if(handoffReady() && participantCurrent(explorer_,Session::CLOSING))return true;
-  waitForSession("completion evidence changed before motion");
-  restart_floor_when_closed_=true;
-  setPhase(Session::CLOSED);
+  if(stoppedHandoffReady(check_stance))return true;
+  abandonUnconsumedHandoff("authorization or measured 3D stance changed before motion");
   return false;
  }
  void gait(bool stairs,std::function<void(bool)> callback) {
@@ -556,7 +624,7 @@ private:
    if(id!=epoch_ || context!=context_epoch_)return;
    rpc_pending_=false;compute_handle_.reset();
    if(authorization) {
-    if(!checkBeforeMotion() || !pending_handoff_ || pending_handoff_->request_id!=authorization)return;
+    if(!checkBeforeMotion(false) || !pending_handoff_ || pending_handoff_->request_id!=authorization)return;
     if(approach_map!=maps::wholeOctomapDigest(*map_)) {
      fail("map geometry changed during stair approach planning");return;
     }
@@ -574,28 +642,103 @@ private:
     path.poses.resize(end);
    }
    const auto & p=path.poses.back().pose;motion_target_={p.position.x,p.position.y,p.position.z,tf2::getYaw(p.orientation)};
-   followPath(path);
+   followPath(path,approach_map);
   };
   compute_->async_send_goal(goal,options);
  }
- void followPath(const nav_msgs::msg::Path & path) {
+ using FollowHandle=rclcpp_action::ClientGoalHandle<Follow>;
+ void cancelFollow(const FollowHandle::SharedPtr & handle) {
+  try {follow_->async_cancel_goal(handle);}
+  catch(const std::exception & e) {
+   RCLCPP_WARN(get_logger(),"FollowPath cancellation could not be sent; motion remains fenced: %s",e.what());
+  }
+ }
+ void releaseFollow(uint64_t id) {
+  if(follow_owner_!=id)return;
+  follow_owner_=0;
+  follow_handle_.reset();
+  first_follow_.reset();
+ }
+ bool followResultIsTerminal(uint64_t id,rclcpp_action::ResultCode code) {
+  if(follow_owner_!=id)return false;
+  switch(code) {
+   case rclcpp_action::ResultCode::SUCCEEDED:
+   case rclcpp_action::ResultCode::ABORTED:
+   case rclcpp_action::ResultCode::CANCELED:
+    return true;
+   default:
+    // A server that no longer recognizes the goal cannot confirm motion stopped.
+    if(id==epoch_) {
+     if(first_follow_)fail("first FollowPath result did not confirm termination");
+     else {
+      ++epoch_;rpc_pending_=false;
+      waitForSession("FollowPath result did not confirm termination");
+      restart_floor_when_closed_=false;
+      cancelOwnGoals();
+     }
+    }
+    return false;
+  }
+ }
+ void followGoalResponse(uint64_t id,FollowHandle::SharedPtr handle) {
+  if(id!=follow_owner_) {
+   if(handle)cancelFollow(handle);
+   return;
+  }
+  if(!handle) {
+   const bool first=first_follow_.has_value();
+   releaseFollow(id);
+   if(id!=epoch_)return;
+   rpc_pending_=false;
+   if(!first) {fail("segment rejected by controller");return;}
+   if(!checkBeforeMotion())return;
+   RCLCPP_WARN(get_logger(),"First FollowPath rejected; retaining valid authorization for a new plan");
+   selected_.reset();
+   state_=State::SEARCH_TRANSITION;
+   next_search_=sim();
+   return;
+  }
+  follow_handle_=handle;
+  if(id!=epoch_) {
+   cancelFollow(handle);
+   return;
+  }
+  rpc_pending_=false;
+  if(!first_follow_)return;
+  const auto submission=*first_follow_;
+  if(std::chrono::steady_clock::now()>rpc_deadline_ || submission.context!=context_epoch_ ||
+    !stoppedHandoffReady(true) || submission.authorization!=pending_handoff_->request_id ||
+    !map_ || submission.approach_map!=maps::wholeOctomapDigest(*map_)) {
+   fail("first FollowPath accepted after its verification or deadline expired");
+   return;
+  }
+  consumeHandoff();
+  first_follow_.reset();
+ }
+ void followPath(const nav_msgs::msg::Path & path,uint64_t approach_map) {
   if(follow_owner_ || !checkBeforeMotion())return;
   if(!follow_->action_server_is_ready()) {fail("controller action unavailable");return;}
+  if(!handoff_ && (!map_ || approach_map!=maps::wholeOctomapDigest(*map_))) {
+   fail("map changed before first FollowPath submission");return;
+  }
   const auto id=++epoch_;rpc_pending_=true;follow_owner_=id;
-  if(!handoff_)consumeHandoff();
+  if(!handoff_)first_follow_=FirstFollow{context_epoch_,pending_handoff_->request_id,approach_map};
   rpc_deadline_=std::chrono::steady_clock::now()+std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(rpc_timeout_));
   state_=motion_==Motion::APPROACH?State::APPROACH_STAIR:State::FOLLOW_3D_PATH;
   motion_start_=last_progress_=sim();progress_pose_.reset();
   Follow::Goal goal;goal.path=path;goal.controller_id=controller_;goal.goal_checker_id=motion_==Motion::APPROACH?entry_checker_:stair_checker_;
   rclcpp_action::Client<Follow>::SendGoalOptions options;
-  options.goal_response_callback=[this,id](auto h) {
-   if(!h && follow_owner_==id)follow_owner_=0;
-   if(id!=epoch_) {if(h)follow_->async_cancel_goal(h);return;}
-   rpc_pending_=false;follow_handle_=h;if(!h) fail("segment rejected by controller");
-  };
+  options.goal_response_callback=[this,id](auto h){followGoalResponse(id,std::move(h));};
   options.result_callback=[this,id](const auto & result) {
-   if(follow_owner_==id){follow_owner_=0;follow_handle_.reset();}
-   if(id!=epoch_) {return;}
+   if(!followResultIsTerminal(id,result.code))return;
+   const bool first=first_follow_.has_value();
+   releaseFollow(id);
+   if(id!=epoch_)return;
+   if(first) {
+    rpc_pending_=false;
+    abandonUnconsumedHandoff("first FollowPath terminated without confirmed authorization");
+    return;
+   }
    if(result.code!=rclcpp_action::ResultCode::SUCCEEDED) {fail("segment execution failed");return;}
    auto actual=robot();if(!actual || !reachedStairTarget(actual->feet,motion_target_)) {fail("action success without measured segment arrival");return;}
    if(motion_==Motion::APPROACH) {
@@ -610,7 +753,11 @@ private:
    if(motion_==Motion::ASCENT) {ascent_started_|=actual->feet.z>active_floor_+.06;++segments_;}observe_since_=sim();last_segment_map_=map_stamp_;stable_since_=-1;
    state_=State::OBSERVE_STAIR;
   };
-  follow_->async_send_goal(goal,options);
+  try {follow_->async_send_goal(goal,options);}
+  catch(const std::exception & e) {
+   // Transport exceptions do not prove that the server did not receive the goal.
+   fail(std::string("FollowPath submission failed: ")+e.what());
+  }
  }
  void launchSearch(const Robot & robot,bool selecting) {
   if(search_.valid() || !freshMap() || follow_owner_) {return;}
@@ -777,11 +924,13 @@ private:
    fail("service/action response timeout");return;
   }
   if(state_==State::SESSION_WAIT) {
-   if(session_.phase==Session::CLOSING)stopFrontier();
+   if(follow_owner_)return;
+   if(session_.phase==Session::CLOSING && restart_floor_when_closed_)setPhase(Session::CLOSED);
+   else if(session_.phase==Session::CLOSING)stopFrontier();
    if(restart_floor_when_closed_ && !follow_owner_ && current && freshMap() &&
      std::abs(current->feet.z-active_floor_)<.15 &&
      participantCurrent(explorer_,Session::CLOSED) && explorer_.value.idle &&
-     participantCurrent(slice_,Session::CLOSED)) {
+     participantCurrent(slice_,Session::CLOSED) && safeStandingPose(*current)) {
     restart_floor_when_closed_=false;
     openFloorSession();
    }
@@ -814,10 +963,7 @@ private:
     waitForSession("Explorer or slice producer lost; new processes cannot adopt a live task");
     return;
    }
-   if(pending_handoff_ && paired_floor_map_ &&
-     !maps::mapEvidenceCurrent(pending_handoff_->evidence,*paired_floor_map_,liveAuditTree())) {
-    RCLCPP_INFO(get_logger(),"Pending floor completion invalidated: relevant map evidence changed");invalidateHandoff();
-   }
+   if(pending_handoff_ && !handoffReady())suspendHandoff();
    if(completion_pending_ && handoffReady() && (lastFloor() || (current && pre_handoff_pose_ &&
      std::hypot(current->feet.x-pre_handoff_pose_->x,current->feet.y-pre_handoff_pose_->y)<.2))) {
     closing_started_at_=sim();
@@ -829,7 +975,7 @@ private:
    if(current && sim()>=next_scan_) {launchSearch(*current,pending_handoff_.has_value());next_scan_=sim()+search_interval_;}
   } else if(state_==State::STOPPING_FRONTIER) stopFrontier();
   else if(state_==State::SEARCH_TRANSITION || state_==State::OBSERVE_STAIR) {
-   if(!checkBeforeMotion() || follow_owner_)return;
+   if(follow_owner_ || !checkBeforeMotion(false))return;
    if(!current || !freshMap()) {return;}
    if(ascent_started_) {
     try {checkLanding(*current);}catch(const SurfaceSearchTimeout &) {stable_since_=-1;}
@@ -842,6 +988,10 @@ private:
   } else if(state_==State::VERIFY_LANDING) {
    if(current) {try {checkLanding(*current);}catch(const SurfaceSearchTimeout &){stable_since_=-1;state_=State::OBSERVE_STAIR;}}
   } else if(state_==State::FOLLOW_3D_PATH || state_==State::APPROACH_STAIR) {
+   if(first_follow_ && (!stoppedHandoffReady(false) ||
+     first_follow_->approach_map!=maps::wholeOctomapDigest(*map_))) {
+    fail("authorization or map changed while first FollowPath was pending");return;
+   }
    if(!current || !freshMap()) {fail("stale map or stance while executing a segment");return;}
    if(!progress_pose_ || std::hypot(current->feet.x-progress_pose_->x,current->feet.y-progress_pose_->y)>.08 ||
     std::abs(current->feet.z-progress_pose_->z)>.04) {progress_pose_=current->feet;last_progress_=sim();}
@@ -888,6 +1038,7 @@ private:
  Session session_;
  SeenParticipant explorer_,slice_;
  std::optional<Handoff> handoff_;
+ std::optional<FirstFollow> first_follow_;
  std::optional<SurfacePoint> pre_handoff_pose_;
  bool exploration_enabled_{true},require_startup_ready_{false},startup_ready_{false},restart_floor_when_closed_{false},landing_ready_{false};
  std::unordered_set<std::string> handled_reports_;
@@ -900,8 +1051,8 @@ private:
  SimulationProgress simulation_progress_;
  std::atomic<bool> clock_rewound_{false};
  rclcpp::JumpHandler::SharedPtr clock_jump_;
- std::optional<PendingHandoff> pending_handoff_;
- uint64_t handoff_request_id_{0},map_source_digest_{0};
+ std::optional<PendingHandoff> pending_handoff_,suspended_handoff_;
+ uint64_t handoff_request_id_{0},idle_handoff_request_{0},map_source_digest_{0};
  std::shared_ptr<const maps::PairedFloorMap> paired_floor_map_;
  rclcpp::Subscription<maps::msg::FloorMapSnapshot>::SharedPtr paired_floor_sub_;
  nav_msgs::msg::OccupancyGrid::ConstSharedPtr slice_map_;

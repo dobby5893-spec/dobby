@@ -8,7 +8,9 @@ struct MapConsistencyTestAccess {
   auto floor=std::make_shared<nav_msgs::msg::OccupancyGrid>();floor->header.frame_id="map";floor->header.stamp=m.now();
   floor->info.width=floor->info.height=20;floor->info.resolution=.1;floor->info.origin.position.x=floor->info.origin.position.y=-1.;
   floor->info.origin.orientation.w=1;floor->data.assign(400,0);
-  auto tree=std::make_shared<octomap::OcTree>(.1);tree->updateNode(octomap::point3d(0,0,-.05),true);
+  auto tree=std::make_shared<octomap::OcTree>(.1);
+  for(int x=-8;x<8;++x)for(int y=-8;y<8;++y)
+   tree->updateNode(octomap::point3d((x+.5)*.1,(y+.5)*.1,-.05),true);
   octomap_msgs::msg::Octomap source;octomap_msgs::fullMapToMsg(*tree,source);source.header.frame_id="map";
   auto pair=std::make_shared<maps::PairedFloorMap>();pair->floor=floor;pair->tree=tree;
   pair->version={1,1,maps::octomapDigest(source),maps::floorDigest(*floor)};pair->source_stamp=m.sim();
@@ -24,12 +26,67 @@ struct MapConsistencyTestAccess {
   ack.task_id=session.task_id;ack.floor_session_id=session.floor_session_id;
   ack.role=ack.EXPLORER;ack.instance_id=session.explorer_instance;m.receiveParticipant(ack);
   ack.role=ack.SLICE;ack.instance_id=session.map_producer;m.receiveParticipant(ack);
-  const auto measured_stamp=m.now();
+  pose(m);
+  ASSERT_TRUE(m.robot());
+ }
+ static void pose(MultifloorManager & m,double age=0,double x=0) {
+  m.tf_->clear();
+  const auto measured_stamp=m.now()-rclcpp::Duration::from_seconds(age);
   for(auto child:{m.body_frame_,m.feet_frame_}) {
    geometry_msgs::msg::TransformStamped tf;tf.header.frame_id="map";tf.child_frame_id=child;tf.header.stamp=measured_stamp;
-   tf.transform.rotation.w=1.;tf.transform.translation.z=child==m.body_frame_?.21:0.;m.tf_->setTransform(tf,"test",false);
+   tf.transform.rotation.w=1.;tf.transform.translation.z=child==m.body_frame_?.21:0.;
+   tf.transform.translation.x=x;m.tf_->setTransform(tf,"test",false);
   }
-  ASSERT_TRUE(m.robot());
+ }
+ static maps::msg::FloorCompletion fresh(MultifloorManager & m,maps::msg::FloorCompletion report) {
+  report.generated_at=m.now();return report;
+ }
+ static bool safe(MultifloorManager & m) {
+  const auto measured=m.robot();return measured && m.safeStandingPose(*measured);
+ }
+ static bool suspended(MultifloorManager & m){return m.suspended_handoff_.has_value();}
+ static auto savedMap(MultifloorManager & m){return m.map_;}
+ static void replaceMap(MultifloorManager & m,std::shared_ptr<const octomap::OcTree> tree) {
+  m.map_=std::move(tree);m.map_stamp_=m.now();catchUp(m);
+ }
+ static void contact(MultifloorManager & m) {
+  auto tree=std::make_shared<octomap::OcTree>(*m.map_);
+  tree->updateNode(octomap::point3d(.1,.0,.35),true);
+  replaceMap(m,tree);
+ }
+ static void unsupported(MultifloorManager & m) {replaceMap(m,std::make_shared<octomap::OcTree>(.1));}
+ static void loseLocalization(MultifloorManager & m){m.tf_->clear();}
+ static void capacity(MultifloorManager & m){
+  for(size_t i=0;i<4096;++i)m.handled_reports_.insert(std::to_string(i));
+ }
+ static void idleForMotion(MultifloorManager & m) {
+  m.setPhase(MultifloorManager::Session::CLOSING);
+  m.explorer_.value.phase=MultifloorManager::Session::CLOSING;
+  m.idle_handoff_request_=m.pending_handoff_->request_id;
+  m.closing_started_at_=m.sim();
+ }
+ static void assertLateNotificationsCannotReleaseNewOwner(MultifloorManager & m) {
+  const auto old=++m.epoch_;
+  const auto current=++m.epoch_;
+  m.follow_owner_=current;m.rpc_pending_=true;
+  m.followGoalResponse(old,nullptr);
+  m.releaseFollow(old);
+  EXPECT_EQ(m.follow_owner_,current);
+  EXPECT_TRUE(m.rpc_pending_);
+  m.releaseFollow(current);EXPECT_EQ(m.follow_owner_,0u);
+ }
+ static void assertUnknownResultDoesNotReleaseOwner(MultifloorManager & m) {
+  const auto owner=++m.epoch_;
+  m.follow_owner_=owner;m.rpc_pending_=true;
+  EXPECT_FALSE(m.followResultIsTerminal(owner,rclcpp_action::ResultCode::UNKNOWN));
+  EXPECT_EQ(m.follow_owner_,owner);
+  EXPECT_TRUE(waiting(m));
+  EXPECT_TRUE(m.followResultIsTerminal(owner,rclcpp_action::ResultCode::CANCELED));
+  m.releaseFollow(owner);EXPECT_EQ(m.follow_owner_,0u);
+ }
+ static bool canFollow(MultifloorManager & m) {
+  m.followPath(nav_msgs::msg::Path{},m.map_?maps::wholeOctomapDigest(*m.map_):0);
+  return m.follow_owner_!=0;
  }
  static maps::msg::FloorCompletion report(MultifloorManager & m,uint64_t sequence=1) {
   auto e=maps::beginMapEvidence(*m.paired_floor_map_,0,0);maps::sealDependency(e,{0,-.5,-.5,.5,.5,0,0},*m.paired_floor_map_);
@@ -97,7 +154,18 @@ TEST_F(HandoffConsistency, UnrelatedChangeStillAllowsLastFloorCompletion){A::las
 TEST_F(HandoffConsistency, OldSearchCannotConsumeNewReport){A::accept(*manager,A::report(*manager,1));A::readySearch(*manager);A::accept(*manager,A::report(*manager,2));A::collect(*manager);EXPECT_FALSE(A::completePending(*manager));EXPECT_TRUE(A::pending(*manager));EXPECT_EQ(A::phase(*manager),1);}
 TEST_F(HandoffConsistency, MatchingSearchCanAuthorizeStop){A::accept(*manager,A::report(*manager));A::readySearch(*manager);A::collect(*manager);EXPECT_TRUE(A::completePending(*manager));A::tick(*manager);EXPECT_EQ(A::phase(*manager),2);}
 TEST_F(HandoffConsistency, MapChangeAfterSearchStillRefusesStop){A::accept(*manager,A::report(*manager));A::readySearch(*manager);A::collect(*manager);ASSERT_TRUE(A::completePending(*manager));A::changed3d(*manager);A::tick(*manager);EXPECT_EQ(A::phase(*manager),1);}
-TEST_F(HandoffConsistency, UnpairedLiveChangeHoldsRatherThanConsumesAuthorization){A::last(*manager);A::accept(*manager,A::report(*manager));A::changed3d(*manager,true);A::tick(*manager);EXPECT_EQ(A::phase(*manager),1);EXPECT_TRUE(A::pending(*manager));A::catchUp(*manager);A::tick(*manager);EXPECT_EQ(A::phase(*manager),2);}
+TEST_F(HandoffConsistency, UnpairedLiveChangeHoldsRatherThanConsumesAuthorization){
+ A::last(*manager);const auto report=A::report(*manager);A::accept(*manager,report);
+ ASSERT_TRUE(A::pending(*manager));
+ const auto old=A::request(*manager);
+ A::changed3d(*manager,true);A::tick(*manager);
+ EXPECT_EQ(A::phase(*manager),1);EXPECT_FALSE(A::pending(*manager));EXPECT_TRUE(A::suspended(*manager));
+ A::accept(*manager,A::fresh(*manager,report));EXPECT_FALSE(A::pending(*manager));
+ A::catchUp(*manager);A::accept(*manager,report);EXPECT_FALSE(A::pending(*manager));
+ A::accept(*manager,A::fresh(*manager,report));EXPECT_TRUE(A::pending(*manager));
+ EXPECT_GT(A::request(*manager),old);
+ A::tick(*manager);EXPECT_EQ(A::phase(*manager),2);
+}
 TEST_F(HandoffConsistency, ChangedMapBeforeReportDeliveryRejectsReport){auto wire=A::report(*manager);A::changedFloor(*manager,true);A::accept(*manager,wire);EXPECT_FALSE(A::pending(*manager));}
 TEST_F(HandoffConsistency, SearchResultWithChangedLiveTreeCannotComplete){A::accept(*manager,A::report(*manager));A::readySearch(*manager);A::changed3d(*manager,true);A::collect(*manager);EXPECT_FALSE(A::completePending(*manager));}
 TEST_F(HandoffConsistency, WrongTaskSessionAndProducerAreRejected){
@@ -134,6 +202,61 @@ TEST_F(HandoffConsistency, ExpiredReportCannotStopLastFloor){
  auto report=A::report(*manager);A::expire(report,*manager);A::accept(*manager,report);
  EXPECT_FALSE(A::pending(*manager));
  A::tick(*manager);EXPECT_EQ(A::phase(*manager),1);
+}
+TEST_F(HandoffConsistency, ValidRefreshPreservesRequestButChangedWitnessDoesNotRefresh){
+ auto report=A::report(*manager);A::accept(*manager,report);ASSERT_TRUE(A::pending(*manager));
+ const auto request=A::request(*manager);
+ A::accept(*manager,A::fresh(*manager,report));EXPECT_EQ(A::request(*manager),request);
+ A::loseLocalization(*manager);A::tick(*manager);ASSERT_TRUE(A::suspended(*manager));
+ A::pose(*manager);
+ auto changed=A::fresh(*manager,report);changed.dependencies.front().min_x-=.001;
+ A::accept(*manager,changed);EXPECT_FALSE(A::pending(*manager));
+ A::accept(*manager,A::fresh(*manager,report));EXPECT_TRUE(A::pending(*manager));
+ EXPECT_GT(A::request(*manager),request);
+}
+TEST_F(HandoffConsistency, RevalidatedReportCannotReuseSuspendedStairSearch){
+ auto report=A::report(*manager);A::accept(*manager,report);ASSERT_TRUE(A::pending(*manager));
+ A::readySearch(*manager);
+ A::loseLocalization(*manager);A::accept(*manager,A::fresh(*manager,report));
+ ASSERT_TRUE(A::suspended(*manager));
+ A::pose(*manager);A::accept(*manager,A::fresh(*manager,report));ASSERT_TRUE(A::pending(*manager));
+ A::collect(*manager);EXPECT_FALSE(A::completePending(*manager));
+}
+TEST_F(HandoffConsistency, RevokedSuspendedIdAndSupersededIdsArePermanent){
+ auto first=A::report(*manager);A::accept(*manager,first);ASSERT_TRUE(A::pending(*manager));
+ A::loseLocalization(*manager);A::tick(*manager);ASSERT_TRUE(A::suspended(*manager));
+ auto revoke=A::fresh(*manager,first);revoke.revoked=true;A::accept(*manager,revoke);
+ A::pose(*manager);A::accept(*manager,A::fresh(*manager,first));
+ EXPECT_FALSE(A::pending(*manager));EXPECT_FALSE(A::suspended(*manager));
+ auto second=A::report(*manager,2);A::accept(*manager,second);ASSERT_TRUE(A::pending(*manager));
+ auto third=A::report(*manager,3);A::accept(*manager,third);const auto request=A::request(*manager);
+ A::accept(*manager,A::fresh(*manager,second));EXPECT_EQ(A::request(*manager),request);
+ second.sequence=4;A::accept(*manager,A::fresh(*manager,second));EXPECT_EQ(A::request(*manager),request);
+}
+TEST_F(HandoffConsistency, ReportHistoryHasHardSessionBound){
+ A::capacity(*manager);A::accept(*manager,A::report(*manager));EXPECT_FALSE(A::pending(*manager));
+}
+TEST_F(HandoffConsistency, MeasuredSupportClearanceAndTfMustBeValid){
+ ASSERT_TRUE(A::safe(*manager));
+ const auto ground=A::savedMap(*manager);
+ A::contact(*manager);EXPECT_FALSE(A::safe(*manager));
+ A::unsupported(*manager);EXPECT_FALSE(A::safe(*manager));
+ A::replaceMap(*manager,ground);EXPECT_TRUE(A::safe(*manager));
+ A::pose(*manager,1.);EXPECT_FALSE(A::safe(*manager));
+ A::loseLocalization(*manager);EXPECT_FALSE(A::safe(*manager));
+}
+TEST_F(HandoffConsistency, FirstSendRequiresRealIdleContextAndCurrentStandingPose){
+ A::accept(*manager,A::report(*manager));ASSERT_TRUE(A::pending(*manager));
+ A::idleForMotion(*manager);
+ ASSERT_TRUE(A::authorizeMotion(*manager));
+ A::pose(*manager,0,.7);
+ EXPECT_FALSE(A::canFollow(*manager));EXPECT_TRUE(A::waiting(*manager));
+}
+TEST_F(HandoffConsistency, LateGoalNotificationsCannotReleaseCurrentOwner){
+ A::assertLateNotificationsCannotReleaseNewOwner(*manager);
+}
+TEST_F(HandoffConsistency, UnknownResultDoesNotConfirmMotionTerminated){
+ A::assertUnknownResultDoesNotReleaseOwner(*manager);
 }
 TEST_F(HandoffConsistency, NoNotificationsAcceptedWhileStopping){A::stopping(*manager);A::accept(*manager,A::report(*manager));EXPECT_FALSE(A::pending(*manager));}
 }

@@ -225,6 +225,9 @@ TEST_F(ActiveResidualNode, ResolvedUnknownsUseUnifiedStableCompletionPublisher) 
  EXPECT_TRUE(completionMapEvidence(typed.back()));
  EXPECT_EQ(typed.front().report_id,typed.back().report_id);
  EXPECT_EQ(typed.front().sequence,typed.back().sequence);
+ EXPECT_EQ(typed.front().dependencies,typed.back().dependencies);
+ EXPECT_EQ(typed.front().start_x,typed.back().start_x);
+ EXPECT_EQ(typed.front().start_y,typed.back().start_y);
  A::stop(*n);
  wait([&]{return typed.back().revoked;});
  EXPECT_EQ(typed.front().report_id,typed.back().report_id);

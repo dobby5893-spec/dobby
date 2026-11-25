@@ -11,7 +11,7 @@ import uuid
 
 import pytest
 import rclpy
-from rclpy.action import ActionServer
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -32,7 +32,11 @@ from frontier_exploration_ros2.msg import (
 )
 
 
-@pytest.mark.parametrize("handoff_kind", ["complete", "residual", "bounded_residual", "region_audit", "region_audit_v3", "region_audit_v4"])
+@pytest.mark.parametrize("handoff_kind", [
+    "complete", "residual", "bounded_residual", "region_audit", "region_audit_v3", "region_audit_v4",
+    "first_goal_rejected", "late_goal_response", "revoked_during_submission",
+    "map_changed_during_submission", "unsafe_last_floor",
+])
 def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, handoff_kind):
     assert os.environ.get('ROS_DOMAIN_ID') == '179', 'This test requires its isolated ROS domain'
     fixture = tmp_path / 'stairs.ot'
@@ -52,6 +56,13 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         if not ok:
             state['rejections'] += 1
         return SetParametersResult(successful=ok, reason='' if ok else 'test rejection')
+
+    goal_fault = handoff_kind in (
+        'first_goal_rejected', 'late_goal_response', 'revoked_during_submission',
+        'map_changed_during_submission')
+    release_response = threading.Event()
+    release_terminal = threading.Event()
+    state.update(goal_requests=0, cancel_requests=0, cancellation_seen=False)
 
     node.add_on_set_parameters_callback(parameters)
     qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -165,11 +176,38 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         handle.succeed()
         return result
 
+    def follow_goal(_request):
+        state['goal_requests'] += 1
+        if goal_fault and state['goal_requests'] == 1:
+            if not release_response.wait(timeout=8):
+                return GoalResponse.REJECT
+            if handoff_kind == 'first_goal_rejected':
+                return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+
+    def cancel_follow(_handle):
+        state['cancel_requests'] += 1
+        return CancelResponse.ACCEPT
+
     def follow(handle):
+        if goal_fault and handoff_kind != 'first_goal_rejected' and state['goal_requests'] == 1:
+            end = time.monotonic() + 5
+            while not handle.is_cancel_requested and time.monotonic() < end:
+                time.sleep(.02)
+            if handle.is_cancel_requested:
+                state['cancellation_seen'] = True
+                release_terminal.wait(timeout=5)
+                handle.canceled()
+            else:
+                handle.abort()
+            return FollowPath.Result()
+
         target = handle.request.path.poses[-1].pose.position
         state['follows'].append((target.x, target.y, target.z))
         if state['compute'][-1] == 'Stair3D':
             state['ascent_follows'] += 1
+        # Allow the client to receive acceptance before simulating physical movement.
+        time.sleep(.12)
         # Deliberately report success without climbing: the manager must reject it.
         state['pose'] = (target.x, target.y, .15 if state['compute'][-1] == 'Stair3D' else 0.)
         # Let the independently published measured TF arrive before the result.
@@ -178,7 +216,8 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         return FollowPath.Result()
 
     servers = [ActionServer(node, ComputePathToPose, '/compute_path_to_pose', compute, callback_group=group),
-               ActionServer(node, FollowPath, '/follow_path', follow, callback_group=group)]
+               ActionServer(node, FollowPath, '/follow_path', follow, callback_group=group,
+                            goal_callback=follow_goal, cancel_callback=cancel_follow)]
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
     thread = threading.Thread(target=executor.spin, daemon=True)
@@ -187,7 +226,8 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     params.write_text(json.dumps({'/**': {'ros__parameters': {
         'use_sim_time': True, 'timer_period_s': .10,
         'gait_controller_node': '/stair_protocol_fixture',
-        'expected_floor_count': 2, 'floor_height_separation': .20,
+        'expected_floor_count': 1 if handoff_kind == 'unsafe_last_floor' else 2,
+        'floor_height_separation': .20,
         'visited_floor_tolerance': .10, 'floor_slice_settle_s': .30,
         'stair_scan_interval_s': .25, 'stair_search_budget_s': 1.5,
         'stair_observation_wait_s': .10, 'stair_observation_attempts': 0,
@@ -254,6 +294,66 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     try:
         pump_until(lambda: any(x['phase'] == 1 for x in state['phases']))
         assert state['starts'] == 1
+        if goal_fault:
+            state['idle'] = True
+            report = formal(0.)
+            verified.publish(report)
+            pump_until(lambda: state['goal_requests'] == 1)
+            assert session.phase == FloorSession.CLOSING
+            assert state['starts'] == 1
+            if handoff_kind == 'first_goal_rejected':
+                until = time.monotonic() + .15
+                pump_until(lambda: time.monotonic() >= until)
+                assert session.phase == FloorSession.CLOSING
+                release_response.set()
+                pump_until(lambda: state['goal_requests'] == 2 and session.phase == FloorSession.CLOSED)
+                assert session.floor_session_id == report.floor_session_id
+                assert state['starts'] == 1
+            else:
+                if handoff_kind == 'revoked_during_submission':
+                    revoked = copy.deepcopy(report)
+                    revoked.revoked = True
+                    verified.publish(revoked)
+                elif handoff_kind == 'map_changed_during_submission':
+                    changed_map = tmp_path / 'stairs-updated.ot'
+                    subprocess.run([os.environ['STAIR_TEST_FIXTURE'], str(changed_map),
+                                    '--geometry-update'], check=True)
+                    data = changed_map.read_bytes().split(b'\ndata\n', 1)[1]
+                pump_until(lambda: state['phases'][-1]['phase'] == 13)
+                assert session.phase == FloorSession.CLOSING
+                assert state['goal_requests'] == 1 and state['starts'] == 1
+                release_response.set()
+                pump_until(lambda: state['cancellation_seen'])
+                until = time.monotonic() + .3
+                pump_until(lambda: time.monotonic() >= until)
+                assert state['cancel_requests'] >= 1
+                assert state['goal_requests'] == 1 and state['starts'] == 1
+                assert session.phase == FloorSession.CLOSING
+                release_terminal.set()
+                pump_until(lambda: state['starts'] == 2 and state['phases'][-1]['phase'] == 1)
+                assert session.task_id == report.task_id
+                assert session.floor_session_id != report.floor_session_id
+                verified.publish(report)
+                until = time.monotonic() + .3
+                pump_until(lambda: time.monotonic() >= until)
+                assert state['goal_requests'] == 1 and state['phases'][-1]['phase'] == 1
+            return
+        if handoff_kind == 'unsafe_last_floor':
+            verified.publish(formal(0.))
+            pump_until(lambda: state['phases'][-1]['phase'] == 2)
+            # The measured feet are inside the height tolerance but above the support surface.
+            state['pose'] = (-.8, 0., .14)
+            until = time.monotonic() + .2
+            pump_until(lambda: time.monotonic() >= until)
+            state['idle'] = True
+            pump_until(lambda: state['phases'][-1]['phase'] == 13)
+            assert not state['completed'] and not state['compute'] and state['starts'] == 1
+            state['pose'] = (-.8, 0., 0.)
+            pump_until(lambda: state['starts'] == 2 and state['phases'][-1]['phase'] == 1)
+            verified.publish(formal(0.))
+            pump_until(lambda: state['completed'] == 1)
+            assert not state['compute'] and state['goal_requests'] == 0
+            return
         legacy_verified.publish(legacy_formal(0.))
         if handoff_kind != 'complete':
             # A retained report from another floor must never stop this floor.
@@ -387,6 +487,8 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
             assert state['starts'] == starts_before_stairs + 1
         (tmp_path / 'protocol_result.json').write_text(json.dumps(state, indent=2))
     finally:
+        release_response.set()
+        release_terminal.set()
         manager.terminate()
         try:
             manager.wait(timeout=6)

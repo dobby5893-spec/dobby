@@ -2129,7 +2129,12 @@ void FrontierExplorerNode::considerResidualCompletion(const ResidualAudit & resu
       mapHashMix(key, result.transition_hash);
       mapHashMix(key, result.runtime_hash);
       for (const auto character : result.records()) mapHashMix(key, uint8_t(character));
-      if (key != completion_key_) revokeFloorCompletion("verified evidence changed");
+      if (current_floor_completion_ && (key != completion_key_ || !current_completion_evidence_ ||
+        std::hypot(result.map_evidence.start_x-current_completion_evidence_->start_x,
+          result.map_evidence.start_y-current_completion_evidence_->start_y)>.3 ||
+        !mapEvidenceCurrent(*current_completion_evidence_,pair,live))) {
+        revokeFloorCompletion("verified evidence changed");
+      }
 
       msg::FloorCompletion v5;
       v5.protocol_version = 5;
@@ -2162,11 +2167,23 @@ void FrontierExplorerNode::considerResidualCompletion(const ResidualAudit & resu
       v5.stable_seconds = residual_audit_stability_.seconds(now);
       if (verifyFloorCompletion(v5) && completionMapEvidence(v5)) {
         const bool fresh_report = !current_floor_completion_;
-        v5.report_id = fresh_report ? newSessionIdentity() : current_floor_completion_->report_id;
-        v5.sequence = fresh_report ? ++completion_sequence_ : current_floor_completion_->sequence;
+        if (fresh_report) {
+          v5.report_id = newSessionIdentity();
+          v5.sequence = ++completion_sequence_;
+          current_completion_evidence_ = result.map_evidence;
+          completion_key_ = key;
+        } else {
+          // Refresh the time and stability of the revalidated original witness.
+          // A changed start or dependency extent cannot silently redefine an ID.
+          const auto generated_at = v5.generated_at;
+          const auto stable_samples = v5.stable_samples;
+          const auto stable_seconds = v5.stable_seconds;
+          v5 = *current_floor_completion_;
+          v5.generated_at = generated_at;
+          v5.stable_samples = stable_samples;
+          v5.stable_seconds = stable_seconds;
+        }
         current_floor_completion_ = v5;
-        current_completion_evidence_ = result.map_evidence;
-        completion_key_ = key;
         completion_checked_generation_ = pair.version.floor_map_generation;
         floor_completion_v5_pub_->publish(v5);
         if (fresh_report) RCLCPP_INFO(get_logger(), "Verified floor report %s task=%s floor=%s",

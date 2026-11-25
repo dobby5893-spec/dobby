@@ -1,6 +1,7 @@
 #include <octomap/OcTree.h>
 #include <cmath>
 #include <iostream>
+#include <string>
 #include <frontier_exploration_ros2/map_consistency.hpp>
 void box(octomap::OcTree & t,double a,double b,double c,double d,double top) {
  for(int x=std::floor(a/.05);x<std::ceil(b/.05);++x)
@@ -10,7 +11,12 @@ void box(octomap::OcTree & t,double a,double b,double c,double d,double top) {
 int main(int argc,char ** argv) {
  if(argc!=2 && argc!=3) {return 1;}octomap::OcTree tree(.05);box(tree,-2,0,-2,2,0);
  for(int i=0;i<6;++i)box(tree,i*.25,(i+1)*.25,-.8,.8,(i+1)*.05);
- box(tree,1.5,3.5,-1.5,1.5,.30);if(argc==3) {
+ box(tree,1.5,3.5,-1.5,1.5,.30);
+ if(argc==3 && std::string(argv[2])=="--geometry-update") {
+  tree.updateNode(octomap::point3d(5.,5.,.4),true);
+  return tree.write(argv[1])?0:2;
+ }
+ if(argc==3) {
   using namespace frontier_exploration_ros2;
   octomap_msgs::msg::Octomap source;octomap_msgs::fullMapToMsg(tree,source);source.header.frame_id="map";
   auto f=std::make_shared<nav_msgs::msg::OccupancyGrid>();f->header.frame_id="map";
