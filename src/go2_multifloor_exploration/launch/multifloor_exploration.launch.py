@@ -15,6 +15,8 @@ def launch_setup(context):
     params = os.path.join(package_share, 'config', 'multifloor.yaml')
 
     resume_path = LaunchConfiguration('resume_state').perform(context)
+    exploring = LaunchConfiguration('exploration_enabled').perform(context).lower() == 'true'
+    require_ready = LaunchConfiguration('require_startup_ready').perform(context).lower() == 'true'
     manager_resume = {}
     slice_resume = {}
     if resume_path:
@@ -29,14 +31,15 @@ def launch_setup(context):
             package='go2_multifloor_exploration',
             executable='floor_slice_node',
             name='floor_slice_node',
-            parameters=[params, {'use_sim_time': use_sim_time}, slice_resume],
+            parameters=[params, {'use_sim_time': use_sim_time, 'managed_floor_sessions': exploring}, slice_resume],
             output='screen',
         ),
         Node(
             package='go2_multifloor_exploration',
             executable='multifloor_manager',
             name='multifloor_manager',
-            parameters=[params, {'use_sim_time': use_sim_time}, manager_resume],
+            parameters=[params, {'use_sim_time': use_sim_time, 'require_startup_ready': require_ready,
+                                 'exploration_enabled': exploring}, manager_resume],
             output='screen',
         ),
     ]
@@ -45,6 +48,8 @@ def launch_setup(context):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('exploration_enabled', default_value='true'),
+        DeclareLaunchArgument('require_startup_ready', default_value='false'),
         DeclareLaunchArgument('resume_state', default_value=''),
         OpaqueFunction(function=launch_setup),
     ])

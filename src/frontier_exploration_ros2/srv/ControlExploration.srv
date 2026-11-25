@@ -11,8 +11,18 @@ uint8 STATE_SHUTDOWN_PENDING=5
 uint8 action
 float32 delay_seconds
 bool quit_after_stop
+string task_id
+string floor_session_id
+uint64 session_generation
+string explorer_instance
+uint64 command_sequence
 ---
 bool accepted
 bool scheduled
 uint8 state
 string message
+string task_id
+string floor_session_id
+uint64 session_generation
+string explorer_instance
+uint64 command_sequence

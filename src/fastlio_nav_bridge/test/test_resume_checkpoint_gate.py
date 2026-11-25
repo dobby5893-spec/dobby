@@ -42,8 +42,9 @@ def test_failed_spawn_validation_never_opens_writer(monkeypatch, start_enabled):
         header=SimpleNamespace(stamp=SimpleNamespace(sec=1, nanosec=0)))
     world = SimpleNamespace(position=SimpleNamespace(x=1., y=0., z=0.),
         orientation=SimpleNamespace(x=0., y=0., z=0., w=1.))
-    node = SimpleNamespace(started=not start_enabled, start_enabled=start_enabled, pending=None, recovery_ready_since=None,
-        control=Mock(), map=SimpleNamespace(data=[0]*50),
+    node = SimpleNamespace(
+        managed=False, started=not start_enabled, start_enabled=start_enabled, pending=None,
+        recovery_ready_since=None, control=Mock(), map=SimpleNamespace(data=[0]*50),
         floor={'phase': 1}, resume={'node_count': 10, 'map_body': [[0,0,0],[0,0,0,1]],
         'world_body': [[0,0,0],[0,0,0,1]]}, resume_validated=False,
         tf=Mock(), odom=deque([SimpleNamespace(pose=SimpleNamespace(pose=world))]),
@@ -58,3 +59,25 @@ def test_failed_spawn_validation_never_opens_writer(monkeypatch, start_enabled):
     assert node.last_save == 0.
     node.control.call_async.assert_not_called()
     assert 'startup blocked:' in node.state_message.call_args.args[0]
+
+
+def test_managed_checkpoint_confirms_only_matching_session(monkeypatch):
+    import fastlio_nav_bridge.exploration_checkpoint as module
+    session = SimpleNamespace(task_id='current-task', floor_session_id='current-floor', phase=1)
+    monkeypatch.setattr(module.time, 'monotonic', lambda: 100.)
+    body = SimpleNamespace(header=SimpleNamespace(stamp=SimpleNamespace(sec=1, nanosec=0)))
+    old_floor = {'phase': 7, 'task_id': session.task_id, 'floor_session_id': 'old-floor'}
+    node = SimpleNamespace(
+        managed=True, start_enabled=True, session=session, session_seen=99.,
+        map=object(), floor=old_floor,
+        resume=None, resume_validated=True, recovery_ready_since=96., pending=None,
+        tf=Mock(), get_clock=Mock(), get_logger=Mock(), state_message=Mock(),
+        session_ready=Mock(), last_log=0., last_save=100., interval=30.)
+    node.tf.lookup_transform.return_value = body
+    node.get_clock.return_value.now.return_value.nanoseconds = 1000000000
+    ExplorationCheckpoint.tick(node)
+    node.session_ready.publish.assert_not_called()
+    node.floor['floor_session_id'] = session.floor_session_id
+    node.recovery_ready_since = 96.
+    ExplorationCheckpoint.tick(node)
+    node.session_ready.publish.assert_called_once_with(session)

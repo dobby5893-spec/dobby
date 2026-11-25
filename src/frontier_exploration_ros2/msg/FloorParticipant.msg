@@ -1,0 +1,9 @@
+uint8 EXPLORER=1
+uint8 SLICE=2
+uint8 role
+string instance_id
+string task_id
+string floor_session_id
+uint64 generation
+uint8 phase
+bool idle

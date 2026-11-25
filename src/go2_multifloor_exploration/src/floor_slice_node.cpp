@@ -1,5 +1,5 @@
 #include "go2_multifloor_exploration/floor_slice.hpp"
-#include <frontier_exploration_ros2/msg/floor_map_snapshot.hpp>
+#include <frontier_exploration_ros2/floor_session.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <octomap/AbstractOcTree.h>
@@ -20,6 +20,10 @@
 namespace go2_multifloor_exploration
 {
 
+namespace protocol = frontier_exploration_ros2;
+using Session = protocol::msg::FloorSession;
+using Participant = protocol::msg::FloorParticipant;
+
 class FloorSliceNode : public rclcpp::Node
 {
 public:
@@ -33,6 +37,24 @@ public:
       "floor_height_topic", "/multifloor/active_floor_height");
     publish_period_s_ = declare_parameter<double>("publish_period_s", 1.0);
     floor_z_ = declare_parameter<double>("initial_floor_z", 0.0);
+
+    managed_ = declare_parameter<bool>("managed_floor_sessions", false);
+    if (managed_) {
+      instance_ = protocol::newSessionIdentity();
+      auto session_qos = rclcpp::QoS(5).reliable();
+      participant_pub_ = create_publisher<Participant>("/multifloor/session_participant", session_qos);
+      session_sub_ = create_subscription<Session>("/multifloor/floor_session", session_qos,
+        [this](Session::ConstSharedPtr next) {
+          std::lock_guard<std::mutex> lock(mutex_);
+          if (next->map_producer != instance_ || !protocol::validSession(*next, now().nanoseconds()) ||
+            !protocol::canApplySession(session_, *next, true)) return;
+          if (next->generation != session_.generation) {
+            floor_z_ = next->floor_z;
+            dirty_ = true;
+          }
+          session_ = *next;
+        });
+    }
 
     FloorSliceConfig config;
     config.resolution = declare_parameter<double>("resolution", 0.10);
@@ -55,7 +77,7 @@ public:
     map_sub_ = create_subscription<octomap_msgs::msg::Octomap>(
       octomap_topic_, map_qos,
       std::bind(&FloorSliceNode::mapCallback, this, std::placeholders::_1));
-    floor_sub_ = create_subscription<std_msgs::msg::Float64>(
+    if (!managed_) floor_sub_ = create_subscription<std_msgs::msg::Float64>(
       floor_height_topic_, map_qos,
       [this](const std_msgs::msg::Float64::SharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -76,6 +98,7 @@ public:
 private:
   void mapCallback(const octomap_msgs::msg::Octomap::SharedPtr msg)
   {
+    if (managed_ && (msg->binary || msg->header.frame_id != frame_id_)) return;
     std::unique_ptr<octomap::AbstractOcTree> abstract(octomap_msgs::msgToMap(*msg));
     auto * raw = abstract ? dynamic_cast<octomap::OcTree *>(abstract.get()) : nullptr;
     if (!raw) {
@@ -84,7 +107,10 @@ private:
     }
     abstract.release();
     std::lock_guard<std::mutex> lock(mutex_);
-    tree_.reset(raw);
+    std::unique_ptr<octomap::OcTree> received(raw);
+    if (managed_ && source_ && protocol::sessionStamp(msg->header.stamp) <=
+      protocol::sessionStamp(source_->header.stamp)) return;
+    tree_ = std::move(received);
     source_ = msg;
     ++octomap_generation_;
     dirty_ = true;
@@ -96,8 +122,23 @@ private:
     double floor_z = 0.0;
     octomap_msgs::msg::Octomap::ConstSharedPtr source;
     uint64_t source_generation = 0;
+    Session session;
     {
       std::lock_guard<std::mutex> lock(mutex_);
+      session = session_;
+      if (managed_) {
+        Participant ack;
+        ack.role = Participant::SLICE;
+        ack.instance_id = instance_;
+        ack.task_id = session.task_id;
+        ack.floor_session_id = session.floor_session_id;
+        ack.generation = session.generation;
+        ack.phase = session.phase;
+        ack.idle = true;
+        participant_pub_->publish(ack);
+        if (!session.generation || !source_ ||
+          protocol::sessionStamp(source_->header.stamp) < protocol::sessionStamp(session.started_at)) return;
+      }
       if (!tree_ || !dirty_) {
         return;
       }
@@ -122,11 +163,23 @@ private:
     msg.data = slice.data;
     // One message transports the immutable pair: delayed independent topics cannot
     // accidentally associate a slice with a different OctoMap. Legacy map is kept.
+    if (managed_ && session.phase == Session::CLOSED) {
+      // The stair controller can keep its legacy grid during the transition.
+      // CLOSED has no current-floor audit snapshots.
+      publisher_->publish(msg);
+      return;
+    }
     frontier_exploration_ros2::msg::FloorMapSnapshot snapshot;
     snapshot.octomap_generation = source_generation;
     snapshot.source_octomap_generation = source_generation;
     snapshot.floor_map_generation = ++floor_map_generation_;
     snapshot.octomap = *source;snapshot.floor_map = msg;
+    if (managed_) {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (!protocol::sessionSnapshot(session_, snapshot.set__task_id(session.task_id)
+        .set__floor_session_id(session.floor_session_id).set__session_generation(session.generation)
+        .set__map_producer(instance_))) return;
+    }
     snapshot_pub_->publish(snapshot);
     publisher_->publish(msg);
   }
@@ -137,7 +190,11 @@ private:
   std::string floor_height_topic_;
   double publish_period_s_{1.0};
   double floor_z_{0.0};
-  bool dirty_{false};
+  bool dirty_{false}, managed_{false};
+  std::string instance_;
+  Session session_;
+  rclcpp::Publisher<Participant>::SharedPtr participant_pub_;
+  rclcpp::Subscription<Session>::SharedPtr session_sub_;
   std::unique_ptr<FloorSliceBuilder> builder_;
   std::mutex mutex_;
   std::shared_ptr<const octomap::OcTree> tree_;

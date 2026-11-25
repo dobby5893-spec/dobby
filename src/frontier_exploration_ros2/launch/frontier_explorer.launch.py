@@ -37,6 +37,7 @@ def _create_frontier_actions(context):
 
     frontier_overrides: dict[str, Any] = {
         "use_sim_time": use_sim_time,
+        "managed_floor_sessions": LaunchConfiguration("managed_floor_sessions").perform(context).lower() == "true",
         "map_qos_durability": map_qos_durability,
         "map_qos_autodetect_on_startup": map_qos_autodetect_on_startup,
         "map_qos_autodetect_timeout_s": map_qos_autodetect_timeout_s,
@@ -95,6 +96,7 @@ def generate_launch_description():
                 default_value="info",
                 description="Log level (debug, info, warn, error, fatal).",
             ),
+            DeclareLaunchArgument("managed_floor_sessions", default_value="false"),
             DeclareLaunchArgument(
                 "autostart",
                 default_value="",

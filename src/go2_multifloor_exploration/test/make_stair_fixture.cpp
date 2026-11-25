@@ -18,6 +18,7 @@ int main(int argc,char ** argv) {
   PairedFloorMap pair;pair.floor=f;pair.tree=std::make_shared<const octomap::OcTree>(tree);
   pair.version={1,1,octomapDigest(source),floorDigest(*f)};
   auto evidence=beginMapEvidence(pair,-.8,0);sealDependency(evidence,{0,-1,-1,1,1,0,0},pair);
+  sealDependency(evidence,{11,-1,-1,1,1,0,0},pair);
   std::cout<<encodeMapEvidence(evidence);return 0;
  }return tree.write(argv[1])?0:2;
 }

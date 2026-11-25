@@ -11,6 +11,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(action_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(go2_surface_3d_planner REQUIRED)
 find_package(octomap REQUIRED)
@@ -29,7 +30,12 @@ find_package(visualization_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ControlExploration.srv"
   "msg/FloorMapSnapshot.msg"
-  DEPENDENCIES nav_msgs octomap_msgs
+  "msg/FloorSession.msg"
+  "msg/FloorParticipant.msg"
+  "msg/FloorRegionEvidence.msg"
+  "msg/FloorMapDependency.msg"
+  "msg/FloorCompletion.msg"
+  DEPENDENCIES builtin_interfaces nav_msgs octomap_msgs
 )
 
 add_library(${PROJECT_NAME}_core
@@ -194,6 +200,12 @@ if(BUILD_TESTING)
   target_include_directories(test_residual_snapshot_node PRIVATE include)
   target_link_libraries(test_residual_snapshot_node ${PROJECT_NAME}_node octomap)
   set_tests_properties(test_residual_snapshot_node PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=190;ROS_LOCALHOST_ONLY=1")
+  ament_add_gtest(test_floor_session test/test_floor_session.cpp)
+  target_include_directories(test_floor_session PRIVATE include)
+  target_link_libraries(test_floor_session ${cpp_typesupport_target} octomap)
+  target_compile_features(test_floor_session PRIVATE cxx_std_17)
+  ament_target_dependencies(test_floor_session nav_msgs octomap_msgs go2_surface_3d_planner)
+
   ament_add_gtest(test_map_consistency test/test_map_consistency.cpp)
   target_include_directories(test_map_consistency PRIVATE include)
   target_link_libraries(test_map_consistency ${cpp_typesupport_target} octomap)

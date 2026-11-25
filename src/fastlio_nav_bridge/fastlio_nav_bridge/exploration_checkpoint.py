@@ -18,6 +18,7 @@ from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformListener
+from frontier_exploration_ros2.msg import FloorSession
 from frontier_exploration_ros2.srv import ControlExploration
 
 from .checkpoint_store import save_checkpoint, load_checkpoint, full_octomap_file, world_fingerprint
@@ -43,6 +44,9 @@ class ExplorationCheckpoint(Node):
         self.world = self.declare_parameter('world', '/home/dobby/scan/worlds/research_two_floor.world').value
         self.fingerprint = world_fingerprint(self.world)
         self.resume_path = self.declare_parameter('resume_state', '').value
+        self.managed = self.declare_parameter('managed_floor_sessions', False).value
+        self.session = None
+        self.session_seen = 0.
         self.start_enabled = self.declare_parameter('start_exploration', True).value
         self.interval = self.declare_parameter('save_interval_s', 30.0).value
         self.map = None
@@ -67,7 +71,12 @@ class ExplorationCheckpoint(Node):
         self.history_publisher = self.create_publisher(PointCloud2, '/checkpoint/previous_cloud_map', durable)
         self.status = self.create_publisher(String, '/exploration_checkpoint/status', durable)
         self.create_service(Trigger, '/exploration_checkpoint/save', self.manual_save)
-        self.control = self.create_client(ControlExploration, '/control_exploration')
+        if self.managed:
+            self.create_subscription(FloorSession, '/multifloor/floor_session', self.on_session, 5)
+            self.session_ready = self.create_publisher(
+                FloorSession, '/multifloor/startup_ready', 5)
+        else:
+            self.control = self.create_client(ControlExploration, '/control_exploration')
         self.timer = self.create_timer(1.0, self.tick, clock=rclpy.clock.Clock())
         if self.resume_path:
             cloud_path = Path(self.resume_path).parent / 'cloud_map.cdr'
@@ -78,6 +87,15 @@ class ExplorationCheckpoint(Node):
                 self.previous_cloud = previous
                 self.history_publisher.publish(previous)
         self.get_logger().info('Checkpoint writer ready: ' + str(self.root))
+
+    def on_session(self, message):
+        """Update the floor context for the startup readiness check."""
+        if (self.session is None or
+                message.task_id != self.session.task_id or
+                message.floor_session_id != self.session.floor_session_id):
+            self.recovery_ready_since = None
+        self.session = message
+        self.session_seen = time.monotonic()
 
     def on_map(self, message):
         if not message.binary and message.id == 'OcTree' and message.header.frame_id == 'map':
@@ -182,17 +200,33 @@ class ExplorationCheckpoint(Node):
 
     def tick(self):
         now = time.monotonic()
-        if (not self.started or not self.resume_validated) and self.control.service_is_ready() and self.map and self.floor:
+        if self.managed:
+            ready = (
+                self.start_enabled and self.session is not None and
+                self.session.phase == FloorSession.PREPARING and now - self.session_seen < 3.0)
+        else:
+            awaiting_validation = not self.started or not self.resume_validated
+            ready = awaiting_validation and self.control.service_is_ready()
+        if ready and self.map and self.floor:
             try:
-                if self.floor['phase'] not in (1, 3, 8):
+                if self.managed:
+                    floor_context = self.floor.get('task_id'), self.floor.get('floor_session_id')
+                    if floor_context != (self.session.task_id, self.session.floor_session_id):
+                        raise ValueError('Waiting for checkpoint state matching the floor session')
+                if self.floor['phase'] not in ((7,) if self.managed else (1, 3, 8)):
                     raise ValueError('Waiting for floor initialization')
-                if self.resume and len(self.map.data)//5 < self.resume.get('node_count', 0)*0.9:
-                    raise ValueError('Restored map is incomplete; exploration remains stopped')
+                checking_resume = self.resume is not None and not self.resume_validated
+                if checking_resume:
+                    minimum_nodes = self.resume.get('node_count', 0) * 0.9
+                    if len(self.map.data) // 5 < minimum_nodes:
+                        raise ValueError('Restored map is incomplete; exploration remains stopped')
                 body = self.tf.lookup_transform('map', 'base_link', Time())
                 age = (self.get_clock().now().nanoseconds-stamp_ns(body.header.stamp))*1e-9
                 if not -0.1 <= age <= 0.5:
                     raise ValueError('Waiting for fresh localization')
-                if self.resume:
+                if checking_resume:
+                    if not self.odom:
+                        raise ValueError("Waiting for independent world odometry")
                     saved = self.resume['map_body']
                     current = transform_tuple(body.transform)
                     # Verify current mapping frame against the independent Gazebo spawn.
@@ -208,7 +242,9 @@ class ExplorationCheckpoint(Node):
                     self.recovery_ready_since = now
                 if now-self.recovery_ready_since >= 3.0 and self.pending is None:
                     self.resume_validated = True
-                    if self.floor['phase'] != 1 or not self.start_enabled:
+                    if self.managed:
+                        self.session_ready.publish(self.session)
+                    elif self.floor['phase'] != 1 or not self.start_enabled:
                         self.started = True  # Floor manager owns transition/completion.
                     else:
                         request = ControlExploration.Request()

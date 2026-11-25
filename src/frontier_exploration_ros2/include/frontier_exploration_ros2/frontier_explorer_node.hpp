@@ -17,6 +17,9 @@ limitations under the License.
 
 #pragma once
 
+#include "frontier_exploration_ros2/floor_completion_v5.hpp"
+#include <atomic>
+
 #include <chrono>
 #include "frontier_exploration_ros2/msg/floor_map_snapshot.hpp"
 #include <future>
@@ -106,6 +109,11 @@ private:
   void controlTimerCallback();
   void stopCompletionPollCallback();
   void deferredShutdownCallback();
+  void applyFloorSession(const msg::FloorSession & session);
+  void floorSessionHeartbeat();
+  void revokeFloorCompletion(const char * reason);
+  bool acceptManagedControl(const srv::ControlExploration::Request & request,
+    srv::ControlExploration::Response & response);
   void handleControlRequest(
     const std::shared_ptr<srv::ControlExploration::Request> request,
     std::shared_ptr<srv::ControlExploration::Response> response);
@@ -290,6 +298,22 @@ private:
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr completion_event_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr floor_exhausted_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr verified_completion_pub_;
+  rclcpp::Publisher<msg::FloorCompletion>::SharedPtr floor_completion_v5_pub_;
+  rclcpp::Publisher<msg::FloorParticipant>::SharedPtr floor_participant_pub_;
+  rclcpp::Subscription<msg::FloorSession>::SharedPtr floor_session_sub_;
+  rclcpp::TimerBase::SharedPtr floor_session_timer_;
+  msg::FloorSession floor_session_;
+  std::string explorer_instance_;
+  bool managed_floor_sessions_{false}, floor_session_fenced_{false};
+  std::chrono::steady_clock::time_point floor_session_seen_;
+  int64_t floor_session_clock_{0};
+  std::atomic<bool> floor_clock_rewound_{false};
+  rclcpp::JumpHandler::SharedPtr floor_clock_jump_;
+  double floor_session_lease_s_{10.0};
+  uint64_t command_sequence_{0}, completion_sequence_{0}, completion_key_{0}, completion_checked_generation_{0};
+  uint8_t last_session_command_{0};
+  std::optional<msg::FloorCompletion> current_floor_completion_;
+  std::optional<AuditMapEvidence> current_completion_evidence_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr frontier_marker_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr selected_frontier_pub_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr optimized_map_pub_;

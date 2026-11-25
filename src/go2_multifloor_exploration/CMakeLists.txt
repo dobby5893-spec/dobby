@@ -88,7 +88,12 @@ if(BUILD_TESTING)
     ENV "ROS_DOMAIN_ID=188" "ROS_LOCALHOST_ONLY=1"
       "FLOOR_SLICE_NODE=$<TARGET_FILE:floor_slice_node>"
       "STAIR_TEST_FIXTURE=$<TARGET_FILE:make_stair_fixture>")
-  ament_add_pytest_test(test_stair_protocol test/test_stair_protocol.py TIMEOUT 90
+  ament_add_pytest_test(test_session_participants test/test_session_participants.py TIMEOUT 55
+    ENV "ROS_DOMAIN_ID=192" "ROS_LOCALHOST_ONLY=1"
+      "FLOOR_SLICE_NODE=$<TARGET_FILE:floor_slice_node>"
+      "FRONTIER_EXPLORER=${frontier_exploration_ros2_DIR}/../../../lib/frontier_exploration_ros2/frontier_explorer"
+      "STAIR_TEST_FIXTURE=$<TARGET_FILE:make_stair_fixture>")
+  ament_add_pytest_test(test_stair_protocol test/test_stair_protocol.py TIMEOUT 120
     ENV "ROS_DOMAIN_ID=179" "ROS_LOCALHOST_ONLY=1"
       "STAIR_TEST_MANAGER=$<TARGET_FILE:multifloor_manager>"
       "STAIR_TEST_FIXTURE=$<TARGET_FILE:make_stair_fixture>")

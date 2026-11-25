@@ -86,6 +86,19 @@ struct ActiveResidualNodeTestAccess {
   n.paired_floor_map_=p;n.surface_map_=tree;n.surface_hint_map_=f;n.core_->map=OccupancyGrid2d(*f);n.core_->costmap=OccupancyGrid2d(*f);
   n.floor_cleanup_mode_=true;
  }
+ static msg::FloorSession enableManagedCompletion(FrontierExplorerNode & n) {
+  n.managed_floor_sessions_=true;
+  auto & session=n.floor_session_;
+  session.task_id=newSessionIdentity();session.floor_session_id=newSessionIdentity();
+  n.explorer_instance_=newSessionIdentity();session.explorer_instance=n.explorer_instance_;session.map_producer=newSessionIdentity();
+  session.generation=1;session.phase=session.ACTIVE;session.started_at=n.now();session.heartbeat=session.started_at;
+  n.floor_completion_v5_pub_=n.create_publisher<msg::FloorCompletion>(
+    "/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local());
+  auto pair=std::make_shared<PairedFloorMap>(*n.paired_floor_map_);
+  pair->version.scope={session.task_id,session.floor_session_id,session.map_producer,session.generation};
+  n.paired_floor_map_=pair;
+  return session;
+ }
  static bool cleanup(FrontierExplorerNode & n){return n.floor_cleanup_mode_;}
  static void occupyLiveRoute(FrontierExplorerNode & n) {
   auto tree=std::make_shared<octomap::OcTree>(*n.surface_map_);
@@ -193,13 +206,28 @@ TEST_F(ActiveResidualNode, EmptyFrontierRequestsActiveObservationBeforeRandomRec
 }
 TEST_F(ActiveResidualNode, ResolvedUnknownsUseUnifiedStableCompletionPublisher) {
  std::vector<std::string> formal;
- auto sub=server->create_subscription<std_msgs::msg::String>("/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local(),[&](std_msgs::msg::String::ConstSharedPtr msg){formal.push_back(msg->data);});
- A::completeFloor(*n);auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(13);
- while(formal.empty() && std::chrono::steady_clock::now()<deadline) {
+ std::vector<msg::FloorCompletion> typed;
+ const auto qos=rclcpp::QoS(1).reliable().transient_local();
+ auto sub=server->create_subscription<std_msgs::msg::String>("/explore/floor_completion_legacy",qos,
+  [&](std_msgs::msg::String::ConstSharedPtr msg){formal.push_back(msg->data);});
+ auto v5=server->create_subscription<msg::FloorCompletion>("/explore/floor_completion",qos,
+  [&](msg::FloorCompletion::ConstSharedPtr msg){typed.push_back(*msg);});
+ A::completeFloor(*n);const auto session=A::enableManagedCompletion(*n);
+ auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(13);
+ while((formal.empty() || typed.size()<2) && std::chrono::steady_clock::now()<deadline) {
   A::pose(*n,x,y);A::map(*n);A::service(*n);executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(50));
  }
  ASSERT_FALSE(formal.empty());auto parsed=parseVerifiedFloorCompletion(formal.back());ASSERT_TRUE(parsed);EXPECT_EQ(parsed->status,CompletionStatus::VERIFIED_COMPLETE);
  EXPECT_TRUE(completionMapEvidence(formal.back()));
+ ASSERT_GE(typed.size(),2u);
+ EXPECT_TRUE(completionIdentity(typed.back(),session,n->now().nanoseconds()));
+ EXPECT_TRUE(verifyFloorCompletion(typed.back()));
+ EXPECT_TRUE(completionMapEvidence(typed.back()));
+ EXPECT_EQ(typed.front().report_id,typed.back().report_id);
+ EXPECT_EQ(typed.front().sequence,typed.back().sequence);
+ A::stop(*n);
+ wait([&]{return typed.back().revoked;});
+ EXPECT_EQ(typed.front().report_id,typed.back().report_id);
 }
 TEST_F(ActiveResidualNode, ChangedFloorSchemaDuringObservationRejectsOldWindow) {
  arrive();baseline();A::changeObservationSchema(*n,false);A::service(*n);EXPECT_EQ(A::phase(*n),0);EXPECT_EQ(A::observed(*n).outcome,SpatialOutcome::StaleMap);

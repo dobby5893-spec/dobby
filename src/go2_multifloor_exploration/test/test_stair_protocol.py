@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import threading
 import time
+import uuid
 
 import pytest
 import rclpy
@@ -25,7 +26,10 @@ from rosgraph_msgs.msg import Clock
 from std_msgs.msg import Empty, Float64, String, Bool
 from tf2_msgs.msg import TFMessage
 from frontier_exploration_ros2.srv import ControlExploration
-from frontier_exploration_ros2.msg import FloorMapSnapshot
+from frontier_exploration_ros2.msg import (
+    FloorCompletion, FloorMapDependency, FloorMapSnapshot,
+    FloorParticipant, FloorRegionEvidence, FloorSession,
+)
 
 
 @pytest.mark.parametrize("handoff_kind", ["complete", "residual", "bounded_residual", "region_audit", "region_audit_v3", "region_audit_v4"])
@@ -57,15 +61,56 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     slice_pub = node.create_publisher(OccupancyGrid, '/map_floor', qos)
     paired_pub = node.create_publisher(FloorMapSnapshot, '/map_floor/snapshot', qos)
     completion = node.create_publisher(Empty, '/exploration_complete', qos)
-    verified = node.create_publisher(String, '/explore/floor_completion', qos)
+    verified = node.create_publisher(FloorCompletion, '/explore/floor_completion', qos)
+    legacy_verified = node.create_publisher(String, '/explore/floor_completion_legacy', qos)
+    session = None
+    first_session = None
+    explorer, producer = str(uuid.uuid4()), str(uuid.uuid4())
+    participants = node.create_publisher(FloorParticipant, '/multifloor/session_participant', 5)
 
-    def formal(floor_z, residual=False):
+    def on_session(message):
+        nonlocal session, first_session
+        session = message
+        if first_session is None:
+            first_session = message
+
+    node.create_subscription(FloorSession, '/multifloor/floor_session', on_session, 5)
+
+    def legacy_formal(floor_z, residual=False):
         area = '.1' if residual else '0'
         return String(data=f"floor_completion;authority=joint_residual_audit;"
             f"status={'VERIFIED_WITH_RESIDUALS' if residual else 'VERIFIED_COMPLETE'};"
             f"floor_z={floor_z};stamp={state['stamp']};remaining={area};residual={area};transition=0;"
             f"region_count={1 if residual else 0};regions={'11:.1:verified_enclosed' if residual else ''};"
             f"safe_start=1;complete_views=1;complete_routes=1;stable_samples=3;stable_seconds=10;map_evidence={evidence[floor_z]}")
+
+    def formal(floor_z, residual=False, sequence=1):
+        meta, _, dependencies = evidence[floor_z].split('|')
+        fields = meta.split(',')
+        stamp = state['stamp']
+        report = FloorCompletion(
+            protocol_version=5, task_id=session.task_id, floor_session_id=session.floor_session_id,
+            session_generation=session.generation, explorer_instance=explorer, map_producer=producer,
+            report_id=str(uuid.uuid4()), sequence=sequence,
+            generated_at=Time(sec=int(stamp), nanosec=int(stamp % 1 * 1e9)),
+            floor_z=session.floor_z, safe_start=True, complete_views=True, complete_routes=True,
+            stable_samples=3, stable_seconds=10., octomap_generation=1, floor_map_generation=1,
+            source_octomap_generation=1, source_digest=int(fields[2]), floor_digest=int(fields[3]),
+            schema_digest=int(fields[5]), unknown_inventory_digest=int(fields[6]),
+            start_x=state['pose'][0], start_y=state['pose'][1])
+        report.completion_status = (FloorCompletion.VERIFIED_WITH_RESIDUALS if residual else
+                                    FloorCompletion.VERIFIED_COMPLETE)
+        for dependency in dependencies.split('/'):
+            key, x0, y0, x1, y1, fhash, ohash = dependency.split(',')
+            report.dependencies.append(FloorMapDependency(
+                region_id=int(key), min_x=float(x0), min_y=float(y0), max_x=float(x1), max_y=float(y1),
+                floor_digest=int(fhash), octomap_digest=int(ohash)))
+        if residual:
+            report.remaining_area = report.residual_area = .1
+            report.region_count = 1
+            report.regions = [FloorRegionEvidence(region_id=11, area=.1, dependency_id=11,
+                                                   classification=FloorRegionEvidence.VERIFIED_ENCLOSED)]
+        return report
 
     exhausted = node.create_publisher(String, '/explore/floor_exhausted', qos)
     node.create_subscription(Empty, '/multifloor/exploration_complete',
@@ -77,9 +122,20 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     node.create_subscription(String, '/multifloor/checkpoint_state', lambda m: state['phases'].append(json.loads(m.data)), qos)
 
     def control(request, response):
+        assert session is not None
+        assert (request.task_id, request.floor_session_id, request.session_generation) == (
+            session.task_id, session.floor_session_id, session.generation)
+        for name in ('task_id', 'floor_session_id', 'session_generation', 'explorer_instance', 'command_sequence'):
+            setattr(response, name, getattr(request, name))
         response.accepted = True
         if request.action == request.ACTION_STOP:
-            response.state = request.STATE_IDLE if state['idle'] else request.STATE_STOPPING
+            if state.get('send_old_idle', False):
+                state['send_old_idle'] = False
+                state['old_idle_replied'] = True
+                response.floor_session_id = first_session.floor_session_id
+                response.state = request.STATE_IDLE
+            else:
+                response.state = request.STATE_IDLE if state['idle'] else request.STATE_STOPPING
         else:
             state['starts'] += 1
             response.state = request.STATE_RUNNING
@@ -141,8 +197,10 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
     manager = subprocess.Popen([os.environ['STAIR_TEST_MANAGER'], '--ros-args', '--params-file', str(params)],
                                stdout=log, stderr=subprocess.STDOUT)
     start = time.monotonic()
+    generation = 0
 
     def pump_until(condition, timeout=15.):
+        nonlocal generation
         deadline = time.monotonic() + timeout
         while not condition() and time.monotonic() < deadline:
             assert manager.poll() is None, (tmp_path / 'manager.log').read_text()
@@ -175,13 +233,28 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
             floor.info.origin.position.z = state['slice_height']
             floor.data = [0]
             slice_pub.publish(floor)
-            paired_pub.publish(FloorMapSnapshot(octomap_generation=1, floor_map_generation=1,
-                source_octomap_generation=1, octomap=octree, floor_map=floor))
+            current = session
+            for role, instance in ((FloorParticipant.EXPLORER, explorer), (FloorParticipant.SLICE, producer)):
+                ack = FloorParticipant(role=role, instance_id=instance, idle=True)
+                if current:
+                    ack.task_id = current.task_id
+                    ack.floor_session_id = current.floor_session_id
+                    ack.generation = current.generation
+                    ack.phase = current.phase
+                participants.publish(ack)
+            generation += 1
+            if current:
+                paired_pub.publish(FloorMapSnapshot(octomap_generation=generation, floor_map_generation=generation,
+                    source_octomap_generation=generation, octomap=octree, floor_map=floor,
+                    task_id=current.task_id, floor_session_id=current.floor_session_id,
+                    session_generation=current.generation, map_producer=producer))
             time.sleep(.05)
         assert condition(), (state, (tmp_path / 'manager.log').read_text()[-5000:])
 
     try:
         pump_until(lambda: any(x['phase'] == 1 for x in state['phases']))
+        assert state['starts'] == 1
+        legacy_verified.publish(legacy_formal(0.))
         if handoff_kind != 'complete':
             # A retained report from another floor must never stop this floor.
             exhausted.publish(String(data=f"v1;floor_z=3;stamp={state['stamp']};"
@@ -232,11 +305,32 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         pump_until(lambda: time.monotonic() >= until)
         assert state['phases'][-1]['phase'] == 1
         assert not state['compute'], 'Legacy completion authorized stair handoff'
-        verified.publish(formal(0., handoff_kind != 'complete'))
-        pump_until(lambda: any(x['phase'] == 2 for x in state['phases']))
+        if handoff_kind == 'complete':
+            canceled = formal(0.)
+            verified.publish(canceled)
+            pump_until(lambda: state['phases'][-1]['phase'] == 2)
+            canceled.revoked = True
+            verified.publish(canceled)
+            until = time.monotonic() + .25
+            pump_until(lambda: time.monotonic() >= until)
+            state['idle'] = True
+            pump_until(lambda: state['phases'][-1]['phase'] == 1 and state['starts'] >= 2)
+            assert not state['compute'], 'Revocation while stopping authorized a planner goal'
+            assert session.task_id == first_session.task_id
+            assert session.floor_session_id != first_session.floor_session_id
+            state['idle'] = False
+            state['send_old_idle'] = True
+        source_session = session
+        starts_before_stairs = state['starts']
+        first_report = formal(0., handoff_kind != 'complete')
+        verified.publish(first_report)
+        verified.publish(first_report)
+        pump_until(lambda: state['phases'][-1]['phase'] == 2)
         until = time.monotonic() + .8
         pump_until(lambda: time.monotonic() >= until)
         assert not state['compute'], 'Stair handoff started before frontier became idle'
+        if handoff_kind == 'complete':
+            assert state.get('old_idle_replied'), 'The mock did not send the old floor IDLE reply'
         state['idle'] = True
         pump_until(lambda: state['rejections'] > 0)
         assert 'Stair3D' not in state['compute'], 'Climbed before gait update was accepted'
@@ -250,15 +344,18 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         assert state['floors'] and all(abs(z) < .08 for z in state['floors'])
         assert all(len(x['visited_floors']) == 1 for x in state['phases'] if x['phase'] != 0)
         assert state['modes'][-1] is True, 'Failure on stairs restored flat gait prematurely'
-        assert state['starts'] == 0, 'Restarted floor exploration before actual landing'
+        assert state['starts'] == starts_before_stairs, 'Restarted floor exploration before actual landing'
         # Now provide actual supported landing feedback; the old floor slice must still block restart.
         state['pose'] = (2.5, 0., .30)
         pump_until(lambda: any(z > .20 for z in state['floors']))
         until = time.monotonic() + .8
         pump_until(lambda: time.monotonic() >= until)
-        assert state['starts'] == 0, 'Restarted before a matching floor slice arrived'
+        assert state['starts'] == starts_before_stairs, 'Restarted before a matching floor slice arrived'
         state['slice_height'] = .30
-        pump_until(lambda: state['starts'] == 1)
+        pump_until(lambda: state['starts'] > starts_before_stairs)
+        assert session.task_id == source_session.task_id
+        assert session.floor_session_id != source_session.floor_session_id
+        verified.publish(first_report)
         assert state['modes'][-1] is False
         assert any(len(x['visited_floors']) == 2 for x in state['phases'])
         # Completion is explicit and only after the configured second floor is explored.
@@ -275,6 +372,19 @@ def test_stair_handoff_requires_idle_gait_ack_and_measured_height(tmp_path, hand
         else:
             pump_until(lambda: state['completed'] > 0)
             assert state['deferred'] == 0
+        if handoff_kind == 'complete':
+            old_report = formal(.30)
+            manager.terminate()
+            manager.wait(timeout=6)
+            state['phases'].clear()
+            verified.publish(old_report)
+            manager = subprocess.Popen([os.environ['STAIR_TEST_MANAGER'], '--ros-args', '--params-file', str(params)],
+                                       stdout=log, stderr=subprocess.STDOUT)
+            pump_until(lambda: bool(state['phases']))
+            until = time.monotonic() + .8
+            pump_until(lambda: time.monotonic() >= until)
+            assert all(row['phase'] == 0 for row in state['phases'])
+            assert state['starts'] == starts_before_stairs + 1
         (tmp_path / 'protocol_result.json').write_text(json.dumps(state, indent=2))
     finally:
         manager.terminate()

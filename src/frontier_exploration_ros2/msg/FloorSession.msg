@@ -1,0 +1,13 @@
+uint8 PREPARING=1
+uint8 ACTIVE=2
+uint8 CLOSING=3
+uint8 CLOSED=4
+string task_id
+string floor_session_id
+uint64 generation
+float64 floor_z
+builtin_interfaces/Time started_at
+builtin_interfaces/Time heartbeat
+uint8 phase
+string explorer_instance
+string map_producer

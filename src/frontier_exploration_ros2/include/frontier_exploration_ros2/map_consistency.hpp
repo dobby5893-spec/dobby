@@ -11,8 +11,17 @@
 #include <queue>
 namespace frontier_exploration_ros2 {
 // Generation identities come from the slice producer, never subscriber counters.
+struct MapScope {
+ std::string task, session, producer;
+ uint64_t session_generation{0};
+ bool operator==(const MapScope & other) const {
+  return task==other.task && session==other.session && producer==other.producer &&
+   session_generation==other.session_generation;
+ }
+};
 struct MapVersion {
  uint64_t octomap_generation{0},floor_map_generation{0},source_digest{0},floor_digest{0};
+ MapScope scope{};
 };
 struct PairedFloorMap {
  MapVersion version;
@@ -58,7 +67,8 @@ template<class Message> inline std::shared_ptr<const PairedFloorMap> decodeFloor
   raw.release();out->tree.reset(tree);
  }
  out->floor=std::make_shared<const nav_msgs::msg::OccupancyGrid>(f);
- out->version={m.octomap_generation,m.floor_map_generation,source_digest,floorDigest(f)};
+ out->version={m.octomap_generation,m.floor_map_generation,source_digest,floorDigest(f),
+   {m.task_id,m.floor_session_id,m.map_producer,m.session_generation}};
  out->source_stamp_ns=int64_t(m.octomap.header.stamp.sec)*1000000000LL+m.octomap.header.stamp.nanosec;
  out->source_stamp=out->source_stamp_ns*1e-9;return out;
 }
@@ -140,7 +150,7 @@ inline bool dependencyUnchanged(const MapDependency & d,const AuditMapEvidence &
   (!live || regionalOctomapDigest(*live,d)==d.octomap_hash);
 }
 inline bool mapEvidenceVersionCompatible(const AuditMapEvidence & e,const PairedFloorMap & current) {
- if(!e.present() || e.dependencies.empty() || e.version.octomap_generation>current.version.octomap_generation ||
+ if(!(e.version.scope==current.version.scope) || !e.present() || e.dependencies.empty() || e.version.octomap_generation>current.version.octomap_generation ||
     e.version.floor_map_generation>current.version.floor_map_generation ||
     (e.version.octomap_generation==current.version.octomap_generation && e.version.source_digest!=current.version.source_digest) ||
     (e.version.floor_map_generation==current.version.floor_map_generation && e.version.floor_digest!=current.version.floor_digest) ||

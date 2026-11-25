@@ -139,7 +139,20 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
     "/multifloor/transition_mask",rclcpp::QoS(1).reliable().transient_local(),
     [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg){
       if(msg->header.frame_id!=params_.global_frame || msg->data.size()!=size_t(msg->info.width)*msg->info.height)return;
-      std::lock_guard<std::mutex> lock(surface_map_mutex_);transition_mask_=msg;
+      if (managed_floor_sessions_ && (!floor_session_.generation ||
+        floor_session_.phase == msg::FloorSession::CLOSED ||
+        sessionStamp(msg->header.stamp) < sessionStamp(floor_session_.started_at) ||
+        std::abs(msg->info.origin.position.z - floor_session_.floor_z) >= .02)) return;
+      {
+        std::lock_guard<std::mutex> lock(surface_map_mutex_);
+        transition_mask_=msg;
+      }
+      if (current_floor_completion_ && current_floor_completion_->transition_digest) {
+        const auto digest = params_.floor_cleanup_enabled ? floorDigest(*msg) :
+          residualMapFingerprint(OccupancyGrid2d(*msg));
+        if (digest != current_floor_completion_->transition_digest)
+          revokeFloorCompletion("stair transition footprint changed");
+      }
     });
   stair_regions_sub_=create_subscription<std_msgs::msg::Float64MultiArray>(
     "/multifloor/stair_regions",rclcpp::QoS(1).reliable().transient_local(),
@@ -296,7 +309,9 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
   params_.selected_frontier_topic = this->get_parameter("selected_frontier_topic").as_string();
   params_.optimized_map_topic = this->get_parameter("optimized_map_topic").as_string();
   params_.frontier_marker_scale = this->get_parameter("frontier_marker_scale").as_double();
-  autostart_ = this->get_parameter("autostart").as_bool();
+  managed_floor_sessions_ = declare_parameter<bool>("managed_floor_sessions", false);
+  floor_session_lease_s_ = declare_parameter<double>("floor_session_lease_s", 10.0);
+  autostart_ = !managed_floor_sessions_ && this->get_parameter("autostart").as_bool();
   control_service_enabled_ = this->get_parameter("control_service_enabled").as_bool();
   if (!autostart_ && !control_service_enabled_) {
     control_service_enabled_ = true;
@@ -655,15 +670,37 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
   floor_exhausted_pub_=create_publisher<std_msgs::msg::String>(
     "/explore/floor_exhausted",rclcpp::QoS(1).reliable().transient_local());
   verified_completion_pub_=create_publisher<std_msgs::msg::String>(
-    "/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local());
+    "/explore/floor_completion_legacy",rclcpp::QoS(1).reliable().transient_local());
+  if (managed_floor_sessions_) {
+    explorer_instance_ = newSessionIdentity();
+    floor_clock_jump_ = get_clock()->create_jump_callback(nullptr,
+      [this](const rcl_time_jump_t &) noexcept { floor_clock_rewound_.store(true); },
+      rcl_jump_threshold_t{false, {0}, {-1}});
+    auto session_qos = rclcpp::QoS(5).reliable();
+    floor_participant_pub_ = create_publisher<msg::FloorParticipant>("/multifloor/session_participant", session_qos);
+    floor_session_sub_ = create_subscription<msg::FloorSession>("/multifloor/floor_session", session_qos,
+      [this](msg::FloorSession::ConstSharedPtr session) { applyFloorSession(*session); });
+    floor_completion_v5_pub_ = create_publisher<msg::FloorCompletion>(
+      "/explore/floor_completion",rclcpp::QoS(1).reliable().transient_local());
+    floor_session_timer_ = create_wall_timer(std::chrono::milliseconds(500),
+      [this] { floorSessionHeartbeat(); });
+  }
   paired_floor_sub_=create_subscription<msg::FloorMapSnapshot>(
     params_.map_topic + "/snapshot",rclcpp::QoS(1).reliable().transient_local(),
     [this](msg::FloorMapSnapshot::ConstSharedPtr msg) {
       if(msg->floor_map.header.frame_id!=params_.global_frame)return;
+      if (managed_floor_sessions_ && (floor_session_fenced_ || !sessionSnapshot(floor_session_, *msg))) return;
       std::shared_ptr<const octomap::OcTree> reuse;uint64_t digest;
       {std::lock_guard<std::mutex> lock(surface_map_mutex_);reuse=surface_map_;digest=surface_map_source_digest_;}
       auto pair=decodeFloorSnapshot(*msg,reuse,digest);if(!pair)return;
-      std::lock_guard<std::mutex> lock(surface_map_mutex_);paired_floor_map_=std::move(pair);
+      {
+        std::lock_guard<std::mutex> lock(surface_map_mutex_);
+        if (managed_floor_sessions_ && paired_floor_map_ &&
+          (msg->floor_map_generation <= paired_floor_map_->version.floor_map_generation ||
+          msg->octomap_generation < paired_floor_map_->version.octomap_generation)) return;
+        paired_floor_map_=pair;
+      }
+      if (managed_floor_sessions_) occupancyGridCallback(pair->floor);
     });
   residual_compute_client_=rclcpp_action::create_client<ResidualCompute>(this,"/compute_path_to_pose");
   callbacks.residual_task_pending=[this]() {return floor_cleanup_mode_ && runtime_state_==RuntimeState::RUNNING && (residual_phase_!=ResidualPhase::Idle || active_plan_future_.valid());};
@@ -908,6 +945,7 @@ bool FrontierExplorerNode::quitRequested() const
 
 void FrontierExplorerNode::createMapSubscription(rclcpp::DurabilityPolicy map_durability)
 {
+  if (managed_floor_sessions_) return;
   map_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     params_.map_topic,
     topic_qos_profiles_.make_map_qos(map_durability),
@@ -1063,13 +1101,14 @@ void FrontierExplorerNode::startExplorationRuntime()
     }
   }
 
-  if (map_qos_autodetect_on_startup_) {
+  if (map_qos_autodetect_on_startup_ && !managed_floor_sessions_) {
     map_autodetect_timer_ = this->create_wall_timer(
       std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::duration<double>(map_qos_autodetect_timeout_s_)),
       std::bind(&FrontierExplorerNode::mapAutodetectTimeoutCallback, this));
     logMapAutodetectStart(topic_qos_profiles_.map_durability);
   }
+  if (managed_floor_sessions_ && paired_floor_map_) occupancyGridCallback(paired_floor_map_->floor);
 }
 
 void FrontierExplorerNode::ensureWatchdogTimer()
@@ -1197,6 +1236,7 @@ void FrontierExplorerNode::requestStopExplorationRuntime(
   bool quit_after_stop,
   const std::string & reason)
 {
+  if (floor_session_.phase != msg::FloorSession::CLOSING) revokeFloorCompletion("exploration stopped");
   ++surface_goal_epoch_; ++random_epoch_;clearance_request_ready_=false;force_no_goal_recovery_=false;
   if(residual_compute_handle_)residual_compute_client_->async_cancel_goal(residual_compute_handle_);
   if(residual_phase_==ResidualPhase::Navigating)cancelResidualNavigation(SpatialOutcome::StaleMap);
@@ -1229,10 +1269,119 @@ void FrontierExplorerNode::requestStopExplorationRuntime(
     std::bind(&FrontierExplorerNode::stopCompletionPollCallback, this));
 }
 
+void FrontierExplorerNode::applyFloorSession(const msg::FloorSession & session)
+{
+  if (floor_session_fenced_ || floor_clock_rewound_.load() || session.explorer_instance != explorer_instance_ ||
+    !validSession(session, now().nanoseconds()) ||
+    !canApplySession(floor_session_, session, controlState() == srv::ControlExploration::Request::STATE_IDLE)) return;
+  if (session.generation != floor_session_.generation) {
+    ++random_epoch_;
+    ++surface_goal_epoch_;
+    current_floor_completion_.reset();
+    current_completion_evidence_.reset();
+    command_sequence_ = completion_sequence_ = completion_key_ = completion_checked_generation_ = 0;
+    last_session_command_ = 0;
+    residual_audit_cache_.reset();
+    residual_audit_stability_.reset();
+    residual_closed_policy_.clear();
+    residual_audit_next_ = now().seconds();
+    std::lock_guard<std::mutex> lock(surface_map_mutex_);
+    paired_floor_map_.reset();
+    surface_hint_map_.reset();
+    transition_mask_.reset();
+    RCLCPP_INFO(get_logger(), "Applied floor session task=%s floor=%s z=%.3f",
+      session.task_id.c_str(), session.floor_session_id.c_str(), session.floor_z);
+  }
+  floor_session_ = session;
+  floor_session_seen_ = std::chrono::steady_clock::now();
+}
+
+bool FrontierExplorerNode::acceptManagedControl(const srv::ControlExploration::Request & request,
+  srv::ControlExploration::Response & response)
+{
+  using Control = srv::ControlExploration::Request;
+  response.state = controlState();
+  const bool start = request.action == Control::ACTION_START;
+  if (!sessionControlMatches(request, floor_session_) || request.delay_seconds != 0 ||
+    request.quit_after_stop || request.command_sequence < command_sequence_ ||
+    (request.command_sequence == command_sequence_ && request.action != last_session_command_) ||
+    (start && (floor_session_fenced_ || floor_clock_rewound_.load() || floor_session_.phase != msg::FloorSession::ACTIVE ||
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - floor_session_seen_).count() > floor_session_lease_s_ ||
+      !paired_floor_map_ || (now() - rclcpp::Time(paired_floor_map_->floor->header.stamp)).seconds() > 1.5 ||
+      (!core_->ready_for_shutdown() && runtime_state_ != RuntimeState::RUNNING))) ||
+    (!start && (request.action != Control::ACTION_STOP || floor_session_.phase != msg::FloorSession::CLOSING))) {
+    response.message = "Wrong or unavailable floor session, phase, or command sequence";
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "Rejected stale or unsupported session control");
+    return false;
+  }
+  command_sequence_ = request.command_sequence;
+  last_session_command_ = request.action;
+  stampSessionControl(response, floor_session_, command_sequence_);
+  return true;
+}
+
+void FrontierExplorerNode::revokeFloorCompletion(const char * reason)
+{
+  if (!current_floor_completion_) return;
+  auto revoked = *current_floor_completion_;
+  revoked.revoked = true;
+  revoked.generated_at = now();
+  floor_completion_v5_pub_->publish(revoked);
+  RCLCPP_INFO(get_logger(), "Revoked completion %s: %s", revoked.report_id.c_str(), reason);
+  current_floor_completion_.reset();
+  current_completion_evidence_.reset();
+  completion_key_ = completion_checked_generation_ = 0;
+}
+
+void FrontierExplorerNode::floorSessionHeartbeat()
+{
+  using Control = srv::ControlExploration::Request;
+  const auto stamp = now().nanoseconds();
+  const bool rewound = floor_clock_rewound_.exchange(false);
+  if (floor_session_.generation && (rewound || stamp < floor_session_clock_ ||
+    (floor_session_.phase != msg::FloorSession::CLOSED &&
+    std::chrono::duration<double>(std::chrono::steady_clock::now() - floor_session_seen_).count() > floor_session_lease_s_))) {
+    floor_session_fenced_ = true;
+    revokeFloorCompletion("session lease or clock lost");
+    if (runtime_state_ == RuntimeState::RUNNING) requestStopExplorationRuntime(false, "Floor session lost");
+  }
+  floor_session_clock_ = stamp;
+  if (floor_session_.phase == msg::FloorSession::CLOSED && runtime_state_ == RuntimeState::RUNNING)
+    requestStopExplorationRuntime(false, "Manager closed the floor session");
+  if (current_floor_completion_ && current_completion_evidence_ && paired_floor_map_ &&
+    floor_session_.phase != msg::FloorSession::CLOSED &&
+    paired_floor_map_->version.floor_map_generation != completion_checked_generation_) {
+    completion_checked_generation_ = paired_floor_map_->version.floor_map_generation;
+    const auto live = surface_map_time_s_ >= paired_floor_map_->source_stamp ? surface_map_.get() : nullptr;
+    if (!mapEvidenceCurrent(*current_completion_evidence_, *paired_floor_map_, live))
+      revokeFloorCompletion("new snapshot invalidated completion evidence");
+  }
+  if (current_floor_completion_ && floor_session_.phase == msg::FloorSession::ACTIVE &&
+    runtime_state_ == RuntimeState::RUNNING) {
+    const auto pose = getCurrentPose();
+    if (!pose || !current_completion_evidence_ ||
+      std::hypot(pose->position.x - current_completion_evidence_->start_x,
+      pose->position.y - current_completion_evidence_->start_y) > .3 ||
+      core_->goal_in_progress || !measuredClearanceRestored(true))
+      revokeFloorCompletion("stance or motion changed");
+  }
+
+  msg::FloorParticipant ack;
+  ack.role = msg::FloorParticipant::EXPLORER;
+  ack.instance_id = explorer_instance_;
+  ack.task_id = floor_session_.task_id;
+  ack.floor_session_id = floor_session_.floor_session_id;
+  ack.generation = floor_session_.generation;
+  ack.phase = floor_session_fenced_ ? 0 : floor_session_.phase;
+  ack.idle = controlState() == Control::STATE_IDLE && core_ && core_->ready_for_shutdown();
+  floor_participant_pub_->publish(ack);
+}
+
 void FrontierExplorerNode::handleControlRequest(
   const std::shared_ptr<srv::ControlExploration::Request> request,
   std::shared_ptr<srv::ControlExploration::Response> response)
 {
+  if (managed_floor_sessions_ && !acceptManagedControl(*request, *response)) return;
   const double delay_seconds = static_cast<double>(request->delay_seconds);
   const bool start_is_scheduled =
     scheduled_control_request_.has_value() &&
@@ -1974,7 +2123,60 @@ void FrontierExplorerNode::considerResidualCompletion(const ResidualAudit & resu
     if(parseVerifiedFloorCompletion(formal.str())) {
       std_msgs::msg::String verified;verified.data=formal.str();verified_completion_pub_->publish(verified);
     }
+    if (managed_floor_sessions_ && floor_session_.phase == msg::FloorSession::ACTIVE &&
+      !floor_session_fenced_ && !floor_clock_rewound_.load() && result.handoff() && pair.floor->info.origin.position.z == floor_session_.floor_z) {
+      uint64_t key = result.map_evidence.stableDigest();
+      mapHashMix(key, result.transition_hash);
+      mapHashMix(key, result.runtime_hash);
+      for (const auto character : result.records()) mapHashMix(key, uint8_t(character));
+      if (key != completion_key_) revokeFloorCompletion("verified evidence changed");
+
+      msg::FloorCompletion v5;
+      v5.protocol_version = 5;
+      v5.task_id = floor_session_.task_id;
+      v5.floor_session_id = floor_session_.floor_session_id;
+      v5.session_generation = floor_session_.generation;
+      v5.explorer_instance = explorer_instance_;
+      v5.map_producer = floor_session_.map_producer;
+      v5.generated_at = this->now();
+      v5.floor_z = floor_session_.floor_z;
+      v5.completion_status = result.remaining == 0 ?
+        msg::FloorCompletion::VERIFIED_COMPLETE : msg::FloorCompletion::VERIFIED_WITH_RESIDUALS;
+      v5.remaining_area = result.remaining;
+      v5.residual_area = result.deferred;
+      v5.transition_area = result.transition;
+      v5.region_count = result.regions.size();
+      for (const auto & region : result.regions) {
+        msg::FloorRegionEvidence record;
+        record.region_id = record.dependency_id = region.id;
+        record.area = region.area;
+        record.classification = region.state == "verified_enclosed" ?
+          msg::FloorRegionEvidence::VERIFIED_ENCLOSED : msg::FloorRegionEvidence::TRANSITION;
+        v5.regions.push_back(record);
+      }
+      v5.transition_digest = result.transition_hash;
+      v5.runtime_digest = result.runtime_hash;
+      setCompletionMapEvidence(v5, result.map_evidence);
+      v5.safe_start = v5.complete_views = v5.complete_routes = true;
+      v5.stable_samples = residual_audit_stability_.samples();
+      v5.stable_seconds = residual_audit_stability_.seconds(now);
+      if (verifyFloorCompletion(v5) && completionMapEvidence(v5)) {
+        const bool fresh_report = !current_floor_completion_;
+        v5.report_id = fresh_report ? newSessionIdentity() : current_floor_completion_->report_id;
+        v5.sequence = fresh_report ? ++completion_sequence_ : current_floor_completion_->sequence;
+        current_floor_completion_ = v5;
+        current_completion_evidence_ = result.map_evidence;
+        completion_key_ = key;
+        completion_checked_generation_ = pair.version.floor_map_generation;
+        floor_completion_v5_pub_->publish(v5);
+        if (fresh_report) RCLCPP_INFO(get_logger(), "Verified floor report %s task=%s floor=%s",
+          v5.report_id.c_str(), v5.task_id.c_str(), v5.floor_session_id.c_str());
+      }
+    }
     RCLCPP_WARN(get_logger(),"Current-floor residual regions individually audited; requesting stair evaluation: %s",msg.data.c_str());
+  } else if (managed_floor_sessions_ && floor_session_.phase == msg::FloorSession::ACTIVE &&
+    current_floor_completion_ && (!result.handoff() || !mapEvidenceCurrent(result.map_evidence,pair,live))) {
+    revokeFloorCompletion("residual audit changed");
   }
 }
 
@@ -2391,6 +2593,7 @@ void FrontierExplorerNode::localizationWatchdogCallback()
 
 std::optional<geometry_msgs::msg::Pose> FrontierExplorerNode::getCurrentPose()
 {
+  if (managed_floor_sessions_ && (floor_clock_rewound_.load() || floor_session_fenced_)) return {};
   try {
     // Bounded TF lookup keeps scheduler responsive under frame delays.
     const auto transform = tf_buffer_->lookupTransform(

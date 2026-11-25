@@ -154,7 +154,8 @@ def launch_setup(context):
     floors = include(
         "go2_multifloor_exploration",
         "multifloor_exploration.launch.py",
-        {"use_sim_time": use_sim_time, "resume_state": resume_state},
+        {"use_sim_time": use_sim_time, "resume_state": resume_state, "require_startup_ready": "true",
+         "exploration_enabled": start_exploration},
     )
 
     def navigation_action(params):
@@ -171,7 +172,7 @@ def launch_setup(context):
     def frontier_action(params):
         return include("frontier_exploration_ros2", "frontier_explorer.launch.py", {
             "use_sim_time": use_sim_time, "autostart": "false",
-            "control_service_enabled": "true", "params_file": params,
+            "control_service_enabled": "true", "managed_floor_sessions": "true", "params_file": params,
             "log_level": "info"})
 
     nav_rviz = Node(
@@ -202,7 +203,7 @@ def launch_setup(context):
         package='fastlio_nav_bridge', executable='exploration_checkpoint',
         name='exploration_checkpoint', output='screen',
         parameters=[{'use_sim_time': use_sim_time, 'checkpoint_dir': checkpoint_dir,
-                     'world': world_path, 'resume_state': resume_state,
+                     'world': world_path, 'resume_state': resume_state, 'managed_floor_sessions': True,
                      'start_exploration': start_exploration.perform(context).lower() == 'true'}])
     ground_enabled = LaunchConfiguration('continuous_ground_floor').perform(context).lower() == 'true'
 
