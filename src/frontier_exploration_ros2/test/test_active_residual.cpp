@@ -79,7 +79,7 @@ TEST(ActiveResidual, PartialCursorAndEvidenceSurviveAuditCycles) {
 TEST(ActiveResidual, RelatedMapChangesReevaluateHistoricalFailures) {
  auto p=scene();ActiveResidualBook b;auto l=layout(*p);b.sync(l,*p,{},0,.5);auto id=b.regions.begin()->first;b.regions[id].cursor=27;
  auto tree=std::make_shared<octomap::OcTree>(*p->tree);tree->updateNode(octomap::point3d(3,1,.3),true);p->tree=tree;++p->version.octomap_generation;
- b.sync(l,*p,{},0,.5);EXPECT_EQ(b.regions[id].cursor,0);
+ b.sync(l,*p,{},0,.5);EXPECT_EQ(b.regions[id].cursor,27);EXPECT_FALSE(b.regions[id].verified_enclosed);EXPECT_FALSE(b.regions[id].enumerated);
 }
 TEST(ActiveResidual, OneBlockedRegionDoesNotStarveAnother) {
  ActiveResidualBook b;SpatialRegion first,second;first.region.id=1;first.spent=180;second.region.id=2;b.regions={{1,first},{2,second}};
@@ -122,10 +122,10 @@ TEST(ActiveResidual, SourceMatchedSnapshotReusesDecodedTree) {
 TEST(ActiveResidual, UnrelatedRegionalUpdateRetainsOtherRegionsCursor) {
  auto p=scene(120);auto f=std::make_shared<nav_msgs::msg::OccupancyGrid>(*p->floor);f->data[15*120+100]=-1;p->floor=f;
  auto l=layout(*p);ASSERT_EQ(l.work.size(),2u);ActiveResidualBook b;b.sync(l,*p,{},0,.5);
- for(auto & r:b.regions)r.second.cursor=13;
+ for(auto & r:b.regions){r.second.cursor=13;r.second.scan_remaining=7;}
  auto tree=std::make_shared<octomap::OcTree>(*p->tree);tree->updateNode(octomap::point3d(11.,1.5,.3),true);p->tree=tree;++p->version.octomap_generation;
  b.sync(l,*p,{},0,.5);int retained=0,reset=0;
- for(const auto & r:b.regions){retained+=r.second.cursor==13;reset+=r.second.cursor==0;}
+ for(const auto & r:b.regions){retained+=r.second.cursor==13 && r.second.scan_remaining==7;reset+=r.second.cursor==13 && r.second.scan_remaining==-1;}
  EXPECT_EQ(retained,1);EXPECT_EQ(reset,1);
 }
 TEST(ActiveResidual, NewMeasuredOriginReevaluatesFailureWithoutErasingRealObservations) {
@@ -162,4 +162,38 @@ TEST(ActiveResidual, BudgetYieldResumesNewWorkWithoutResettingCursorOrHistory) {
  b.recoverBudgets(10,180,60);EXPECT_FALSE(b.next(180));b.recoverBudgets(69,180,60);EXPECT_FALSE(b.next(180));
  b.recoverBudgets(70,180,60);EXPECT_EQ(b.next(180),1u);EXPECT_EQ(b.regions[1].cursor,100);EXPECT_EQ(b.regions[1].attempts.size(),1u);
  b.regions[1].spent=180;b.recoverBudgets(80,180,60);b.recoverBudgets(1000,180,60);EXPECT_FALSE(b.next(180));
+}
+
+TEST(ActiveResidual, BoundedHistoryDoesNotBecomeGeometryEvidence) {
+ ActiveResidualBook book;SpatialAttempt a;a.arrived=true;a.verified_at=10;
+ for(size_t i=0;i<ActiveResidualBook::history_limit+10;++i)book.record(i,a);
+ ASSERT_EQ(book.history.size(),ActiveResidualBook::history_limit);
+ EXPECT_EQ(book.history.front().region,10u);
+ EXPECT_EQ(book.recentVisits(11,60).size(),ActiveResidualBook::history_limit);
+ EXPECT_TRUE(book.recentVisits(71,60).empty());
+ EXPECT_TRUE(book.regions.empty());
+}
+
+TEST(ActiveResidual, CandidateToleratesUnrelatedInventoryButNotSameGenerationConflictOrLocalObstacle) {
+ auto p=scene(120);auto e=beginMapEvidence(*p,.5,1.5);sealDependency(e,{1,0,0,5,3,0,0},*p);
+ auto floor=std::make_shared<nav_msgs::msg::OccupancyGrid>(*p->floor);
+ floor->data[100]=-1;p->floor=floor;p->version.floor_digest=floorDigest(*floor);
+ EXPECT_FALSE(spatialEvidenceCurrent(e,*p,nullptr));
+ ++p->version.floor_map_generation;
+ EXPECT_TRUE(spatialEvidenceCurrent(e,*p,nullptr));EXPECT_FALSE(mapEvidenceCurrent(e,*p));
+ auto live=std::make_shared<octomap::OcTree>(*p->tree);
+ live->updateNode(octomap::point3d(2.,1.,.35),true);
+ EXPECT_FALSE(spatialEvidenceCurrent(e,*p,live.get()));
+}
+TEST(ActiveResidual, SplitAndMergeKeepFactsWithoutTransferringProof) {
+ auto p=scene();auto l=layout(*p);ASSERT_EQ(l.work.size(),1u);
+ ActiveResidualBook b;b.sync(l,*p,{},0,.5);auto original=l.work.front();
+ b.regions.begin()->second.verified_enclosed=true;SpatialAttempt record;record.arrived=true;
+ b.record(original.region.id,record);
+ auto other=original;other.region.id++;other.region.cells.pop_back();
+ l.work.front().region.id+=2;l.work.front().region.cells.erase(l.work.front().region.cells.begin());
+ l.work.push_back(other);b.sync(l,*p,{},0,.5);
+ ASSERT_EQ(b.regions.size(),2u);for(const auto & r:b.regions)EXPECT_FALSE(r.second.verified_enclosed);
+ ASSERT_EQ(b.history.size(),1u);l.work={original};b.sync(l,*p,{},0,.5);
+ EXPECT_FALSE(b.regions.at(original.region.id).verified_enclosed);
 }

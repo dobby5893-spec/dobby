@@ -1759,6 +1759,10 @@ void FrontierExplorerCore::goal_response_callback(
     }
     if(context && context->goal_kind=="symmetry_relocation")
       symmetric_relocation_.finish(callbacks.now_ns()*1e-9);
+    if(context && context->goal_kind=="residual_observation") {
+      pending_cancel_reason.reset();
+      cancel_request_in_progress=false;
+    }
     clear_active_goal_state();
     callbacks.log_error(error_message.empty() ? "Frontier goal was rejected" : error_message);
     return;

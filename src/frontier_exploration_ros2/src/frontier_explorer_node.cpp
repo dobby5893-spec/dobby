@@ -673,7 +673,11 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
     {std::lock_guard<std::mutex> lock(surface_map_mutex_);
      work|=paired_floor_map_ && (paired_floor_map_->version.octomap_generation!=active_sync_octomap_ || paired_floor_map_->version.floor_map_generation!=active_sync_floor_);
     }
-    for(const auto & region:active_residual_.regions)work|=region.second.schedulable(params_.floor_cleanup_budget_s);
+    for(const auto & region:active_residual_.regions) {
+      const auto & state=region.second;
+      work|=state.schedulable(params_.floor_cleanup_budget_s) ||
+        (state.retry_visited_at>0 && state.retry_visited_at<=get_clock()->now().seconds());
+    }
     if(work)floor_cleanup_mode_=true;
     return work;
   };
@@ -1027,11 +1031,17 @@ void FrontierExplorerNode::startExplorationRuntime()
     params_.local_costmap_topic,
     topic_qos_profiles_.make_local_costmap_qos(),
     std::bind(&FrontierExplorerNode::localCostmapCallback, this, std::placeholders::_1));
-  if (params_.geometry_scoring_enabled || params_.floor_cleanup_enabled) {
+  if (params_.geometry_scoring_enabled) {
     point_cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       params_.geometry_point_cloud_topic,
       rclcpp::SensorDataQoS(),
       std::bind(&FrontierExplorerNode::pointCloudCallback, this, std::placeholders::_1));
+  }
+  if(params_.floor_cleanup_enabled) {
+    // Match the actual cloud_in remapping in mapping_3d.launch.py.
+    residual_cloud_sub_=create_subscription<sensor_msgs::msg::PointCloud2>(
+      "/fastlio/lidar_octomap",rclcpp::SensorDataQoS(),
+      [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr msg){residualCloudCallback(msg);});
   }
   if (params_.map_processing_rate_hz > 0.0) {
     if (effective_map_processing_rate_hz_.has_value()) {
@@ -1086,6 +1096,7 @@ void FrontierExplorerNode::enterColdIdle()
   costmap_sub_.reset();
   local_costmap_sub_.reset();
   point_cloud_sub_.reset();
+  residual_cloud_sub_.reset();
   map_autodetect_timer_.reset();
   map_processing_timer_.reset();
   suppression_watchdog_timer_.reset();
@@ -1188,8 +1199,9 @@ void FrontierExplorerNode::requestStopExplorationRuntime(
 {
   ++surface_goal_epoch_; ++random_epoch_;clearance_request_ready_=false;force_no_goal_recovery_=false;
   if(residual_compute_handle_)residual_compute_client_->async_cancel_goal(residual_compute_handle_);
-  if(residual_phase_!=ResidualPhase::Idle)finishResidualAttempt(SpatialOutcome::StaleMap);
-  active_residual_.clear();active_layout_={};active_layout_digest_=0;latest_lidar_stamp_=-1;
+  if(residual_phase_==ResidualPhase::Navigating)cancelResidualNavigation(SpatialOutcome::StaleMap);
+  else if(residual_phase_!=ResidualPhase::Idle)finishResidualAttempt(SpatialOutcome::StaleMap);
+  active_residual_.clear();active_layout_={};active_layout_digest_=0;residual_input_scans_.clear();
   random_policy_.last_time=-1;random_avoid_.clear();
   surface_goal_cache_.clear();
   surface_goal_queue_.clear();
@@ -1937,7 +1949,7 @@ void FrontierExplorerNode::considerResidualCompletion(const ResidualAudit & resu
   int64_t stamp=int64_t(hint->header.stamp.sec)*1000000000LL+hint->header.stamp.nanosec;
   RCLCPP_INFO(get_logger(),"Floor completion assessment: %s",completionStatusName(result.status()));
   bool stable=residual_audit_stability_.observe(result,now,stamp);
-  if(stable && pairedSourceCaughtUp(pair,live) && measuredClearanceRestored(true)) {
+  if(stable && pairedSourceCaughtUp(pair,live) && mapEvidenceCurrent(result.map_evidence,pair,live) && measuredClearanceRestored(true)) {
     std::ostringstream report;report<<std::setprecision(10);
     report<<"v4;floor_z="<<hint->info.origin.position.z<<";stamp="<<now
       <<";reason=region_observability_audit;remaining_unknown_area="<<result.remaining
@@ -2223,16 +2235,15 @@ void FrontierExplorerNode::localCostmapCallback(const nav_msgs::msg::OccupancyGr
   core_->localCostmapCallback(OccupancyGrid2d(msg));
 }
 
-void FrontierExplorerNode::pointCloudCallback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+void FrontierExplorerNode::residualCloudCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
-  // Fresh lidar evidence is independent of optional geometry scoring. Retain
-  // timestamps only; never accumulate raw clouds in the residual task history.
   if(runtime_state_==RuntimeState::RUNNING && msg->width*msg->height>0U && msg->point_step>0 &&
      msg->row_step>0 && msg->data.size()>=size_t(msg->row_step)*msg->height) {
-    const double stamp=rclcpp::Time(msg->header.stamp).seconds(),now=get_clock()->now().seconds();
+    const auto time=rclcpp::Time(msg->header.stamp);
+    const double stamp=time.seconds(),now=get_clock()->now().seconds();
     try {
-      (void)tf_buffer_->lookupTransform(params_.global_frame,msg->header.frame_id,rclcpp::Time(msg->header.stamp));
+      if(time.nanoseconds()<=residual_scan_after_ || !residual_option_ ||
+         (residual_phase_!=ResidualPhase::AwaitBaseline && residual_phase_!=ResidualPhase::Observing))return;
       bool finite=false,fields_ok=true;
       for(const auto * name:{"x","y","z"}) {
         auto field=std::find_if(msg->fields.begin(),msg->fields.end(),[&](const auto & f){return f.name==name;});
@@ -2244,9 +2255,17 @@ void FrontierExplorerNode::pointCloudCallback(
         for(size_t i=0;x!=x.end() && i<params_.geometry_max_points;++x,++y,++z,++i)
           if(std::isfinite(*x) && std::isfinite(*y) && std::isfinite(*z)){finite=true;break;}
       }catch(const std::runtime_error &){}
-      if(finite && stamp<=now+.1 && now-stamp<=1.5)latest_lidar_stamp_=std::max(latest_lidar_stamp_,stamp);
+      if(finite && stamp<=now && now-stamp<=1.5) {
+        residual_input_scans_.try_emplace(time.nanoseconds(),msg->header.frame_id);
+        while(residual_input_scans_.size()>64)residual_input_scans_.erase(residual_input_scans_.begin());
+      }
     }catch(const tf2::TransformException &){}
   }
+}
+
+void FrontierExplorerNode::pointCloudCallback(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+{
   if (
     runtime_state_ != RuntimeState::RUNNING ||
     !params_.geometry_scoring_enabled ||
@@ -2667,6 +2686,10 @@ void FrontierExplorerNode::dispatchGoalRequest(const GoalDispatchRequest & reque
   options.result_callback = [this, dispatch_id = request.dispatch_id](
     const NavigateGoalHandle::WrappedResult & wrapped_result)
     {
+      if(dispatch_id==residual_dispatch_ && wrapped_result.code==rclcpp_action::ResultCode::UNKNOWN) {
+        // An unknown response is not confirmation that the controller stopped.
+        cancelResidualNavigation(SpatialOutcome::NavigationFailed);return;
+      }
       const int status = mapResultCodeToGoalStatus(wrapped_result.code);
       int error_code = 0;
       std::string error_msg;

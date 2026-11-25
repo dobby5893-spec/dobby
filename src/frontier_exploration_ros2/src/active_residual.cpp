@@ -127,7 +127,7 @@ bool observedClosedFence(const PairedFloorMap & pair,const ResidualRegion & regi
 
 SpatialPlan planSpatialRegion(const PairedFloorMap & pair,SpatialRegion region,const ResidualPose & body,
  SurfaceSearchConfig config,VisibilitySensor sensor,const ExplorationBoundaryPolygon & boundary,double margin,
- double budget,unsigned batch,unsigned retries,uint64_t epoch) {
+ double budget,unsigned batch,unsigned retries,uint64_t epoch,const std::vector<SpatialAttempt> & recent,double visit_cooldown) {
  SpatialPlan out;out.region=std::move(region);out.region.retry_limit=retries;out.epoch=epoch;out.region.route_origin=std::make_pair(body.x,body.y);
  out.region.evaluated_origins.insert({int64_t(std::floor(body.x/.35)),int64_t(std::floor(body.y/.35))});
  const auto begin=Clock::now();const auto deadline=begin+std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(budget));
@@ -206,8 +206,10 @@ SpatialPlan planSpatialRegion(const PairedFloorMap & pair,SpatialRegion region,c
     for(const auto & a:out.region.attempts)if(a.second.outcome==SpatialOutcome::Timeout && !a.second.arrived && a.second.retries<retries)retry.push_back(a.first);
     for(int cell:retry){if(tested++>=batch)break;evaluate(cell,out.region.attempts[cell].retries+1);}
    } else {
-    for(;out.region.cursor<count && tested<batch;) {
-     budgetCheck(deadline);int cell=out.region.cursor++;
+    if(out.region.scan_remaining<0)out.region.scan_remaining=count;
+    for(;out.region.scan_remaining>0 && tested<batch;) {
+     budgetCheck(deadline);int cell=out.region.cursor%count;
+     out.region.cursor=(cell+1)%count;--out.region.scan_remaining;
      if(grid.getCost(cell%width,cell/width)!=0)continue;
      auto xy=grid.mapToWorld(cell%width,cell/width);if(!is_inside_exploration_boundary(xy,boundary,margin))continue;
      bool near=false;for(int target:out.region.frontier) {
@@ -215,15 +217,27 @@ SpatialPlan planSpatialRegion(const PairedFloorMap & pair,SpatialRegion region,c
      }
      if(!near || std::hypot(xy.first-body.x,xy.second-body.y)<=.35)continue;
      bool duplicate=false;
+     for(const auto & v:recent)if(std::hypot(v.pose.x-xy.first,v.pose.y-xy.second)<=.35) {
+      duplicate=true;const double until=v.verified_at+visit_cooldown;
+      if(out.region.retry_visited_at==0 || until<out.region.retry_visited_at)out.region.retry_visited_at=until;
+     }
      for(const auto & a:out.region.attempts)if((a.second.arrived || a.second.outcome==SpatialOutcome::Ready) &&
        std::hypot(a.second.pose.x-xy.first,a.second.pose.y-xy.second)<=.35){duplicate=true;break;}
      if(duplicate)continue;
      try{if(evaluate(cell,1))++tested;}catch(const SurfaceSearchTimeout &){SpatialAttempt a;a.cell=cell;a.retries=1;a.outcome=SpatialOutcome::Timeout;out.region.attempts[cell]=a;}
     }
-    out.region.enumerated=out.region.cursor>=count;
+    out.region.enumerated=out.region.scan_remaining==0;
    }
   }
  }catch(const SurfaceSearchTimeout &){out.complete_input=false;}
+ if(out.selected) {
+  // The SurfaceGraph search may leave the region's viewing envelope.
+  const double route_padding=config.search_padding_xy+padding+config.goal_tolerance;
+  const auto & goal=out.selected->pose;
+  sealDependency(out.evidence,{out.region.region.id,std::min(body.x,goal.x)-route_padding,
+    std::min(body.y,goal.y)-route_padding,std::max(body.x,goal.x)+route_padding,
+    std::max(body.y,goal.y)+route_padding,0,0},pair);
+ }
  out.elapsed=std::chrono::duration<double>(Clock::now()-begin).count();out.region.spent+=out.elapsed;
  return out;
 }

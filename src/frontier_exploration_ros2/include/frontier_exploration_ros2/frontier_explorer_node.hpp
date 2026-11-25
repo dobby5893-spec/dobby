@@ -142,6 +142,9 @@ private:
   double contact_probe_at_{-1},contact_request_at_{-1};
   void serviceResidualAudit();
   void serviceActiveResidual();
+  void cancelResidualNavigation(SpatialOutcome);
+  void residualCloudCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr);
+  bool residualScanAtTarget(int64_t);
   void activeResidualNavigationResult(int dispatch,int status);
   void beginResidualNav2Check(const SpatialAttempt & option,uint64_t region,const AuditMapEvidence & evidence);
   void finishResidualAttempt(SpatialOutcome outcome);
@@ -160,7 +163,13 @@ private:
   AuditMapEvidence residual_option_evidence_;
   UnknownVoxelWindow residual_unknown_window_;
   int residual_dispatch_{-1};
-  double residual_phase_started_{0},residual_arrived_at_{0},residual_cloud_stamp_{-1},latest_lidar_stamp_{-1};
+  std::optional<SpatialOutcome> residual_cancel_outcome_;
+  rclcpp::TimerBase::SharedPtr residual_nav_watchdog_;
+  double residual_nav_started_{0},residual_cancel_retry_at_{0};
+  int64_t residual_scan_after_{0},residual_last_fused_{0},residual_unmatched_map_{0};
+  std::map<int64_t,std::string> residual_input_scans_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr residual_cloud_sub_;
+  double residual_phase_started_{0},residual_arrived_at_{0};
   uint64_t residual_arrival_generation_{0},active_sync_octomap_{0},active_sync_floor_{0},active_sync_layout_{0};
   double active_clock_{-1};
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr transition_mask_sub_;

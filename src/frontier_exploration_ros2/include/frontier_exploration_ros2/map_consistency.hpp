@@ -19,6 +19,7 @@ struct PairedFloorMap {
  nav_msgs::msg::OccupancyGrid::ConstSharedPtr floor;
  std::shared_ptr<const octomap::OcTree> tree;
  double source_stamp{0};
+ int64_t source_stamp_ns{0};
 };
 inline void mapHashMix(uint64_t & h,uint64_t v){h=(h^v)*1099511628211ULL;}
 inline uint64_t mapHashSeed(){return 1469598103934665603ULL;}
@@ -58,7 +59,8 @@ template<class Message> inline std::shared_ptr<const PairedFloorMap> decodeFloor
  }
  out->floor=std::make_shared<const nav_msgs::msg::OccupancyGrid>(f);
  out->version={m.octomap_generation,m.floor_map_generation,source_digest,floorDigest(f)};
- out->source_stamp=m.octomap.header.stamp.sec+m.octomap.header.stamp.nanosec*1e-9;return out;
+ out->source_stamp_ns=int64_t(m.octomap.header.stamp.sec)*1000000000LL+m.octomap.header.stamp.nanosec;
+ out->source_stamp=out->source_stamp_ns*1e-9;return out;
 }
 struct MapDependency {
  uint64_t region{0};double min_x{0},min_y{0},max_x{0},max_y{0};
@@ -137,12 +139,16 @@ inline bool dependencyUnchanged(const MapDependency & d,const AuditMapEvidence &
   regionalOctomapDigest(*current.tree,d)==d.octomap_hash &&
   (!live || regionalOctomapDigest(*live,d)==d.octomap_hash);
 }
-inline bool mapEvidenceCurrent(const AuditMapEvidence & e,const PairedFloorMap & current,const octomap::OcTree * live=nullptr) {
+inline bool mapEvidenceVersionCompatible(const AuditMapEvidence & e,const PairedFloorMap & current) {
  if(!e.present() || e.dependencies.empty() || e.version.octomap_generation>current.version.octomap_generation ||
     e.version.floor_map_generation>current.version.floor_map_generation ||
     (e.version.octomap_generation==current.version.octomap_generation && e.version.source_digest!=current.version.source_digest) ||
     (e.version.floor_map_generation==current.version.floor_map_generation && e.version.floor_digest!=current.version.floor_digest) ||
     e.schema!=floorSchemaDigest(*current.floor) || std::abs(e.floor_z-current.floor->info.origin.position.z)>1e-6)return false;
+ return true;
+}
+inline bool mapEvidenceCurrent(const AuditMapEvidence & e,const PairedFloorMap & current,const octomap::OcTree * live=nullptr) {
+ if(!mapEvidenceVersionCompatible(e,current))return false;
  OccupancyGrid2d grid(*current.floor);if(unknownInventoryDigest(grid,e)!=e.unknowns)return false;
  for(const auto & d:e.dependencies)if(!dependencyUnchanged(d,e,current,live))return false;
  return true;

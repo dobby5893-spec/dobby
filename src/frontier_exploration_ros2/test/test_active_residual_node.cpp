@@ -46,22 +46,23 @@ struct ActiveResidualNodeTestAccess {
   for(auto & r:n.active_residual_.regions)for(auto & a:r.second.attempts)if(a.second.arrived)return a.second;
   return {};
  }
- static void map(FrontierExplorerNode & n,bool gain=false,double source=-1) {
+ static void map(FrontierExplorerNode & n,bool gain=false,int64_t source=-1) {
   auto p=std::make_shared<PairedFloorMap>(*n.paired_floor_map_);auto f=std::make_shared<nav_msgs::msg::OccupancyGrid>(*p->floor);f->header.stamp=n.now();p->floor=f;
   if(gain && !n.residual_unknown_window_.keys.empty()) {
    auto tree=std::make_shared<octomap::OcTree>(*p->tree);tree->updateNode(n.residual_unknown_window_.keys.front(),false);p->tree=tree;n.surface_map_=tree;
   }
-  ++p->version.octomap_generation;++p->version.floor_map_generation;p->source_stamp=source<0?n.now().seconds():source;
+  ++p->version.octomap_generation;++p->version.floor_map_generation;p->source_stamp_ns=source<0?n.now().nanoseconds():source;p->source_stamp=p->source_stamp_ns*1e-9;
   n.paired_floor_map_=p;n.surface_hint_map_=f;
  }
  static void service(FrontierExplorerNode & n){n.serviceActiveResidual();}
- static double lidar(FrontierExplorerNode & n,bool malformed=false) {
-  auto msg=std::make_shared<sensor_msgs::msg::PointCloud2>();msg->header.frame_id="map";msg->header.stamp=n.now();
+ static int64_t lidar(FrontierExplorerNode & n,bool malformed=false) {
+  auto msg=std::make_shared<sensor_msgs::msg::PointCloud2>();msg->header.frame_id="map";msg->header.stamp=n.tf_buffer_->lookupTransform("map",n.params_.robot_base_frame,tf2::TimePointZero).header.stamp;
   if(!malformed) {
    sensor_msgs::PointCloud2Modifier modifier(*msg);modifier.setPointCloud2FieldsByString(1,"xyz");modifier.resize(1);
    sensor_msgs::PointCloud2Iterator<float> x(*msg,"x"),y(*msg,"y"),z(*msg,"z");*x=1;*y=1;*z=.2;
   }else{msg->width=1;msg->height=1;}
-  n.pointCloudCallback(msg);return n.latest_lidar_stamp_;
+  n.residualCloudCallback(msg);const auto stamp=rclcpp::Time(msg->header.stamp).nanoseconds();
+  return n.residual_input_scans_.count(stamp)?stamp:-1;
  }
  static int emptyFrontier(FrontierExplorerNode & n) {
   auto recoveries=std::make_shared<int>(0);
@@ -86,6 +87,22 @@ struct ActiveResidualNodeTestAccess {
   n.floor_cleanup_mode_=true;
  }
  static bool cleanup(FrontierExplorerNode & n){return n.floor_cleanup_mode_;}
+ static void occupyLiveRoute(FrontierExplorerNode & n) {
+  auto tree=std::make_shared<octomap::OcTree>(*n.surface_map_);
+  tree->updateNode(octomap::point3d(.6,1.5,.35),true);
+  n.surface_map_=tree;
+ }
+ static void replayBeforeArrival(FrontierExplorerNode & n) {
+  const auto stamp=n.residual_scan_after_-1;
+  n.residual_input_scans_[stamp]="map";map(n,false,stamp);
+ }
+ static void expireNavigation(FrontierExplorerNode & n) {
+  n.residual_nav_started_=n.now().seconds()-n.params_.floor_cleanup_budget_s-1;
+ }
+ static bool cancelPending(FrontierExplorerNode & n){return n.residual_cancel_outcome_.has_value();}
+ static int dispatch(FrontierExplorerNode & n){return n.residual_dispatch_;}
+ static void lateResult(FrontierExplorerNode & n,int id){n.activeResidualNavigationResult(id,4);}
+ static int64_t fused(FrontierExplorerNode & n){return n.residual_last_fused_;}
  static void staleMap(FrontierExplorerNode & n,bool expire) {
   auto p=std::make_shared<PairedFloorMap>(*n.paired_floor_map_);auto f=std::make_shared<nav_msgs::msg::OccupancyGrid>(*p->floor);
   f->header.stamp=rclcpp::Time(n.now().nanoseconds()-5000000000LL);p->floor=f;n.paired_floor_map_=p;n.surface_hint_map_=f;n.floor_cleanup_mode_=true;
@@ -115,8 +132,10 @@ protected:
    });
   nav=rclcpp_action::create_server<Nav>(server,"/navigate_to_pose",
    [](auto,const auto &){return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},
-   [](auto){return rclcpp_action::CancelResponse::ACCEPT;},[this](auto handle) {
-    ++navigation_calls;if(move_actual){x=handle->get_goal()->pose.pose.position.x;y=handle->get_goal()->pose.pose.position.y;A::pose(*n,x,y);}
+   [this](auto){++cancel_calls;return rclcpp_action::CancelResponse::ACCEPT;},[this](auto handle) {
+    ++navigation_calls;
+    if(hold_nav){held=handle;return;}
+    if(move_actual){x=handle->get_goal()->pose.pose.position.x;y=handle->get_goal()->pose.pose.position.y;A::pose(*n,x,y);}
     auto result=std::make_shared<Nav::Result>();if(nav_ok)handle->succeed(result);else handle->abort(result);
    });
   executor.add_node(n);executor.add_node(server);wait([&]{return A::ready(*n);});
@@ -128,14 +147,15 @@ protected:
   ASSERT_TRUE(condition());
  }
  void arrive(){A::begin(*n);wait([&]{return A::phase(*n)==3;});ASSERT_EQ(navigation_calls,1);}
- void baseline(){wait([&]{A::map(*n);A::service(*n);return A::phase(*n)==4;});ASSERT_EQ(A::phase(*n),4);}
+ void baseline(){wait([&]{auto stamp=A::lidar(*n);if(stamp>0)A::map(*n,false,stamp);A::service(*n);return A::phase(*n)==4;});ASSERT_EQ(A::phase(*n),4);}
  std::shared_ptr<FrontierExplorerNode> n;std::shared_ptr<rclcpp::Node> server;
  rclcpp::executors::SingleThreadedExecutor executor;
  rclcpp_action::Server<Nav>::SharedPtr nav;rclcpp_action::Server<Compute>::SharedPtr compute;
- bool plan_ok=true,nav_ok=true,move_actual=true;int navigation_calls=0;double x=.5,y=1.5;
+ std::shared_ptr<rclcpp_action::ServerGoalHandle<Nav>> held;
+ bool plan_ok=true,nav_ok=true,move_actual=true,hold_nav=false;int navigation_calls=0,cancel_calls=0;double x=.5,y=1.5;
 };
 TEST_F(ActiveResidualNode, RealNav2PlanThenNavigationArrivalAndVoxelGain) {
- arrive();baseline();ASSERT_GT(A::lidar(*n),0);A::map(*n,true);A::service(*n);
+ arrive();baseline();A::pose(*n,x,y);const auto stamp=A::lidar(*n);ASSERT_GT(stamp,0);A::map(*n,true,stamp);A::service(*n);
  ASSERT_EQ(A::phase(*n),0);auto observed=A::observed(*n);EXPECT_TRUE(observed.nav_checked);EXPECT_TRUE(observed.fresh_cloud);
  EXPECT_EQ(observed.outcome,SpatialOutcome::ObservedGain);EXPECT_GT(observed.free_voxels,0u);A::disableTimersForFinalCheck(*n);
 }
@@ -149,16 +169,16 @@ TEST_F(ActiveResidualNode, NoFreshLidarKeepsObservationPending) {
  arrive();baseline();A::map(*n,true);A::service(*n);EXPECT_EQ(A::phase(*n),4);EXPECT_FALSE(A::observed(*n).fresh_cloud);
 }
 TEST_F(ActiveResidualNode, MapOlderThanPostArrivalCloudDoesNotCountGain) {
- arrive();baseline();double stamp=A::lidar(*n);A::map(*n,true,stamp-.01);A::service(*n);EXPECT_EQ(A::phase(*n),4);
+ arrive();baseline();A::pose(*n,x,y);auto stamp=A::lidar(*n);ASSERT_GT(stamp,0);A::map(*n,true,stamp-10000000);A::service(*n);EXPECT_EQ(A::phase(*n),4);
 }
 TEST_F(ActiveResidualNode, NoGainDoesNotFinishBeforeExistingObservationWindow) {
- arrive();baseline();A::lidar(*n);A::map(*n);A::service(*n);EXPECT_EQ(A::phase(*n),4);
+ arrive();baseline();const auto stamp=A::lidar(*n);if(stamp>0)A::map(*n,false,stamp);A::service(*n);EXPECT_EQ(A::phase(*n),4);
 }
 TEST_F(ActiveResidualNode, RealNoGainWindowContinuesToAnotherSpatialNavigationGoal) {
  arrive();baseline();const double first_x=x,first_y=y;
  auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(12);
  while(navigation_calls<2 && std::chrono::steady_clock::now()<deadline) {
-  A::pose(*n,x,y);A::lidar(*n);A::map(*n);A::service(*n);executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(30));
+  A::pose(*n,x,y);const auto stamp=A::lidar(*n);if(stamp>0)A::map(*n,false,stamp);A::service(*n);executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(30));
  }
  EXPECT_GE(A::noGainCount(*n),1u);EXPECT_GE(navigation_calls,2);EXPECT_GT(std::hypot(x-first_x,y-first_y),.35);
  A::disableTimersForFinalCheck(*n);
@@ -198,3 +218,59 @@ TEST_F(ActiveResidualNode, StaleMapStillDrainsCompletedWorkerBuffers) {
 }
 TEST_F(ActiveResidualNode, MalformedCloudCannotSupplyFreshObservationEvidence) {EXPECT_LT(A::lidar(*n,true),0);}
 } // namespace frontier_exploration_ros2
+
+namespace frontier_exploration_ros2 {
+TEST_F(ActiveResidualNode, TimeoutRequestsCancelAndHoldsUntilTerminal) {
+ hold_nav=true;A::begin(*n);wait([&]{return bool(held);});const auto old=A::dispatch(*n);
+ A::expireNavigation(*n);A::service(*n);
+ wait([&]{return held->is_canceling();});
+ EXPECT_TRUE(A::cancelPending(*n));EXPECT_EQ(A::phase(*n),2);
+ A::service(*n);EXPECT_EQ(navigation_calls,1);
+ held->canceled(std::make_shared<Nav::Result>());wait([&]{return A::phase(*n)==0;});
+ EXPECT_EQ(A::outcome(*n),SpatialOutcome::Timeout);
+ A::lateResult(*n,old);EXPECT_EQ(A::phase(*n),0);
+}
+TEST_F(ActiveResidualNode, LateSuccessAfterTimeoutCannotBeginObservation) {
+ hold_nav=true;A::begin(*n);wait([&]{return bool(held);});
+ A::expireNavigation(*n);A::service(*n);
+ // Simulate success racing ahead of the cancel request on the action server.
+ held->succeed(std::make_shared<Nav::Result>());wait([&]{return A::phase(*n)==0;});
+ EXPECT_EQ(A::outcome(*n),SpatialOutcome::Timeout);
+}
+TEST_F(ActiveResidualNode, FloorChangeCancelsNavigationAndWaitsForTerminal) {
+ hold_nav=true;A::begin(*n);wait([&]{return bool(held);});
+ A::changeObservationSchema(*n,false);A::service(*n);
+ wait([&]{return held->is_canceling();});EXPECT_EQ(A::phase(*n),2);
+ held->canceled(std::make_shared<Nav::Result>());wait([&]{return A::phase(*n)==0;});
+ EXPECT_EQ(A::outcome(*n),SpatialOutcome::StaleMap);
+}
+TEST_F(ActiveResidualNode, StopCancelsExecutingResidualNavigation) {
+ hold_nav=true;A::begin(*n);wait([&]{return bool(held);});A::stop(*n);
+ wait([&]{return held->is_canceling();});EXPECT_TRUE(A::cancelPending(*n));
+ held->canceled(std::make_shared<Nav::Result>());wait([&]{return A::phase(*n)==0;});
+ EXPECT_EQ(navigation_calls,1);
+}
+TEST_F(ActiveResidualNode, DuplicateOctomapStampCannotCreditNewGain) {
+ arrive();baseline();
+ A::pose(*n,x,y);const auto stamp=A::lidar(*n);ASSERT_GT(stamp,0);
+ A::map(*n,false,stamp);A::service(*n);EXPECT_EQ(A::fused(*n),stamp);
+ A::map(*n,true,stamp);A::service(*n);EXPECT_EQ(A::phase(*n),4);
+ EXPECT_EQ(A::fused(*n),stamp);
+}
+TEST_F(ActiveResidualNode, NewerUnmatchedOctomapCannotCreditGain) {
+ arrive();baseline();A::pose(*n,x,y);const auto stamp=A::lidar(*n);ASSERT_GT(stamp,0);
+ A::map(*n,true,stamp+1);A::service(*n);EXPECT_EQ(A::phase(*n),4);
+ EXPECT_NE(A::fused(*n),stamp+1);
+}
+}
+
+namespace frontier_exploration_ros2 {
+TEST_F(ActiveResidualNode, ObstacleAddedDuringNav2PlanningRejectsOldCandidate) {
+ A::begin(*n);A::occupyLiveRoute(*n);
+ wait([&]{return A::phase(*n)==0;});
+ EXPECT_EQ(navigation_calls,0);EXPECT_EQ(A::outcome(*n),SpatialOutcome::StaleMap);
+}
+TEST_F(ActiveResidualNode, PreArrivalSourceCannotEstablishBaseline) {
+ arrive();A::replayBeforeArrival(*n);A::service(*n);EXPECT_EQ(A::phase(*n),3);
+}
+}

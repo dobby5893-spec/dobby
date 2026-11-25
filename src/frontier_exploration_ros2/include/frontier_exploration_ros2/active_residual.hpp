@@ -2,7 +2,15 @@
 #include "frontier_exploration_ros2/residual_region_audit.hpp"
 #include "frontier_exploration_ros2/region_observation_task.hpp"
 #include <set>
+#include <deque>
 namespace frontier_exploration_ros2 {
+inline bool spatialEvidenceCurrent(const AuditMapEvidence & e,const PairedFloorMap & pair,const octomap::OcTree * live) {
+ // Candidate execution may tolerate changes to unrelated unknown inventory.
+ // Formal handoff still uses mapEvidenceCurrent with the full inventory check.
+ if(!mapEvidenceVersionCompatible(e,pair))return false;
+ for(const auto & d:e.dependencies)if(!dependencyUnchanged(d,e,pair,live))return false;
+ return true;
+}
 using ResidualPose=go2_surface_3d_planner::SurfacePoint;
 enum class SpatialOutcome {Ready,Occluded,OutsideFov,SupportUnverified,MapInsufficient,NoRoute,Timeout,
  NavigationFailed,LocalizationInvalid,ObservedNoGain,ObservedGain,StaleMap};
@@ -25,7 +33,8 @@ struct SpatialAttempt {
 struct SpatialRegion {
  ResidualRegion region;std::vector<int> frontier;
  bool transition{false},enumerated{false},verified_enclosed{false};
- int cursor{0};double spent{0},cooldown_until{0};uint64_t dependency_hash{0},executions{0},round_progress{0};unsigned rounds{0};
+ int cursor{0},scan_remaining{-1};
+ double retry_visited_at{0};double spent{0},cooldown_until{0};uint64_t dependency_hash{0},executions{0},round_progress{0};unsigned rounds{0};
  std::optional<std::pair<double,double>> route_origin;std::set<std::pair<int64_t,int64_t>> evaluated_origins;
  std::map<int,SpatialAttempt> attempts;
  std::vector<std::pair<int,SpatialOutcome>> rejected;unsigned retry_limit{4};
@@ -78,9 +87,31 @@ struct SpatialPlan {
 // Incremental work keeps only compact regional evidence, never historical trees.
 class ActiveResidualBook {
 public:
+ static constexpr size_t history_limit=256;
+ struct Visit {uint64_t region;SpatialAttempt attempt;};
+ std::deque<Visit> history;
  std::map<uint64_t,SpatialRegion> regions;
+ void record(uint64_t region,SpatialAttempt attempt) {
+  attempt.visible_cells={};
+  history.push_back({region,std::move(attempt)});
+  if(history.size()>history_limit)history.pop_front();
+ }
+ std::vector<SpatialAttempt> recentVisits(double now,double cooldown)const {
+  std::vector<SpatialAttempt> visits;
+  for(const auto & v:history)if(v.attempt.arrived && now>=v.attempt.verified_at && now-v.attempt.verified_at<cooldown)
+   visits.push_back(v.attempt);
+  return visits;
+ }
+ void releaseVisitedCooldown(double now) {
+  for(auto & item:regions) {
+   auto & r=item.second;
+   if(r.retry_visited_at>0 && now>=r.retry_visited_at && r.enumerated) {
+    r.retry_visited_at=0;r.enumerated=false;r.scan_remaining=-1;
+   }
+  }
+ }
  uint64_t revision{0},last_region{0};
- void clear(){regions.clear();schema_=0;++revision;last_region=0;}
+ void clear(){regions.clear();history.clear();schema_=0;++revision;last_region=0;}
  void sync(const ResidualLayout & layout,const PairedFloorMap & pair,
    const ExplorationBoundaryPolygon & boundary,double margin,double padding) {
   const auto schema=floorSchemaDigest(*pair.floor);if(schema_ && schema_!=schema)clear();schema_=schema;
@@ -95,6 +126,9 @@ public:
    alive.insert(w.region.id);auto it=regions.find(w.region.id);
    if(it==regions.end() || it->second.dependency_hash!=h) {
     SpatialRegion r;r.region=w.region;r.frontier=w.frontier;r.transition=w.stair;r.dependency_hash=h;
+    // Preserve the next position in the lattice. Revisit a full pass in
+    // rotated order, since newly opened space may precede the old cursor.
+    if(it!=regions.end())r.cursor=it->second.cursor;
     regions[w.region.id]=std::move(r);++revision;
    }else it->second.frontier=w.frontier;
   }
@@ -127,7 +161,7 @@ public:
    if(state=="actionable")continue;
    const auto origin=std::make_pair(int64_t(std::floor(x/.35)),int64_t(std::floor(y/.35)));
    if(!r.evaluated_origins.insert(origin).second){r.route_origin=std::make_pair(x,y);continue;}
-   r.round_progress=0;r.cursor=0;r.enumerated=false;r.rejected.clear();r.route_origin=std::make_pair(x,y);
+   r.round_progress=0;r.cursor=0;r.scan_remaining=-1;r.enumerated=false;r.rejected.clear();r.route_origin=std::make_pair(x,y);
    for(auto it=r.attempts.begin();it!=r.attempts.end();) {
     if(!it->second.arrived)it=r.attempts.erase(it);else ++it;
    }
@@ -180,5 +214,6 @@ bool observedClosedFence(const PairedFloorMap &,const ResidualRegion &,
  std::chrono::steady_clock::time_point deadline);
 SpatialPlan planSpatialRegion(const PairedFloorMap &,SpatialRegion,
  const ResidualPose &,go2_surface_3d_planner::SurfaceSearchConfig,VisibilitySensor,
- const ExplorationBoundaryPolygon &,double margin,double budget,unsigned batch,unsigned retries,uint64_t epoch);
+ const ExplorationBoundaryPolygon &,double margin,double budget,unsigned batch,unsigned retries,uint64_t epoch,
+ const std::vector<SpatialAttempt> & recent={},double visit_cooldown=0.);
 } // namespace frontier_exploration_ros2
